@@ -37,6 +37,9 @@ html{scroll-behavior:smooth}*{box-sizing:border-box}body{overflow-x:clip}
 @media(max-width:600px){.brand-header{padding-top:19px}.brand-logo{width:98px;height:98px}.hero-content{padding:0 18px}.hero-eyebrow{font-size:9px;letter-spacing:1px;margin-bottom:14px}#hero-title{font-size:39px;letter-spacing:-.9px;line-height:1.06;margin-bottom:14px}.hero-description{font-size:16px;line-height:1.45;margin-bottom:20px}.desktop-break{display:none}.family-photo{border-radius:23px;aspect-ratio:1.38}.family-photo img{object-position:center 56%}.hero-features{margin:20px 0;gap:0}.hero-features li{flex-direction:column;gap:6px;padding:0 5px;font-size:12px}.hero-features span{height:36px;width:36px;font-size:23px}.hero-price{gap:9px;font-size:21px}.hero-price strong{font-size:43px;padding:3px 12px}.hero-payment{font-size:14px;margin-bottom:18px}.hero-cta{font-size:18px;min-height:58px;padding:0 16px;gap:13px}.hero-reassurance{font-size:12px;gap:6px}.activity-intro{padding:30px 0;border-radius:30px 30px 0 0}.activity-intro h2{font-size:29px}.activity-intro p{font-size:15px}.real-activities{gap:13px}.real-activities figcaption{font-size:11px;line-height:1.3}.activity-intro .wrap{padding:0 19px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
+
+/* Carrossel de exemplos - imagens existentes no site */
+.mek-gallery{background:#f9f9ee;padding:60px 16px;text-align:center}.mek-gallery h2{font:800 clamp(29px,5vw,43px)/1.15 'Baloo 2',sans-serif;color:#14254b;margin:0 0 8px}.mek-gallery>p{margin:0 auto 24px;max-width:680px;color:#44516a;font-size:17px}.mek-slider{position:relative;max-width:710px;margin:auto;padding:0 49px}.mek-window{overflow:hidden;border-radius:22px;background:#fff;box-shadow:0 10px 24px #0d254014;touch-action:pan-y}.mek-track{display:flex;transition:transform .5s ease}.mek-slide{margin:0;flex:0 0 100%;min-width:0;padding:17px 17px 13px;background:#fff}.mek-slide[hidden]{display:none}.mek-slide img{display:block;margin:auto;width:100%;height:min(74vh,690px);object-fit:contain;background:#fff;border-radius:12px}.mek-slide figcaption{font:800 17px Nunito,sans-serif;color:#172950;padding:10px}.mek-arrow{position:absolute;top:50%;transform:translateY(-50%);border:0;background:#2563df;color:white;font-size:30px;font-weight:800;width:45px;height:58px;cursor:pointer;border-radius:22px;z-index:2}.mek-prev{left:0}.mek-next{right:0}.mek-count{font:800 14px Nunito,sans-serif;color:#455675;margin-top:15px}@media(max-width:600px){.mek-gallery{padding:35px 6px}.mek-slider{padding:0 39px}.mek-slide{padding:9px}.mek-slide img{height:min(64vh,510px)}.mek-arrow{width:34px;height:52px;font-size:26px}.mek-slide figcaption{font-size:14px}}@media(prefers-reduced-motion:reduce){.mek-track{transition:none}}
 </style>
 
 <!-- Meta Pixel -->
@@ -65,6 +68,19 @@ fbq('track','ViewContent',{content_name:'Plano PRO - 37 Cadernos',content_catego
 <div class="hero-offer"><p class="hero-price">Tudo por <strong>R$ 19,90</strong></p><p class="hero-payment">Pagamento único · Acesso por e-mail</p><a class="cta hero-cta" href="https://ggcheckout.app/checkout/v2/utMvpwAuQ35fGZbpi3cOv0">QUERO OS 37 CADERNOS <span aria-hidden="true">→</span></a><p class="hero-reassurance"><svg aria-hidden="true" width="22" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/><path d="M8 12l3 3 5-6"/></svg> Material digital · Garantia de 7 dias</p></div>
 </div></section>
 <section class="activity-intro" aria-labelledby="activity-title"><div class="wrap"><h2 id="activity-title">Aprender também pode ser brincar.</h2><p>Um pouquinho dos cadernos que vocês vão explorar juntos.</p><div class="real-activities"><figure><img src="img/pg02.jpg" loading="lazy" alt="Página do caderno Descobrindo o Alfabeto"><figcaption>Letras e palavras</figcaption></figure><figure><img src="img/pg04.jpg" loading="lazy" alt="Página do caderno de Matemática"><figcaption>Números e contas</figcaption></figure><figure><img src="img/pg19.jpg" loading="lazy" alt="Página do caderno de Pintura"><figcaption>Pintura e criatividade</figcaption></figure></div><p class="real-caption">Páginas reais do material · Baixe, escolha e imprima</p></div></section>
+
+<section class="mek-gallery" id="mek-gallery" aria-labelledby="mek-gallery-title"><h2 id="mek-gallery-title">Veja as atividades por dentro</h2><p>Conheça exemplos dos cadernos que você poderá imprimir.</p><div class="mek-slider"><button class="mek-arrow mek-prev" type="button" aria-label="Foto anterior">‹</button><div class="mek-window"><div class="mek-track"><figure class="mek-slide" aria-label="1 de 12"><img src="img/pg02.jpg" alt="Descobrindo o alfabeto" loading="eager" decoding="async" onerror="this.closest('figure').hidden=true"><figcaption>Descobrindo o alfabeto</figcaption></figure>
+<figure class="mek-slide" aria-label="2 de 12"><img src="img/pg03.jpg" alt="Identificando as vogais" loading="lazy" decoding="async" onerror="this.closest('figure').hidden=true"><figcaption>Identificando as vogais</figcaption></figure>
+<figure class="mek-slide" aria-label="3 de 12"><img src="img/pg10.jpg" alt="Sílabas simples" loading="lazy" decoding="async" onerror="this.closest('figure').hidden=true"><figcaption>Sílabas simples</figcaption></figure>
+<figure class="mek-slide" aria-label="4 de 12"><img src="img/pg13.jpg" alt="Primeiras leituras" loading="lazy" decoding="async" onerror="this.closest('figure').hidden=true"><figcaption>Primeiras leituras</figcaption></figure>
+<figure class="mek-slide" aria-label="5 de 12"><img src="img/pg09.jpg" alt="Alfabeto traçado" loading="lazy" decoding="async" onerror="this.closest('figure').hidden=true"><figcaption>Alfabeto traçado</figcaption></figure>
+<figure class="mek-slide" aria-label="6 de 12"><img src="img/pg04.jpg" alt="Matemática" loading="lazy" decoding="async" onerror="this.closest('figure').hidden=true"><figcaption>Matemática</figcaption></figure>
+<figure class="mek-slide" aria-label="7 de 12"><img src="img/pg07.jpg" alt="Formas geométricas" loading="lazy" decoding="async" onerror="this.closest('figure').hidden=true"><figcaption>Formas geométricas</figcaption></figure>
+<figure class="mek-slide" aria-label="8 de 12"><img src="img/pg15.jpg" alt="Números e cores" loading="lazy" decoding="async" onerror="this.closest('figure').hidden=true"><figcaption>Números e cores</figcaption></figure>
+<figure class="mek-slide" aria-label="9 de 12"><img src="img/pg19.jpg" alt="Atividades para colorir" loading="lazy" decoding="async" onerror="this.closest('figure').hidden=true"><figcaption>Atividades para colorir</figcaption></figure>
+<figure class="mek-slide" aria-label="10 de 12"><img src="img/pg20.jpg" alt="Coordenação motora" loading="lazy" decoding="async" onerror="this.closest('figure').hidden=true"><figcaption>Coordenação motora</figcaption></figure>
+<figure class="mek-slide" aria-label="11 de 12"><img src="img/pg14.jpg" alt="Quebra-cabeças" loading="lazy" decoding="async" onerror="this.closest('figure').hidden=true"><figcaption>Quebra-cabeças</figcaption></figure>
+<figure class="mek-slide" aria-label="12 de 12"><img src="img/pg23.jpg" alt="Alfabeto com relógio" loading="lazy" decoding="async" onerror="this.closest('figure').hidden=true"><figcaption>Alfabeto com relógio</figcaption></figure></div></div><button class="mek-arrow mek-next" type="button" aria-label="Próxima foto">›</button><div class="mek-count" aria-live="polite"></div></div></section>
 <section class="dots" style="background: #7CC8FF; padding: 64px 0">
 <div class="wrap" style="display: flex; flex-direction: column; gap: 32px">
 <h2 style="margin: 0; text-align: center; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 40px; line-height: 1.1; color: #FFFFFF; text-shadow: 0 3px 0 rgba(43,36,64,.35)">Seu filho aprende sem perceber que está estudando</h2>
@@ -230,6 +246,21 @@ fbq('track','ViewContent',{content_name:'Plano PRO - 37 Cadernos',content_catego
 <script>
 (function(){var q=location.search.replace(/^\?/,'');if(!q)return;
 document.querySelectorAll('a[href*="ggcheckout.app"]').forEach(function(a){a.href+=(a.href.indexOf('?')<0?'?':'&')+q;});})();
+</script>
+
+<script>
+(()=>{
+const root=document.getElementById('mek-gallery');if(!root)return;
+const track=root.querySelector('.mek-track');const count=root.querySelector('.mek-count');let current=0;let timer;
+function slides(){return [...track.querySelectorAll('.mek-slide:not([hidden])')];}
+function show(delta){const all=slides();if(!all.length){count.textContent='Imagens indisponíveis';return;}current=(current+delta+all.length)%all.length;track.style.transform='translateX(-'+(current*100)+'%)';count.textContent=(current+1)+' de '+all.length+' exemplos';}
+function reset(){clearInterval(timer);if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)timer=setInterval(()=>show(1),4500);}
+root.querySelector('.mek-prev').addEventListener('click',()=>{show(-1);reset()});root.querySelector('.mek-next').addEventListener('click',()=>{show(1);reset()});
+let start=null;root.querySelector('.mek-window').addEventListener('touchstart',e=>{start=e.touches[0].clientX},{passive:true});root.querySelector('.mek-window').addEventListener('touchend',e=>{if(start===null)return;const dist=e.changedTouches[0].clientX-start;if(Math.abs(dist)>45){show(dist<0?1:-1);reset()}start=null},{passive:true});
+root.addEventListener('mouseenter',()=>clearInterval(timer));root.addEventListener('mouseleave',reset);document.addEventListener('visibilitychange',()=>{if(document.hidden)clearInterval(timer);else reset()});
+root.querySelectorAll('img').forEach(img=>img.addEventListener('error',()=>{const all=slides();if(!all.length){track.style.transform='none';count.textContent='Imagens indisponíveis';return;}current=0;show(0)}));
+show(0);reset();
+})();
 </script>
 </body>
 </html>

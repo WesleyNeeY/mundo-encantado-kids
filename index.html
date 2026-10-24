@@ -40,6 +40,12 @@ html{scroll-behavior:smooth}*{box-sizing:border-box}body{overflow-x:clip}
 
 /* Carrossel de exemplos - imagens existentes no site */
 .mek-gallery{background:#f9f9ee;padding:60px 16px;text-align:center}.mek-gallery h2{font:800 clamp(29px,5vw,43px)/1.15 'Baloo 2',sans-serif;color:#14254b;margin:0 0 8px}.mek-gallery>p{margin:0 auto 24px;max-width:680px;color:#44516a;font-size:17px}.mek-slider{position:relative;max-width:710px;margin:auto;padding:0 49px}.mek-window{overflow:hidden;border-radius:22px;background:#fff;box-shadow:0 10px 24px #0d254014;touch-action:pan-y}.mek-track{display:flex;transition:transform .5s ease}.mek-slide{margin:0;flex:0 0 100%;min-width:0;padding:17px 17px 13px;background:#fff}.mek-slide[hidden]{display:none}.mek-slide img{display:block;margin:auto;width:100%;height:min(74vh,690px);object-fit:contain;background:#fff;border-radius:12px}.mek-slide figcaption{font:800 17px Nunito,sans-serif;color:#172950;padding:10px}.mek-arrow{position:absolute;top:50%;transform:translateY(-50%);border:0;background:#2563df;color:white;font-size:30px;font-weight:800;width:45px;height:58px;cursor:pointer;border-radius:22px;z-index:2}.mek-prev{left:0}.mek-next{right:0}.mek-count{font:800 14px Nunito,sans-serif;color:#455675;margin-top:15px}@media(max-width:600px){.mek-gallery{padding:35px 6px}.mek-slider{padding:0 39px}.mek-slide{padding:9px}.mek-slide img{height:min(64vh,510px)}.mek-arrow{width:34px;height:52px;font-size:26px}.mek-slide figcaption{font-size:14px}}@media(prefers-reduced-motion:reduce){.mek-track{transition:none}}
+
+/* Arte oficial do topo com a imagem completa, sem cortes */
+.hero-promo{max-width:850px;margin:0 auto 22px}
+.hero-promo img{width:100%;height:auto;display:block;border-radius:20px;box-shadow:0 8px 24px rgba(64,17,50,.10)}
+.screen-reader-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){.hero-promo{margin:0 auto 12px}.hero-promo img{border-radius:12px}.new-hero .hero-content{padding:0 12px}}
 </style>
 
 <!-- Meta Pixel -->
@@ -58,12 +64,8 @@ fbq('track','ViewContent',{content_name:'Plano PRO - 37 Cadernos',content_catego
 <div style="font-family: 'Nunito', sans-serif; color: #2B2440; background: #FFF8EE">
 
 <section class="new-hero" aria-labelledby="hero-title">
-<header class="brand-header"><a href="./" aria-label="Mundo Encantado Kids, início"><img src="img/logo_mek.png" width="420" height="420" alt="Mundo Encantado Kids" class="brand-logo"></a></header>
-<div class="wrap hero-content">
-<p class="hero-eyebrow">ATIVIDADES PARA CRIANÇAS DE 3 A 8 ANOS</p>
-<h1 id="hero-title">Menos telas.<br>Mais descobertas <span>juntos.</span></h1>
-<p class="hero-description">37 cadernos em PDF para imprimir e transformar<br class="desktop-break"> pequenos momentos em aprendizado.</p>
-<figure class="family-photo"><img src="img/familia-topo.webp" width="1536" height="1024" fetchpriority="high" decoding="async" alt="Família reunida à mesa, acompanhando as crianças em atividades de pintar e aprender."></figure>
+<h1 id="hero-title" class="screen-reader-only">Mundo Encantado Kids: 37 cadernos de atividades para imprimir</h1>
+<figure class="hero-promo"><img src="img/topo-cadernos.avif" width="1000" height="1000" fetchpriority="high" decoding="async" alt="Mundo Encantado Kids: 37 cadernos de atividades, jogos bíblicos, moldes e montagens, com capas ilustradas e dois personagens infantis"></figure>
 <ul class="hero-features" aria-label="O que você recebe"><li><span aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 5c-3-2-7-2-10-1v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1z"/><path d="M12 5v15"/></svg></span><strong>37 cadernos</strong></li><li><span aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="m12 2 10 6-10 6L2 8zM2 12l10 6 10-6M2 16l10 6 10-6"/></svg></span><strong>1.002 páginas</strong></li><li><span aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M6 8V2h12v6M6 18H3V9h18v9h-3M6 14h12v8H6z"/><path d="M17 11h1"/></svg></span><strong>Para imprimir</strong></li></ul>
 <div class="hero-offer"><p class="hero-price">Tudo por <strong>R$ 19,90</strong></p><p class="hero-payment">Pagamento único · Acesso por e-mail</p><a class="cta hero-cta" href="https://ggcheckout.app/checkout/v2/utMvpwAuQ35fGZbpi3cOv0">QUERO OS 37 CADERNOS <span aria-hidden="true">→</span></a><p class="hero-reassurance"><svg aria-hidden="true" width="22" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/><path d="M8 12l3 3 5-6"/></svg> Material digital · Garantia de 7 dias</p></div>
 </div></section>

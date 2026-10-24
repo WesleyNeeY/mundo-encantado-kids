@@ -77,6 +77,22 @@ html{scroll-behavior:smooth}*{box-sizing:border-box}body{overflow-x:clip}
 @media(max-width:600px){.mek-motion-photos{padding:25px 0 30px}.mek-motion-label{padding:0 14px;font-size:17px}.mek-motion-group img{width:127px;border-radius:10px}.mek-motion-track,.mek-motion-group{gap:9px}.mek-motion-right{animation-duration:42s}.mek-motion-left{animation-duration:62s}.mek-motion-row+.mek-motion-row{margin-top:9px}}
 @media(prefers-reduced-motion:reduce){.mek-motion-track{animation:none}.mek-motion-window{overflow-x:auto}}
 /* Fim: estilos independentes das faixas */
+
+/* Área para avaliações reais, sem depoimentos inventados */
+.mek-reviews{background:#fff8f1;padding:58px 0 68px;text-align:center;color:#302449}
+.mek-reviews .mek-reviews-kicker{display:inline-block;background:#ffe4ef;color:#ac2563;font:800 13px Nunito,sans-serif;letter-spacing:1px;border-radius:999px;padding:9px 16px;margin-bottom:14px}
+.mek-reviews h2{font:800 clamp(30px,4vw,43px)/1.15 'Baloo 2',sans-serif;color:#642c88;margin:0 0 12px}
+.mek-reviews .mek-reviews-intro{font:600 17px/1.6 Nunito,sans-serif;max-width:660px;margin:0 auto 28px;color:#635273}
+.mek-reviews-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.mek-review-card{background:white;border-radius:20px;padding:25px 22px;box-shadow:0 10px 26px rgba(85,47,97,.09);border:1px solid #f6e0eb;text-align:left;display:flex;flex-direction:column;gap:13px;min-height:215px}
+.mek-review-card .mek-review-icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:#fff0f5;font-size:26px}
+.mek-review-card:nth-child(2) .mek-review-icon{background:#fff2d1}.mek-review-card:nth-child(3) .mek-review-icon{background:#e8f7ee}
+.mek-review-card h3{font:800 21px/1.2 'Baloo 2',sans-serif;color:#4e277a;margin:0}
+.mek-review-card p{font:600 15px/1.6 Nunito,sans-serif;color:#60556b;margin:0;flex:1}
+.mek-review-card .mek-review-status{font:800 12px Nunito,sans-serif;color:#876d8c;letter-spacing:.2px}
+.mek-reviews-note{font:600 14px/1.55 Nunito,sans-serif;color:#785d82;margin:24px auto 0;max-width:660px}
+@media(max-width:760px){.mek-reviews{padding:40px 0 48px}.mek-reviews-grid{grid-template-columns:1fr;max-width:460px;margin:auto}.mek-review-card{min-height:unset}.mek-reviews .wrap{padding:0 18px}}
+
 </style>
 
 <!-- Meta Pixel -->
@@ -284,6 +300,21 @@ fbq('track','ViewContent',{content_name:'Plano PRO - 37 Cadernos',content_catego
 <div style="background: #FFFFFF; border-left: 0; box-shadow: 0 5px 0 #8C5CF2; border-radius: 16px; padding: 20px 22px"><h3 style="margin: 0 0 6px; font-size: 18px">Como recebo o acesso?</h3><p style="margin: 0; font-size: 17px; line-height: 1.5; color: #4A4360">Logo após a confirmação do pagamento, no e-mail que você informou na compra.</p></div>
 </div>
 </section>
+
+<section class="mek-reviews" id="mek-reviews" aria-labelledby="mek-reviews-title">
+<div class="wrap">
+<span class="mek-reviews-kicker">ESPAÇO PARA AVALIAÇÕES REAIS</span>
+<h2 id="mek-reviews-title">Feedback de quem comprou 💗</h2>
+<p class="mek-reviews-intro">Queremos mostrar experiências verdadeiras de quem adquiriu o Mundo Encantado Kids. Este espaço está preparado para receber os primeiros depoimentos autorizados.</p>
+<div class="mek-reviews-grid">
+<article class="mek-review-card"><div class="mek-review-icon" aria-hidden="true">📚</div><h3>Experiência com os cadernos</h3><p>Como foi receber, escolher e imprimir as atividades?</p><span class="mek-review-status">Aguardando relato de comprador</span></article>
+<article class="mek-review-card"><div class="mek-review-icon" aria-hidden="true">🧩</div><h3>Jogos bíblicos em família</h3><p>Conte como vocês aproveitaram os jogos e as atividades bíblicas.</p><span class="mek-review-status">Aguardando relato de comprador</span></article>
+<article class="mek-review-card"><div class="mek-review-icon" aria-hidden="true">✂️</div><h3>Moldes e montagens</h3><p>Qual montagem as crianças mais gostaram de fazer?</p><span class="mek-review-status">Aguardando relato de comprador</span></article>
+</div>
+<p class="mek-reviews-note">Depoimentos serão publicados somente após serem recebidos e autorizados por compradores reais.</p>
+</div>
+</section>
+
 <div class="rainbow"></div>
 
 <section class="wrap dotsd" style="padding-top: 56px; padding-bottom: 72px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 18px">

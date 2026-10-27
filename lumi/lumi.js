@@ -243,7 +243,7 @@
       let target = 0;
       if (this.talking) {
         this.boundaryPulse = Math.max(0, this.boundaryPulse - dt * 4);
-        target = 0.25 + 0.55 * Math.abs(Math.sin(t * 14 + Math.sin(t * 5) * 2)) + this.boundaryPulse * 0.3;
+        target = this.mouthLevel != null ? Math.min(1, 0.08 + this.mouthLevel) : 0.25 + 0.55 * Math.abs(Math.sin(t * 14 + Math.sin(t * 5) * 2)) + this.boundaryPulse * 0.3;
       } else if (m === 'happy') target = 0.75;
       else if (this.chew > 0) { this.chew -= dt; target = 0.45 * Math.abs(Math.sin(t * 9)); if (this.chew <= 0) this.setMood('happy'); }
       else if (m === 'listen') target = 0.15;

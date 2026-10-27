@@ -43,10 +43,52 @@
     return pool[0] || null;
   }
   let speakToken = 0;
+  // áudios gravados com voz neural (audio/index.json); se faltar, usa a voz do aparelho
+  let AUDIO = {}, actx = null, analyser = null;
+  const bufCache = {};
+  fetch('audio/index.json').then((r) => r.json()).then((j) => { AUDIO = j; }).catch(() => {});
+  function audioCtx() {
+    if (!actx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; actx = new C(); analyser = actx.createAnalyser(); analyser.fftSize = 512; analyser.connect(actx.destination); }
+    if (actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+  async function getBuf(file) {
+    if (!bufCache[file]) bufCache[file] = fetch('audio/' + file).then((r) => r.arrayBuffer()).then((a) => new Promise((res, rej) => actx.decodeAudioData(a, res, rej)));
+    return bufCache[file];
+  }
+  let curSrc = null;
+  async function playFile(file, lumi, my) {
+    const ctx = audioCtx(); if (!ctx) return false;
+    let buf; try { buf = await getBuf(file); } catch (e) { return false; }
+    if (my !== speakToken) return true;
+    return new Promise((resolve) => {
+      const src = ctx.createBufferSource(); src.buffer = buf; src.connect(analyser); curSrc = src;
+      const data = new Uint8Array(analyser.fftSize);
+      let live = true;
+      const lip = () => {
+        if (!live) return;
+        analyser.getByteTimeDomainData(data);
+        let sum = 0; for (let i = 0; i < data.length; i++) { const v = (data[i] - 128) / 128; sum += v * v; }
+        if (lumi) lumi.mouthLevel = Math.min(1, Math.sqrt(sum / data.length) * 5.5);
+        requestAnimationFrame(lip);
+      };
+      src.onended = () => { live = false; if (lumi) { lumi.mouthLevel = null; if (my === speakToken) lumi.talk(false); } resolve(true); };
+      if (lumi) lumi.talk(true);
+      src.start(); lip();
+    });
+  }
   function speak(text, lang = 'pt-BR', lumi, opt = {}) {
+    const key = (lang.startsWith('en') ? 'en' : 'pt') + '|' + text;
+    if (AUDIO[key] && (window.AudioContext || window.webkitAudioContext)) {
+      const my = speakToken;
+      return playFile(AUDIO[key], lumi, my).then((ok) => { if (!ok) return speakTTS(text, lang, lumi, opt); });
+    }
+    return speakTTS(text, lang, lumi, opt);
+  }
+  function speakTTS(text, lang = 'pt-BR', lumi, opt = {}) {
     return new Promise((resolve) => {
       if (!synth) { setTimeout(resolve, 400 + text.length * 45); return; }
-      const my = ++speakToken;
+      const my = speakToken;
       const u = new SpeechSynthesisUtterance(text);
       u.lang = lang;
       const v = pickVoice(lang); if (v) u.voice = v;
@@ -62,7 +104,7 @@
       synth.speak(u);
     });
   }
-  function stopTalk() { if (synth) synth.cancel(); speakToken++; Object.values(L).forEach((l) => l && l.talk(false)); }
+  function stopTalk() { if (synth) synth.cancel(); if (curSrc) { try { curSrc.onended && curSrc.onended(); curSrc.stop(); } catch (e) {} curSrc = null; } speakToken++; Object.values(L).forEach((l) => l && l.talk(false)); }
   // fala com balão: parts = [[texto, 'pt'|'en'], ...]
   async function say(lumi, bubble, parts, opts = {}) {
     if (typeof parts === 'string') parts = [[parts, 'pt']];
@@ -146,7 +188,10 @@
       L[k] = new window.Lumi(document.getElementById('lumi-' + k), { outfit: S.outfit });
       L[k].paused = true;
     }
-    L.home.onPoke = () => say(L.home, $('#home-bubble'), rnd([[['Hi! Hehe!', 'en']], 'Hihi! Faz cócegas!', [['Hello, ' + (S.name || 'friend') + '!', 'en']], 'Vamos aprender juntos?']));
+    L.home.onPoke = () => {
+      const pick = rnd([[[['Hi! Hehe!', 'en']]], ['Hihi! Faz cócegas!'], [[['Hello!', 'en']], 'Hello, ' + (S.name || 'friend') + '!'], ['Vamos aprender juntos?']]);
+      say(L.home, $('#home-bubble'), pick[0], pick[1] ? { bubble: pick[1] } : {});
+    };
   }
   const dressAll = () => Object.values(L).forEach((l) => l.setOutfit(S.outfit));
 
@@ -203,6 +248,7 @@
       S.name = n.charAt(0).toUpperCase() + n.slice(1); save();
     }
     if (synth) { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); }
+    audioCtx();
     touchStreak();
     go('home');
   });
@@ -222,8 +268,8 @@
       L.home.doWave(1.8);
       const first = !S.seen.home; S.seen.home = 1; save();
       if (S.energy < 10) say(L.home, $('#home-bubble'), 'Estou cansadinho... Vamos dormir ou comer um lanchinho?');
-      else if (first) say(L.home, $('#home-bubble'), [['Olá, ' + S.name + '! Eu sou o Lumi!', 'pt'], ['Vamos aprender inglês hoje?', 'pt']]);
-      else say(L.home, $('#home-bubble'), [['Hello, ' + S.name + '!', 'en'], ['Vamos aprender inglês hoje?', 'pt']]);
+      else if (first) say(L.home, $('#home-bubble'), [['Olá! Eu sou o Lumi!', 'pt'], ['Vamos aprender inglês hoje?', 'pt']], { bubble: `Olá, ${S.name}! Eu sou o Lumi! Vamos aprender inglês hoje?` });
+      else say(L.home, $('#home-bubble'), [['Hello!', 'en'], ['Vamos aprender inglês hoje?', 'pt']], { bubble: `Hello, ${S.name}! Vamos aprender inglês hoje?` });
     }, 350);
   }
   $('#btn-today').addEventListener('click', () => startLesson(unitIndex()));
@@ -292,6 +338,7 @@
       { t: 'speak', w: rnd(words) }, { t: 'audio2pic', w: rnd([b, d]) },
     ];
     S.energy = Math.max(0, S.energy - 10); save();
+    if (audioCtx()) words.forEach((w) => { ['en|' + w.en, 'pt|Olha só: ' + w.pt + '!', 'pt|Como se diz ' + w.pt + ' em inglês?'].forEach((k) => AUDIO[k] && getBuf(AUDIO[k]).catch(() => {})); });
     LS = { ui, u, words, steps, i: -1, mistakes: 0, coins: 0 };
     go('lesson');
     L.lesson.paused = false;
@@ -393,7 +440,8 @@
     if (r.ok) {
       L.lesson.celebrate(); if (!LS.cur.miss) award(3, btn);
       setNext(true, 'Próxima →');
-      await say(L.lesson, $('#lesson-bubble'), [[rnd(PRAISE_EN), 'en'], ['Você falou ' , 'pt'], [w.en, 'en'], ['direitinho!', 'pt']], { bubble: `${rnd(PRAISE_EN)} Você falou “${w.en}” direitinho!` });
+      const pr = rnd(PRAISE_EN);
+      await say(L.lesson, $('#lesson-bubble'), [[pr, 'en'], ['Você falou', 'pt'], [w.en, 'en'], ['direitinho!', 'pt']], { bubble: `${pr} Você falou “${w.en}” direitinho!` });
       L.lesson.setMood('idle');
     } else {
       LS.cur.tries = (LS.cur.tries || 0) + 1;
@@ -433,7 +481,7 @@
     L.result.celebrate();
     setTimeout(() => L.result.celebrate(), 1300);
     const up = level() > before;
-    say(L.result, null, up ? [['Uau! Você subiu para o nível ' + level() + '!', 'pt'], ['Amazing!', 'en']] : [['Aula completa! Você é incrível,', 'pt'], [S.name + '!', 'pt']]);
+    say(L.result, null, up ? [['Uau! Você subiu para o nível ' + level() + '!', 'pt'], ['Amazing!', 'en']] : [['Aula completa! Você é incrível!', 'pt']], up ? {} : { bubble: `Aula completa! Você é incrível, ${S.name}!` });
   }
   $('#btn-result').addEventListener('click', () => go('home'));
   function confetti() {

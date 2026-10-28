@@ -214,7 +214,7 @@ $('#btn-start').addEventListener('click', () => {
 function enterHome() {
   tickSleep();
   const i = unitIndex(), u = D.units[i];
-  $('#play-sub').textContent = `Aula ${i + 1} · ${u.name}`;
+  $('#play-sub').textContent = `Fase ${u.num} · ${worldOf(u).name} · ${u.name}`;
   $('#btn-gift').classList.toggle('glow', S.giftDay !== today());
   lumi.setMood(S.sleeping ? 'sleep' : 'idle');
   bind();
@@ -237,22 +237,36 @@ $('#btn-gift').addEventListener('click', () => {
   say($('#home-bubble'), [[T.pt.gift, 'pt'], [T.en.thanks, 'en']], 'Surpresa! Você ganhou <b>30 moedas</b>! 🪙');
 });
 
-/* ---------------- MAPA ---------------- */
+/* ---------------- MAPA (6 mundos) ---------------- */
 let avatarURL = null;
+const worldOf = (u) => D.worlds[u.wi];
+const unitById = (id) => D.units.find((x) => x.id === id);
+const poolWords = (ids) => { const seen = new Set(); return ids.flatMap((id) => unitById(id).words).filter((w) => !seen.has(w.en) && seen.add(w.en)); };
 function enterMap() {
-  const wrap = $('#mapwrap'), n = D.units.length, step = 160, H = n * step + 160;
+  const wrap = $('#mapwrap'), n = D.units.length, step = 150, BAN = 130;
+  const H = n * step + D.worlds.length * BAN + 120;
   wrap.style.height = H + 'px';
   const xs = [0.5, 0.76, 0.5, 0.24];
-  const pts = D.units.map((u, i) => ({ x: xs[i % 4], y: H - 100 - i * step }));
+  const pts = []; let y = H - 70 - BAN;
+  D.units.forEach((u, i) => { if (i > 0) y -= step + (u.wi !== D.units[i - 1].wi ? BAN : 0); pts.push({ x: xs[i % 4], y }); });
   let path = `M${pts[0].x * 400},${pts[0].y}`;
-  for (let i = 1; i < n; i++) { const a = pts[i - 1], b = pts[i]; path += ` C${a.x * 400},${a.y - 80} ${b.x * 400},${b.y + 80} ${b.x * 400},${b.y}`; }
+  for (let i = 1; i < n; i++) { const a = pts[i - 1], b = pts[i]; const d = (a.y - b.y) / 2; path += ` C${a.x * 400},${a.y - d} ${b.x * 400},${b.y + d} ${b.x * 400},${b.y}`; }
   const cur = unitIndex();
-  let html = `<svg class="mapsvg" viewBox="0 0 400 ${H}" preserveAspectRatio="none"><path d="${path}" stroke="rgba(255,255,255,.75)" stroke-width="26" fill="none" stroke-linecap="round"/><path d="${path}" stroke="#ffc928" stroke-width="9" stroke-dasharray="1 22" fill="none" stroke-linecap="round"/></svg>`;
+  let html = '';
+  // faixas coloridas de cada mundo
+  D.worlds.forEach((w, wi) => {
+    const idx = D.units.map((u, i) => (u.wi === wi ? i : -1)).filter((i) => i >= 0);
+    const bottom = pts[idx[0]].y + step / 2 + BAN, top = wi === D.worlds.length - 1 ? 0 : pts[idx[idx.length - 1]].y - step / 2;
+    const done = idx.filter((i) => S.units[D.units[i].id] && S.units[D.units[i].id].done).length;
+    html += `<div class="band" style="top:${top}px;height:${bottom - top}px;background:linear-gradient(180deg,${w.color}10,${w.color}38)"></div>`;
+    html += `<div class="wban" style="top:${bottom - BAN / 2 - 6}px;--wc:${w.color}"><span class="wi">${w.icon}</span><div><b>Mundo ${wi + 1} · ${w.name}</b><small>${done}/${idx.length} fases</small></div></div>`;
+  });
+  html += `<svg class="mapsvg" viewBox="0 0 400 ${H}" preserveAspectRatio="none"><path d="${path}" stroke="rgba(255,255,255,.8)" stroke-width="26" fill="none" stroke-linecap="round"/><path d="${path}" stroke="#ffc928" stroke-width="9" stroke-dasharray="1 22" fill="none" stroke-linecap="round"/></svg>`;
   D.units.forEach((u, i) => {
     const st = S.units[u.id] || {};
-    const cls = st.done ? 'done' : i === cur ? 'cur' : i > cur ? 'lock' : '';
+    const cls = (st.done ? 'done' : i === cur ? 'cur' : i > cur ? 'lock' : '') + (u.type === 'game' ? ' game' : '');
     const stars = st.stars ? '⭐'.repeat(st.stars) + '<span style="opacity:.3">' + '⭐'.repeat(3 - st.stars) + '</span>' : '';
-    html += `<button class="node ${cls}" data-u="${i}" style="left:${pts[i].x * 100}%;top:${pts[i].y}px"><div class="disc"><span class="n">${i + 1}</span>${u.icon}${i > cur ? '<span class="lk">🔒</span>' : ''}</div><label>${u.name}</label><div class="st">${stars}</div></button>`;
+    html += `<button class="node ${cls}" data-u="${i}" style="left:${pts[i].x * 100}%;top:${pts[i].y}px"><div class="disc"><span class="n">${u.num}</span>${u.icon}${i > cur ? '<span class="lk">🔒</span>' : ''}</div><label>${u.name}</label><div class="st">${stars}</div></button>`;
   });
   if (!avatarURL) avatarURL = stage.snapshot(220, 220);
   html += `<img class="mapav" src="${avatarURL}" alt="" style="left:calc(${pts[cur].x * 100}% + ${pts[cur].x > 0.5 ? -88 : 88}px);top:${pts[cur].y + 40}px">`;
@@ -263,17 +277,17 @@ function enterMap() {
 $('#mapwrap').addEventListener('click', (e) => {
   const b = e.target.closest('.node'); if (!b) return;
   const i = +b.dataset.u;
-  if (i > unitIndex()) { toast('🔒 Termine a aula anterior para abrir'); speak(T.pt.locked, 'pt'); return; }
+  if (i > unitIndex()) { toast('🔒 Termine a fase anterior para abrir'); speak(T.pt.locked, 'pt'); return; }
   startLesson(i);
 });
 
-/* ---------------- LIÇÃO: escuta → repete → joga ---------------- */
+/* ---------------- FASE: aula (escuta → repete → joga) ou mini-jogo ---------------- */
 let LS = null;
 const STARS = 8;
 function picHTML(w) { return w.txt ? `<span class="num">${w.txt}</span>` : w.img; }
 function setStars() { $('#stars').innerHTML = Array.from({ length: STARS }, (_, i) => `<span class="${i < LS.stars ? 'on' : ''}">⭐</span>`).join(''); }
 function addStar(el) {
-  LS.stars++; setStars();
+  LS.stars = Math.min(STARS, LS.stars + 1); setStars();
   if (el) coinFly(el, '+2 🪙'); S.coins += 2; LS.coins += 2; save();
 }
 function coinFly(el, txt) {
@@ -282,45 +296,77 @@ function coinFly(el, txt) {
   f.style.left = r.left - app.left + r.width / 2 - 30 + 'px'; f.style.top = r.top - app.top + 'px';
   $('#app').appendChild(f); setTimeout(() => f.remove(), 1000);
 }
+const give = (en) => 'Give me the ' + en.toLowerCase() + '!';
 function startLesson(ui) {
   tickSleep(); wake();
   if (S.energy < 10) { openTired(); return; }
-  const u = D.units[ui];
-  const seenW = (S.units[u.id] && S.units[u.id].seenWords) || [];
-  let pool = shuffle(u.words.filter((w) => !seenW.includes(w.en)));
-  if (pool.length < 4) pool = pool.concat(shuffle(u.words.filter((w) => seenW.includes(w.en))));
-  const words = pool.slice(0, 4);
+  const u = D.units[ui], world = worldOf(u);
+  let words = [], items = [];
+  if (u.type === 'lesson') {
+    const seenW = (S.units[u.id] && S.units[u.id].seenWords) || [];
+    let pool = shuffle(u.words.filter((w) => !seenW.includes(w.en)));
+    if (pool.length < 4) pool = pool.concat(shuffle(u.words.filter((w) => seenW.includes(w.en))));
+    words = pool.slice(0, 4);
+    words.forEach((w) => preload([[w.en, 'en'], [cap(w.pt) + '! ' + T.pt.inEn, 'pt']]));
+    preload([[T.pt.yourTurn, 'pt'], [T.pt.where, 'pt'], [T.pt.again, 'pt']]);
+  } else if (u.game === 'simon') {
+    items = shuffle(u.pool.flatMap((k) => D.simon[k])).slice(0, 8);
+    items.forEach((c) => preload([[c.en, 'en']])); preload([[T.pt.simonSays, 'pt'], [T.pt.doAndSay, 'pt']]);
+  } else {
+    items = poolWords(u.pool);
+    const n = u.game === 'memory' ? 4 : 8;
+    words = shuffle(items).slice(0, n);
+    words.forEach((w) => preload([[u.game === 'feed' ? give(w.en) : w.en, 'en']]));
+  }
   S.energy = Math.max(0, S.energy - 10); save();
-  words.forEach((w) => preload([[w.en, 'en'], [cap(w.pt) + '! ' + T.pt.inEn, 'pt']]));
-  preload([[T.pt.look, 'pt'], [T.pt.inEn, 'pt'], [T.pt.yourTurn, 'pt'], [T.pt.where, 'pt'], [T.pt.again, 'pt']]);
-  LS = { id: Symbol(), ui, u, words, stars: 0, coins: 0, misses: 0 };
+  const welcome = world.units[0] === u && !S.seen['w-' + world.id];
+  LS = { id: Symbol(), ui, u, world, words, items, stars: 0, coins: 0, misses: 0, welcome };
+  lumi.action = null;
   show('lesson'); lumi.setMood('idle'); setStars();
   runLesson(LS);
 }
 const alive = (ls) => LS === ls && current === 'lesson';
 async function runLesson(ls) {
   await wait(500);
-  for (const w of ls.words) { if (!alive(ls)) return; await teachWord(ls, w); }
-  if (!alive(ls)) return;
-  await quizIntro(ls);
-  for (const w of shuffle(ls.words)) { if (!alive(ls)) return; await quizWord(ls, w); }
+  if (ls.welcome) {
+    S.seen['w-' + ls.world.id] = 1; save();
+    $('#lbody').innerHTML = `<div class="wcard in" style="--wc:${ls.world.color}"><div class="wic">${ls.world.icon}</div><b>Mundo ${ls.u.wi + 1}</b><h2>${ls.world.name}</h2></div>`;
+    lumi.celebrate(); confetti(40);
+    await say($('#lesson-bubble'), [[ls.world.welcome, 'pt']]);
+    if (!alive(ls)) return; await wait(300);
+  }
+  const g = ls.u.type === 'lesson' ? null : ls.u.game;
+  if (!g) {
+    for (const w of ls.words) { if (!alive(ls)) return; await teachWord(ls, w); }
+    if (!alive(ls)) return;
+    await quizIntro(ls);
+    for (const w of shuffle(ls.words)) { if (!alive(ls)) return; await quizWord(ls, w); }
+  } else if (g === 'simon') await playSimon(ls);
+  else if (g === 'balloon') await playBalloon(ls);
+  else if (g === 'feed') await playFeed(ls);
+  else if (g === 'memory') await playMemory(ls);
   if (alive(ls)) finishLesson(ls);
 }
+function turnHTML() { return `<div class="turn" id="turn"><div class="turnlbl" id="tlbl"></div><button class="mic idle" id="mic" aria-label="Falar">🎤</button><button class="skip" id="skip" style="visibility:hidden">Pular ›</button></div>`; }
 // 1) apresenta a palavra e 2) a criança repete
 async function teachWord(ls, w) {
   const B = $('#lbody'), bub = $('#lesson-bubble');
-  B.innerHTML = `<div class="card in"><button class="spk" id="spk" aria-label="Ouvir">🔊</button><div class="pic" id="pic">${picHTML(w)}</div><div class="wen">${esc(w.en)}</div><div class="wpt">${esc(w.pt)}</div></div>
-    <div class="turn" id="turn"><div class="turnlbl" id="tlbl"></div><button class="mic idle" id="mic" aria-label="Falar">🎤</button><button class="skip" id="skip" style="visibility:hidden">Pular ›</button></div>`;
+  B.innerHTML = `<div class="card in"><button class="spk" id="spk" aria-label="Ouvir">🔊</button><div class="pic" id="pic">${picHTML(w)}</div><div class="wen">${esc(w.en)}</div><div class="wpt">${esc(w.pt)}</div></div>${turnHTML()}`;
   $('#spk').onclick = () => { stopListen(); speak(w.en, 'en'); $('#pic').classList.remove('bounce'); void $('#pic').offsetWidth; $('#pic').classList.add('bounce'); };
   const ptw = cap(w.pt) + '!';
   lumi.setMood('idle');
   if (!(await say(bub, [[ptw + ' ' + T.pt.inEn, 'pt'], [w.en, 'en']], `${esc(ptw)} Em inglês é <span class="en">${esc(w.en)}</span>!`))) return;
   $('#pic').classList.add('bounce');
   await wait(250); if (!alive(ls)) return;
-  // vez da criança
+  await turnLoop(ls, w, T.pt.yourTurn, 'Agora você! Fala:');
+}
+// vez da criança: até 2 tentativas
+async function turnLoop(ls, w, firstLine, firstTxt, onRetry) {
+  const bub = $('#lesson-bubble');
   let tries = 0, last = '', silent = 0;
   while (alive(ls)) {
-    const [line, txt] = tries === 0 ? [T.pt.yourTurn, 'Agora você! Fala:'] : last === 'silent' ? [T.pt.louder, 'Não ouvi! Fala mais alto:'] : [T.pt.again, 'Escuta de novo:'];
+    const [line, txt] = tries === 0 ? [firstLine, firstTxt] : last === 'silent' ? [T.pt.louder, 'Não ouvi! Fala mais alto:'] : [T.pt.again, 'Escuta de novo:'];
+    if (tries > 0 && onRetry) onRetry();
     if (!(await say(bub, [[line, 'pt'], [w.en, 'en']], `${txt} <span class="en">${esc(w.en)}</span>`))) return;
     const r = await childTurn(ls, w);
     if (!alive(ls) || r === 'gone') return;
@@ -362,7 +408,7 @@ function childTurn(ls, w) {
       mic.className = 'mic listen'; mic.textContent = '🎤';
       lbl.innerHTML = `Sua vez! Fale: <span class="en">${esc(w.en)}</span>`;
       lumi.setMood('listen');
-      const r = await listen(w.en);
+      const r = await listen(w.key || w.en);
       if (settled || !alive(ls)) return done('gone');
       mic.className = 'mic idle'; lumi.setMood('idle');
       if (r.broken) { mic.className = 'mic'; mic.textContent = '✅'; lbl.innerHTML = `Fale <span class="en">${esc(w.en)}</span> e toque aqui!`; mic.onclick = () => done('ok'); return; }
@@ -374,7 +420,7 @@ function childTurn(ls, w) {
     attempt();
   });
 }
-// 3) jogo: "Cadê... dog?" com 3 figuras
+// 3) jogo da aula: "Cadê... dog?" com 3 figuras
 async function quizIntro(ls) {
   $('#lbody').innerHTML = '<div class="qtitle" style="margin-top:30px">🎮 Hora do jogo!</div>';
   lumi.hop();
@@ -387,7 +433,6 @@ async function quizWord(ls, w) {
     <div class="tiles">${opts.map((o) => `<button class="tile" data-en="${esc(o.en)}">${picHTML(o)}</button>`).join('')}</div><div class="turn" style="min-height:40px"></div>`;
   $('#qspk').onclick = () => speak(w.en, 'en');
   say(bub, [[T.pt.where, 'pt'], [w.en, 'en']], `Cadê… <span class="en">${esc(w.en)}</span>?`);
-  let missed = false;
   await new Promise((resolve) => {
     $$('.tile', B).forEach((b) => b.onclick = async () => {
       if ($('.tile.ok', B) || !alive(ls)) return;
@@ -397,18 +442,189 @@ async function quizWord(ls, w) {
         await say(bub, [[w.en, 'en'], [rnd(T.en.praise), 'en']]);
         lumi.setMood('idle'); resolve();
       } else {
-        missed = true; ls.misses++;
+        ls.misses++;
         b.classList.add('bad'); setTimeout(() => { b.classList.remove('bad'); b.classList.add('dim'); }, 450);
         lumi.encourage();
         await say(bub, [[T.pt.notThis, 'pt'], [w.en, 'en']], `Não é esse! Cadê <span class="en">${esc(w.en)}</span>?`);
         lumi.setMood('idle');
       }
     });
+    ls.abort = resolve;
   });
-  void missed;
+}
+
+/* ---------- MINI-JOGO 1: Lumi diz ---------- */
+async function playSimon(ls) {
+  const bub = $('#lesson-bubble');
+  $('#lbody').innerHTML = '<div class="qtitle" style="margin-top:30px">🙌 Lumi diz!</div><p class="ghint">Faça o que o Lumi mandar e fale junto!</p>';
+  lumi.act('dance', 2.4);
+  await say(bub, [[T.pt.simonIntro, 'pt']]); if (!alive(ls)) return;
+  for (const c of ls.items) {
+    if (!alive(ls)) return;
+    $('#lbody').innerHTML = `<div class="card in simon"><div class="pic" id="pic">${c.img}</div><div class="wen">${esc(c.en)}</div><div class="wpt">${esc(c.pt)}</div></div>${turnHTML()}`;
+    lumi.setMood('idle');
+    const show = () => lumi.act(c.act, 2.8);
+    show();
+    if (!(await say(bub, [[T.pt.simonSays, 'pt'], [c.en, 'en']], `Lumi diz: <span class="en">${esc(c.en)}</span>`))) return;
+    await wait(600); if (!alive(ls)) return;
+    await turnLoop(ls, c, T.pt.doAndSay, 'Agora você! Faz e fala:', show);
+  }
+}
+
+/* ---------- MINI-JOGO 2: Estoura balão ---------- */
+const BCOLS = ['#ff4f6a', '#2f86ff', '#2fc46a', '#ffc928', '#9a55ff', '#ff8a1f', '#ff6fae', '#10b5c9'];
+async function playBalloon(ls) {
+  const bub = $('#lesson-bubble');
+  $('#lbody').innerHTML = '<div class="bplay" id="bplay"><div class="qtitle" style="margin-top:30px">🎈 Estoura balão!</div></div>';
+  lumi.hop();
+  await say(bub, [[T.pt.balloonIntro, 'pt']]); if (!alive(ls)) return;
+  const area = $('#bplay'); area.innerHTML = '<button class="spk bspk" id="bspk">🔊</button>';
+  let target = null;
+  $('#bspk').onclick = () => target && speak(target.en, 'en');
+  const pool = ls.items;
+  for (const w of ls.words) {
+    if (!alive(ls)) return;
+    target = w;
+    const others = shuffle(pool.filter((x) => x.en !== w.en && (x.img || x.txt || x.color) !== (w.img || w.txt || w.color))).slice(0, 3);
+    const set = shuffle([w, ...others]);
+    const lanes = shuffle([0.13, 0.38, 0.62, 0.87]);
+    const AH = area.clientHeight, AW = area.clientWidth;
+    const balls = set.map((x, i) => {
+      const el = document.createElement('button'); el.className = 'balloon';
+      const col = x.color || BCOLS[Math.floor(Math.random() * BCOLS.length)];
+      el.style.setProperty('--bc', col); if (x.color === '#ffffff') el.classList.add('white');
+      el.innerHTML = x.color ? '' : `<span>${x.txt ? `<b>${x.txt}</b>` : x.img}</span>`;
+      el.dataset.en = x.en; area.appendChild(el);
+      return { el, x, lane: lanes[i], y: AH * (0.3 + 0.17 * i) + Math.random() * 30, sp: AH / (6 + Math.random() * 2.5), ph: Math.random() * 6 };
+    });
+    let running = true, last = performance.now();
+    const tick = (now) => {
+      if (!running) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      for (const b of balls) {
+        if (b.popped) continue;
+        b.y -= b.sp * dt; if (b.y < -130) b.y = AH + 30;
+        b.el.style.transform = `translate(${b.lane * AW - 44 + Math.sin(now / 700 + b.ph) * 10}px, ${b.y}px) rotate(${Math.sin(now / 900 + b.ph) * 6}deg)`;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    say(bub, [[T.pt.pop, 'pt'], [w.en, 'en']], `Estoura o balão: <span class="en">${esc(w.en)}</span>!`);
+    await new Promise((resolve) => {
+      ls.abort = resolve;
+      for (const b of balls) b.el.onclick = async () => {
+        if (b.popped || !alive(ls) || balls.some((q) => q.win)) return;
+        if (b.x.en === w.en) {
+          b.popped = b.win = true; b.el.classList.add('pop'); burst(b.el);
+          addStar(b.el); lumi.celebrate();
+          await say(bub, [[w.en, 'en'], [rnd(T.en.praise), 'en']]);
+          resolve();
+        } else {
+          ls.misses++; b.el.classList.remove('wob'); void b.el.offsetWidth; b.el.classList.add('wob');
+          lumi.encourage();
+          await say(bub, [[T.pt.notThis, 'pt'], [w.en, 'en']], `Não é esse! Estoura: <span class="en">${esc(w.en)}</span>`);
+          lumi.setMood('idle');
+        }
+      };
+    });
+    running = false; balls.forEach((b) => setTimeout(() => b.el.remove(), b.win ? 400 : 0));
+    lumi.setMood('idle'); await wait(250);
+  }
+}
+function burst(el) {
+  const r = el.getBoundingClientRect(), app = $('#app').getBoundingClientRect();
+  for (let i = 0; i < 14; i++) {
+    const p = document.createElement('i'); p.className = 'spark';
+    const a = (i / 14) * Math.PI * 2, d = 50 + Math.random() * 40;
+    p.style.left = r.left - app.left + r.width / 2 + 'px'; p.style.top = r.top - app.top + r.height / 2.5 + 'px';
+    p.style.background = rnd(BCOLS); p.style.setProperty('--dx', Math.cos(a) * d + 'px'); p.style.setProperty('--dy', Math.sin(a) * d + 'px');
+    $('#app').appendChild(p); setTimeout(() => p.remove(), 700);
+  }
+}
+
+/* ---------- MINI-JOGO 3: Dar comida (arrastar até a boca) ---------- */
+async function playFeed(ls) {
+  const bub = $('#lesson-bubble');
+  $('#lbody').innerHTML = '<div class="qtitle" style="margin-top:30px">🍽️ Hora do lanche!</div>';
+  lumi.setMood('idle');
+  await say(bub, [[T.pt.feedIntro, 'pt'], [T.pt.feedHint, 'pt']]); if (!alive(ls)) return;
+  for (const w of ls.words) {
+    if (!alive(ls)) return;
+    const opts = shuffle([w, ...shuffle(ls.items.filter((x) => x.en !== w.en)).slice(0, 2)]);
+    $('#lbody').innerHTML = `<div class="qtitle"><span class="en">${esc(give(w.en))}</span> <button class="spk" id="qspk" style="display:inline-grid;width:40px;height:40px;font-size:18px;vertical-align:middle">🔊</button></div>
+      <p class="ghint">Arraste ou toque na comida certa</p><div class="tray">${opts.map((o) => `<div class="fooditem" data-en="${esc(o.en)}">${o.img}</div>`).join('')}</div>`;
+    $('#qspk').onclick = () => speak(give(w.en), 'en');
+    lumi.setMood('listen');
+    say(bub, [[give(w.en), 'en']]);
+    await new Promise((resolve) => {
+      ls.abort = resolve; let busy = false;
+      $$('.fooditem').forEach((el) => {
+        el.onpointerdown = (e) => {
+          if (busy || !alive(ls)) return;
+          e.preventDefault(); el.setPointerCapture(e.pointerId);
+          const r0 = el.getBoundingClientRect(), sx = e.clientX, sy = e.clientY; let moved = 0;
+          el.classList.add('drag');
+          el.onpointermove = (ev) => { moved = Math.max(moved, Math.hypot(ev.clientX - sx, ev.clientY - sy)); el.style.transform = `translate(${ev.clientX - sx}px, ${ev.clientY - sy}px) scale(1.15)`; };
+          el.onpointerup = async (ev) => {
+            el.onpointermove = el.onpointerup = null; el.classList.remove('drag');
+            const m = stage.project(lumi.p.mouth), r = el.getBoundingClientRect();
+            const near = Math.hypot(r.left + r.width / 2 - m.x, r.top + r.height / 2 - m.y) < 140;
+            if (!near && moved > 25) { el.style.transform = ''; return; } // soltou longe: volta
+            busy = true;
+            el.style.transition = 'transform .45s cubic-bezier(.3,-.3,.6,1), opacity .2s .35s';
+            el.style.transform = `translate(${m.x - (r0.left + r0.width / 2)}px, ${m.y - (r0.top + r0.height / 2)}px) scale(.35)`;
+            await wait(420);
+            if (el.dataset.en === w.en) {
+              el.style.opacity = '0'; lumi.eat(1.8); addStar(el);
+              await say(bub, [[T.en.yummy, 'en'], [w.en + '!', 'en']], `<span class="en">Yummy! ${esc(w.en)}!</span> 😋`);
+              resolve();
+            } else {
+              ls.misses++; lumi.act('no', 1.2);
+              el.style.transition = 'transform .4s ease'; el.style.transform = '';
+              await say(bub, [[T.en.noThanks, 'en'], [give(w.en), 'en']], `<span class="en">No, thank you! ${esc(give(w.en))}</span>`);
+              setTimeout(() => (el.style.transition = ''), 400);
+              busy = false; lumi.setMood('listen');
+            }
+          };
+        };
+      });
+    });
+    lumi.setMood('idle'); await wait(300);
+  }
+}
+
+/* ---------- MINI-JOGO 4: Jogo da memória ---------- */
+async function playMemory(ls) {
+  const bub = $('#lesson-bubble');
+  const cards = shuffle([...ls.words, ...ls.words].map((w, i) => ({ w, i })));
+  $('#lbody').innerHTML = `<div class="mgrid">${cards.map((c, k) => `<button class="mcard" data-k="${k}"><span class="back">❓</span><span class="face">${picHTML(c.w)}</span></button>`).join('')}</div><p class="ghint">Vire duas cartas e ache os pares!</p>`;
+  lumi.hop();
+  await say(bub, [[T.pt.memoryIntro, 'pt']]); if (!alive(ls)) return;
+  await new Promise((resolve) => {
+    ls.abort = resolve; let open = [], lock = false, found = 0;
+    $$('.mcard').forEach((el) => el.onclick = async () => {
+      if (lock || el.classList.contains('up') || !alive(ls)) return;
+      const c = cards[+el.dataset.k]; el.classList.add('up'); open.push({ el, c });
+      speak(c.w.en, 'en');
+      if (open.length < 2) return;
+      lock = true; const [a, b] = open; open = [];
+      await wait(900);
+      if (a.c.w.en === b.c.w.en) {
+        a.el.classList.add('ok'); b.el.classList.add('ok'); found++;
+        addStar(a.el); addStar(b.el); lumi.celebrate();
+        await say(bub, [[a.c.w.en, 'en'], [T.en.match, 'en']], `<span class="en">${esc(a.c.w.en)}</span>! Achou um par! 🎉`);
+        lumi.setMood('idle');
+        if (found === ls.words.length) { await wait(300); resolve(); }
+      } else {
+        ls.misses += 0.5; a.el.classList.add('no'); b.el.classList.add('no');
+        await wait(500); a.el.classList.remove('up', 'no'); b.el.classList.remove('up', 'no');
+      }
+      lock = false;
+    });
+  });
 }
 $('#btn-quit').addEventListener('click', () => {
-  sheet(`<h2>Sair da aula?</h2><p>O Lumi vai sentir sua falta! 🥺</p>
+  sheet(`<h2>Sair da fase?</h2><p>O Lumi vai sentir sua falta! 🥺</p>
     <div class="row"><button class="big sm blue" data-close>Continuar</button><button class="big sm" style="background:linear-gradient(180deg,#ff8aa0,#ff4f6a);box-shadow:0 6px 0 var(--redD)" id="quitok">Sair</button></div>`);
   $('#quitok').onclick = () => { closeSheet(); go('home'); };
 });
@@ -423,6 +639,7 @@ function finishLesson(ls) {
   S.units[u.id] = st; S.coins += 20; S.xp += 50; touchStreak(); save();
   LS = null; avatarURL = null;
   show('result');
+  $('#result-title').textContent = ls.u.type === 'game' ? 'Fase completa!' : 'Aula completa!';
   $('#result-coins').textContent = ls.coins + 20; $('#result-xp').textContent = 50;
   $$('#result-stars span').forEach((s, i) => { s.classList.remove('on'); setTimeout(() => s.classList.toggle('on', i < stars), 500 + i * 380); });
   confetti(70); lumi.celebrate(); setTimeout(() => current === 'result' && lumi.celebrate(), 1400);

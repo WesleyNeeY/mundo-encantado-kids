@@ -242,6 +242,53 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 .loading{position:absolute;inset:0;z-index:100;display:grid;place-items:center;background:linear-gradient(180deg,#46a9ff,#bfe6ff);color:#fff;font-size:22px;font-weight:700;transition:opacity .4s}
 .loading.off{opacity:0;pointer-events:none}
 .nogl{padding:30px;text-align:center}
+
+/* mundos no mapa */
+.band{position:absolute;left:-20px;right:-20px;pointer-events:none}
+.wban{position:absolute;left:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;background:#fff;border-radius:22px;padding:8px 18px 8px 8px;box-shadow:0 6px 0 color-mix(in srgb,var(--wc) 55%,#000 0%),0 12px 22px rgba(20,60,140,.2);border:4px solid var(--wc);z-index:2;white-space:nowrap}
+.wban .wi{width:48px;height:48px;border-radius:16px;background:var(--wc);display:grid;place-items:center;font-size:28px}
+.wban b{display:block;font-size:17px}
+.wban small{font-size:13px;color:var(--muted);font-weight:600}
+.node.game .disc{background:linear-gradient(180deg,#ffb3dc,#ff6fae);box-shadow:0 8px 0 var(--pinkD),0 14px 22px rgba(20,60,140,.22)}
+.node.game.done .disc{background:linear-gradient(180deg,#ffd0ea,#ff8cc1)}
+.node.game.cur .disc{background:linear-gradient(180deg,#ffe27a,#ffb000)}
+.wcard{margin-top:24px;width:100%;max-width:330px;background:#fff;border-radius:32px;padding:20px;text-align:center;border:6px solid var(--wc);box-shadow:0 10px 0 rgba(20,60,140,.12)}
+.wcard.in{animation:cardIn .5s cubic-bezier(.2,1.5,.4,1)}
+.wcard .wic{font-size:80px;line-height:1.1}
+.wcard b{color:var(--muted);font-size:17px}
+.wcard h2{margin:2px 0 0;font-size:34px;color:var(--wc)}
+.ghint{margin:4px 0 0;text-align:center;color:var(--muted);font-weight:600;font-size:15px}
+.card.simon .pic{font-size:min(24vw,104px)}
+/* balões */
+.bplay{position:relative;flex:1;width:calc(100% + 32px);margin:0 -16px;overflow:hidden}
+.bspk{position:absolute;right:12px;top:8px;z-index:3}
+.balloon{position:absolute;left:0;top:0;width:88px;height:108px;border-radius:50% 50% 47% 47% / 55% 55% 45% 45%;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.85) 0 8%,rgba(255,255,255,0) 22%),radial-gradient(circle at 50% 45%,var(--bc) 55%,color-mix(in srgb,var(--bc) 70%,#000) 100%);display:grid;place-items:center;will-change:transform;box-shadow:inset -8px -10px 18px rgba(0,0,0,.12)}
+.balloon.white{box-shadow:inset -8px -10px 18px rgba(0,0,0,.12),0 0 0 3px #cfd8ea}
+.balloon::after{content:"";position:absolute;left:50%;bottom:-34px;width:2px;height:34px;background:rgba(40,60,100,.45)}
+.balloon::before{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-7px;border:7px solid transparent;border-bottom-color:var(--bc);transform:rotate(180deg) translateY(-6px)}
+.balloon span{font-size:44px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.15))}
+.balloon b{font-size:46px;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.2)}
+.balloon.pop{animation:popb .35s ease-out forwards}
+@keyframes popb{60%{scale:1.35;opacity:.9}100%{scale:1.6;opacity:0}}
+.balloon.wob{animation:wob .5s}
+@keyframes wob{25%{rotate:-14deg}50%{rotate:12deg}75%{rotate:-8deg}}
+.spark{position:absolute;width:10px;height:10px;border-radius:50%;z-index:50;pointer-events:none;animation:spark .7s ease-out forwards}
+@keyframes spark{to{transform:translate(var(--dx),var(--dy)) scale(.3);opacity:0}}
+/* comida */
+.tray{display:flex;justify-content:center;gap:14px;margin-top:auto;margin-bottom:10px;width:100%}
+.fooditem{width:100px;height:100px;border-radius:30px;background:#fff;display:grid;place-items:center;font-size:62px;box-shadow:0 7px 0 #f3d6b8,0 14px 24px rgba(160,90,30,.15);touch-action:none;cursor:grab;position:relative;z-index:5}
+.fooditem.drag{z-index:20;box-shadow:0 18px 30px rgba(20,60,140,.3)}
+/* memória */
+.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;max-width:380px;margin-top:6px}
+.mcard{position:relative;aspect-ratio:3/4;border-radius:20px;perspective:600px}
+.mcard span{position:absolute;inset:0;border-radius:20px;display:grid;place-items:center;backface-visibility:hidden;transition:transform .4s}
+.mcard .back{background:linear-gradient(180deg,#b48cff,#8a55ff);box-shadow:0 6px 0 var(--purpleD);font-size:34px;color:#fff}
+.mcard .face{background:#fff;box-shadow:0 6px 0 #cfe0fb;font-size:46px;transform:rotateY(180deg)}
+.mcard .face .num{font-weight:700;color:var(--blue);font-size:40px}
+.mcard.up .back{transform:rotateY(180deg)}
+.mcard.up .face{transform:rotateY(360deg)}
+.mcard.ok .face{background:#dcfbe7;box-shadow:0 6px 0 var(--green)}
+.mcard.no .face{background:#ffe6ea;animation:shake .45s}
 @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -304,7 +351,7 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
  <section class="screen sky" id="s-result">
   <div class="clouds" data-clouds></div>
   <div class="host" data-host></div>
-  <div class="rtitle"><h1>Aula completa!</h1><div class="big3" id="result-stars"><span>⭐</span><span>⭐</span><span>⭐</span></div></div>
+  <div class="rtitle"><h1 id="result-title">Aula completa!</h1><div class="big3" id="result-stars"><span>⭐</span><span>⭐</span><span>⭐</span></div></div>
   <div class="rbox">
    <div class="rewards"><div class="reward"><span class="ic coin" style="width:30px;height:30px;border-radius:50%;display:grid;place-items:center">$</span>+<span id="result-coins">0</span></div><div class="reward">✨ +<span id="result-xp">0</span> XP</div></div>
    <button class="big" id="btn-result">Continuar ▶</button>

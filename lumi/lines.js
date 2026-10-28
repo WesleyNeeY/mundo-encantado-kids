@@ -34,6 +34,15 @@ window.LUMI_LINES = {
     gift: 'Surpresa! Você ganhou moedas!',
     giftDone: 'Você já abriu o presente hoje. Volta amanhã!',
     locked: 'Essa ainda está fechada. Termina a aula anterior!',
+    balloonIntro: 'Vamos estourar balões! Escuta e estoura o certo.',
+    pop: 'Estoura o balão:',
+    simonIntro: 'Vamos brincar de Lumi diz! Faz o que eu falar.',
+    simonSays: 'Lumi diz:',
+    doAndSay: 'Agora você! Faz e fala:',
+    feedIntro: 'Hora do lanche! Me dá o que eu pedir.',
+    feedHint: 'Arrasta a comida até a minha boca!',
+    memoryIntro: 'Jogo da memória! Acha os pares iguais.',
+    memoryGood: 'Achou um par!',
   },
   en: {
     praise: ['Great job!', 'Awesome!', 'Well done!', 'Excellent!', 'Super!'],
@@ -46,5 +55,7 @@ window.LUMI_LINES = {
     yummy: 'Yummy!',
     hungry: "I'm hungry!",
     thanks: 'Thank you!',
+    noThanks: 'No, thank you!',
+    match: 'Match!',
   },
 };

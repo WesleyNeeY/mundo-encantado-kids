@@ -200,6 +200,38 @@ export class Lumi3D {
     P.tongue.scale.set(1.1, 0.02 + o * 0.5, 0.4); P.tongue.position.y = -0.1 - o * 0.13;
     P.lip.scale.y = m === 'sad' && !this.talking ? -0.8 : 1;
     P.headStar.rotation.z = 0.2 + Math.sin(t * 1.5) * 0.25; P.headStar.scale.setScalar(1 + Math.sin(t * 3) * 0.08);
+    this.applyAction(t, dt);
+  }
+  /* ações do "Lumi diz" */
+  act(name, dur = 2.4) {
+    if (name === 'jump') { this.jump = { t: 0, n: 3 }; this.excite = 1; }
+    else if (name === 'wave') this.doWave(dur);
+    else if (name === 'eat') this.eat(dur);
+    this.action = { name, t: 0, dur };
+  }
+  applyAction(t, dt) {
+    const P = this.p, A = this.action;
+    P.bounce.rotation.set(0, 0, 0);
+    if (!A) return;
+    A.t += dt; const k = A.t / A.dur;
+    if (k >= 1) { this.action = null; return; }
+    const ease = Math.sin(Math.min(1, k * 6) * Math.PI / 2) * Math.sin(Math.min(1, (1 - k) * 6) * Math.PI / 2); // entra e sai suave
+    const arms = (fL, aL, fR, aR) => { P.armL.rotation.set(fL * ease, 0, -0.45 + (aL + 0.45) * ease); P.armR.rotation.set(fR * ease, 0, 0.45 + (aR - 0.45) * ease); };
+    const happyFace = () => { for (const e of P.eyes) { e.open.visible = false; e.happy.visible = true; e.sleep.visible = false; } P.mouthIn.scale.set(1.3, 0.85, 0.35); P.tongue.scale.set(1.1, 0.45, 0.4); };
+    switch (A.name) {
+      case 'clap': { const c = Math.abs(Math.sin(A.t * 9)); arms(-1.25, 0.15 + c * 0.45, -1.25, -0.15 - c * 0.45); happyFace(); break; }
+      case 'spin': P.bounce.rotation.y = (k < 0.85 ? k / 0.85 : 1) * Math.PI * 2; arms(0, -1.2, 0, 1.2); break;
+      case 'nose': arms(0, -0.45, -2.3, -0.45); P.head.rotation.x = 0.12 * ease; break;
+      case 'head': arms(0, -2.75, 0, 2.75); P.head.rotation.x = 0.1 * ease; break;
+      case 'stretch': arms(0, -2.45, 0, 2.45); P.bounce.scale.y *= 1 + 0.07 * ease; P.head.rotation.x = -0.2 * ease; for (const e of P.eyes) { e.open.visible = false; e.sleep.visible = true; } break;
+      case 'dance': { P.bounce.rotation.y = Math.sin(A.t * 5) * 0.6; P.bounce.rotation.z = Math.sin(A.t * 10) * 0.12; P.bounce.position.y += Math.abs(Math.sin(A.t * 10)) * 0.25; const s = Math.sin(A.t * 10); arms(0, -1.8 - s * 0.6, 0, 1.8 - s * 0.6); happyFace(); break; }
+      case 'wiggle': P.bounce.rotation.z = Math.sin(A.t * 12) * 0.22 * ease; P.bounce.position.x += Math.sin(A.t * 12) * 0.15 * ease; arms(0, -1.0, 0, 1.0); happyFace(); break;
+      case 'run': { const s = Math.sin(A.t * 16); P.bounce.position.y += Math.abs(s) * 0.3; P.bounce.rotation.x = 0.12 * ease; P.armL.rotation.set(s * 1.1 * ease, 0, -0.35); P.armR.rotation.set(-s * 1.1 * ease, 0, 0.35); break; }
+      case 'stomp': { const s = Math.sin(A.t * 11); P.bounce.rotation.z = s * 0.12 * ease; P.bounce.position.y += Math.max(0, s) * 0.18 * ease; arms(0, -0.8, 0, 0.8); break; }
+      case 'sit': { const d = ease; P.bounce.position.y -= 0.35 * d; P.bounce.scale.y *= 1 - 0.12 * d; P.bounce.scale.x *= 1 + 0.08 * d; P.bounce.scale.z *= 1 + 0.08 * d; arms(-0.6, -0.3, -0.6, 0.3); break; }
+      case 'sleep': for (const e of P.eyes) { e.open.visible = false; e.happy.visible = false; e.sleep.visible = true; } P.head.rotation.x = 0.2 * ease; P.head.rotation.z = 0.18 * ease; P.mouthIn.scale.set(1, 0.15, 0.35); break;
+      case 'no': P.head.rotation.y = Math.sin(A.t * 14) * 0.35 * ease; break;
+    }
   }
 }
 

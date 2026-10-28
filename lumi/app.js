@@ -164,7 +164,12 @@ async function say(bubble, parts, html) {
 
 /* ---------------- reconhecimento de voz ---------------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let micBroken = !SR;
+// iPhone com o app aberto pelo ícone: a Apple bloqueia o reconhecimento de voz,
+// então o Lumi escuta direto pelo microfone (percebe quando a criança fala)
+const IOS_APP = navigator.standalone === true || (/iPhone|iPad|iPod/.test(navigator.userAgent) && matchMedia('(display-mode: standalone)').matches);
+const CAN_REC = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+let srBroken = !SR || IOS_APP, vadBroken = !CAN_REC;
+let micBroken = srBroken && vadBroken;
 const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z ]/g, '').trim();
 function lev(a, b) {
   const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
@@ -179,7 +184,43 @@ function match(heard, target) {
   return best;
 }
 let curRec = null;
+// escuta pelo microfone: detecta voz pela energia do som (sem conferir a palavra)
+let vadStop = null;
+function listenVAD() {
+  return new Promise(async (resolve) => {
+    const ctx = audioCtx(); let stream;
+    try { setSession('play-and-record'); stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
+    catch (e) { vadBroken = true; micBroken = srBroken && vadBroken; setSession('playback'); return resolve({ broken: micBroken, error: 'vad' }); }
+    if (!ctx) { stream.getTracks().forEach((t) => t.stop()); vadBroken = true; micBroken = srBroken; return resolve({ broken: micBroken }); }
+    const src = ctx.createMediaStreamSource(stream), an = ctx.createAnalyser(); an.fftSize = 1024; src.connect(an);
+    const buf = new Float32Array(an.fftSize), mic = $('#mic'), t0 = performance.now();
+    let floor = 0.006, voiced = 0, lastVoice = 0, done = false, prev = t0;
+    const fin = (res) => {
+      if (done) return; done = true; vadStop = null; clearInterval(iv);
+      try { src.disconnect(); } catch (e) {} stream.getTracks().forEach((t) => t.stop());
+      if (mic) mic.style.removeProperty('--lv');
+      setSession('playback'); setTimeout(() => { if (actx && actx.state !== 'running') actx.resume(); resolve(res); }, 350);
+    };
+    vadStop = () => fin({ ok: false, heardAny: false, aborted: true });
+    let iv = 0;
+    const step = () => {
+      const now = performance.now();
+      if (done) return;
+      an.getFloatTimeDomainData(buf); let e = 0; for (let i = 0; i < buf.length; i++) e += buf[i] * buf[i];
+      const rms = Math.sqrt(e / buf.length), dt = Math.min(120, now - prev); prev = now;
+      // ruído do ambiente: desce rápido no silêncio e sobe devagar (a voz da criança não vira "ruído")
+      floor = rms < floor ? floor * 0.7 + rms * 0.3 : Math.min(0.05, floor + (rms - floor) * 0.003);
+      const thr = Math.max(0.016, floor * 3);
+      if (mic) mic.style.setProperty('--lv', Math.min(1, rms / (thr * 2.2)).toFixed(2));
+      if (rms > thr && now - t0 > 250) { voiced += dt; lastVoice = now; }
+      if (voiced > 260 && now - lastVoice > 650) return fin({ ok: true, score: 1, heard: '', heardAny: true, vad: true });
+      if (now - t0 > 7000) return fin(voiced > 260 ? { ok: true, score: 1, heard: '', heardAny: true, vad: true } : { ok: false, heardAny: voiced > 80, heard: '' });
+    };
+    iv = setInterval(step, 40); // mede o som 25x por segundo, independente do desenho da tela
+  });
+}
 function listen(target) {
+  if (srBroken) return vadBroken ? Promise.resolve({ broken: true }) : listenVAD();
   return new Promise((resolve) => {
     if (micBroken) return resolve({ broken: true });
     const r = new SR(); curRec = r;
@@ -197,14 +238,21 @@ function listen(target) {
       if (best.score >= 0.55) fin();
       else if (ev.results[ev.results.length - 1].isFinal) fin();
     };
-    r.onerror = (e) => { if (['not-allowed', 'service-not-allowed', 'audio-capture', 'network', 'language-not-supported'].includes(e.error)) micBroken = true; fin({ error: e.error, broken: micBroken }); };
+    r.onerror = (e) => {
+      if (['not-allowed', 'service-not-allowed', 'audio-capture', 'network', 'language-not-supported'].includes(e.error)) {
+        // reconhecimento indisponível: passa a escutar direto pelo microfone
+        srBroken = true; micBroken = srBroken && vadBroken;
+        if (!vadBroken && !done) { done = true; curRec = null; try { r.abort(); } catch (x) {} return listenVAD().then(resolve); }
+      }
+      fin({ error: e.error, broken: micBroken });
+    };
     r.onend = () => fin();
     setTimeout(() => fin(), 6500);
     setSession('play-and-record');
-    try { r.start(); } catch (e) { micBroken = true; fin({ broken: true }); }
+    try { r.start(); } catch (e) { srBroken = true; micBroken = vadBroken; if (!vadBroken) { done = true; curRec = null; return listenVAD().then(resolve); } fin({ broken: true }); }
   });
 }
-function stopListen() { if (curRec) { try { curRec.abort(); } catch (e) {} } }
+function stopListen() { if (curRec) { try { curRec.abort(); } catch (e) {} } if (vadStop) vadStop(); }
 
 /* ---------------- cenários CSS ---------------- */
 $$('[data-clouds]').forEach((d) => {
@@ -981,5 +1029,5 @@ function openTired() {
 bind();
 enterSplash();
 setTimeout(() => $('#loading').classList.add('off'), 250);
-window.__lumi = { S, stage, go, startLesson, openChest, checkAwards, updateFx, get LS() { return LS; }, setMicBroken: (v) => { micBroken = v; } };
+window.__lumi = { S, stage, go, startLesson, openChest, checkAwards, updateFx, get LS() { return LS; }, setMicBroken: (v) => { micBroken = v; }, get micMode() { return micBroken ? 'tap' : srBroken ? 'vad' : 'sr'; } };
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});

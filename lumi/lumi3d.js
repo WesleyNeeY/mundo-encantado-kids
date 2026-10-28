@@ -1370,7 +1370,7 @@ function makeSchool() {
   const holoT = new THREE.CanvasTexture(hcv); holoT.colorSpace = THREE.SRGBColorSpace; holoT.anisotropy = 4;
   const drawHolo = () => {
     const x = hx, w = 512, h = 384, F = "'Fredoka', 'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif"; x.clearRect(0, 0, w, h); x.save();
-    ctxRR(x, 12, 12, w - 24, h - 24, 46); const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(44,96,232,.66)'); g.addColorStop(1, 'rgba(30,44,168,.56)'); x.fillStyle = g; x.fill();
+    ctxRR(x, 12, 12, w - 24, h - 24, 46); const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(38,86,226,.84)'); g.addColorStop(1, 'rgba(26,38,160,.78)'); x.fillStyle = g; x.fill();
     x.shadowColor = '#5ff0ff'; x.shadowBlur = 20; x.strokeStyle = '#b4f7ff'; x.lineWidth = 6; x.stroke();
     x.strokeStyle = '#ffffff'; x.lineWidth = 7; x.lineCap = 'round'; // cantoneiras
     [[34, 34, 1, 1], [w - 34, 34, -1, 1], [34, h - 34, 1, -1], [w - 34, h - 34, -1, -1]].forEach(([px, py, sx, sy]) => { x.beginPath(); x.moveTo(px, py + sy * 30); x.lineTo(px, py); x.lineTo(px + sx * 30, py); x.stroke(); });

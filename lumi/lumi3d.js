@@ -37,6 +37,7 @@ export const SPECIES = {
   fox:    { fur: 0xf28a2e, furD: 0x4a2414, sheen: 0xffd2a6, shell: [0xe8761c, 0xffb46a], arm: 0xf28a2e, hand: 0x4a2414, cream: 0xfffaf2, creamShell: [0xf4ead9, 0xffffff], earIn: 0xfff3e6, earTip: 0x3a1c10, brow: 0x7a3a12, nose: 0x1f120c, ears: 'fox', tail: 'fox', head: 'tufts', cheekCream: true, iris: ['#3a1d04', '#a85a0c', '#f0a422', '#ffe58a'], blush: 0xff9a7a },
   bunny:  { fur: 0xf7e9f2, furD: 0xe9c6dc, sheen: 0xffffff, shell: [0xf3dfec, 0xffffff], arm: null, hand: 'cream', cream: 0xffffff, creamShell: [0xf6f0f4, 0xffffff], earIn: 0xffa6cf, brow: 0xc98fb4, nose: 0xff6fa8, ears: 'bunny', tail: 'puff', head: 'tufts', teeth: true, iris: ['#3b0f6b', '#7a3fd0', '#c58cff', '#f3d6ff'], blush: 0xff7fb8 },
   dragon: { fur: 0x3fc48d, furD: 0x239a68, sheen: 0xb6ffe0, shell: null, arm: null, hand: 'fur', cream: 0xffe7a8, creamShell: null, earIn: 0xffd36b, brow: 0x1d7a50, nose: 0x14523a, ears: 'dragon', tail: 'dragon', head: 'spikes', smooth: true, wings: true, plates: true, iris: ['#3a2a00', '#c98a00', '#ffd23f', '#fff6b0'], blush: 0xff9ab0 },
+  robot:  { robot: true, fur: 0xf4f7fb, furD: 0xf4f7fb, sheen: 0xffffff, shell: null, cream: 0xe3ecf7, nose: 0x1d2f6b, brow: 0x49d6ff, blush: 0xff7fc0, iris: null },
   panda:  { fur: 0xfbfbfb, furD: 0x24242c, sheen: 0xffffff, shell: [0xf2f2f2, 0xffffff], arm: 0x24242c, armShell: [0x1a1a20, 0x4a4a55], hand: 0x24242c, cream: 0xffffff, creamShell: [0xf2f2f2, 0xffffff], earIn: 0x3a3a46, earCol: 0x24242c, earShell: [0x1a1a20, 0x4a4a55], brow: 0x24242c, nose: 0x15151b, ears: 'panda', tail: 'panda', head: 'none', patches: true, iris: ['#1e0c03', '#6b3a17', '#b87a42', '#f0cfa0'], blush: 0xff9ac6 },
 };
 function furMat(c, sheen, smooth) {
@@ -58,6 +59,7 @@ export class Lumi3D {
     this.outfit = {};
   }
   build() {
+    if (this.sp.robot) return this.buildRobot();
     const R = this.root, P = (this.p = {});
     const sp = this.sp, fur = furMat(sp.fur, sp.sheen, sp.smooth), furD = furMat(sp.furD, sp.sheen, sp.smooth), navy = mat.navy();
     const cream = sp.smooth ? mat.std(sp.cream, { roughness: 0.4, clearcoat: 0.6 }) : furMat(sp.cream, 0xffffff);
@@ -201,6 +203,99 @@ export class Lumi3D {
     P.aura = makeAura(); P.aura.visible = false; R.add(P.aura);
     P.feet = this._feet;
   }
+
+  /* ---- robozinho: casco branco brilhante, visor escuro e olhos de LED (mesmos pontos de encaixe das roupas) ---- */
+  buildRobot() {
+    const R = this.root, P = (this.p = {});
+    const shellM = new THREE.MeshPhysicalMaterial({ color: 0xf4f7fb, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 0.9 });
+    const navy = mat.std(0x1d2f6b, { roughness: 0.3, clearcoat: 0.8 }), blue = mat.std(0x2f74e0, { roughness: 0.3, clearcoat: 0.8 });
+    const panel = mat.std(0xe2eaf6, { roughness: 0.35, clearcoat: 0.6 });
+    const visorM = new THREE.MeshPhysicalMaterial({ color: 0x060a18, roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.02, metalness: 0.25, envMapIntensity: 1.2 });
+    const glow = new THREE.MeshBasicMaterial({ color: 0x3fcfff, toneMapped: false });
+    const glowHi = new THREE.MeshBasicMaterial({ color: 0xbff4ff, toneMapped: false });
+    const halo = new THREE.MeshBasicMaterial({ color: 0x2fb8ff, transparent: true, opacity: 0.28, depthWrite: false, toneMapped: false });
+    P.bounce = new THREE.Group(); R.add(P.bounce);
+    // pés: botinhas com sola azul
+    this._feet = [];
+    for (const s of [-1, 1]) { const f = sph(0.31, shellM); f.scale.set(1.05, 0.7, 1.35); f.position.set(0.36 * s, 0.19, 0.12); P.bounce.add(f); this._feet.push(f);
+      const so = sph(0.31, navy); so.scale.set(1.08, 0.3, 1.38); so.position.set(0.36 * s, 0.07, 0.12); P.bounce.add(so); }
+    // corpo
+    P.body = new THREE.Group(); P.body.position.y = 0.2; P.bounce.add(P.body);
+    const body = sph(0.8, shellM, 56); body.scale.set(0.98, 1.03, 0.9); body.position.y = 0.78; P.body.add(body); P.bodyMesh = body;
+    const belly = sph(0.55, panel, 40); belly.scale.set(0.86, 0.8, 0.36); belly.position.set(0, 0.8, 0.54); P.body.add(belly); P.belly = belly;
+    const Ls = new THREE.Shape(); Ls.moveTo(-0.11, 0.17); Ls.lineTo(-0.03, 0.17); Ls.lineTo(-0.03, -0.09); Ls.lineTo(0.13, -0.09); Ls.lineTo(0.13, -0.17); Ls.lineTo(-0.11, -0.17); Ls.closePath();
+    const Lg = new THREE.ExtrudeGeometry(Ls, { depth: 0.05, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 3 }); Lg.center();
+    const Lm = new THREE.Mesh(Lg, mat.std(0x2f86ff, { emissive: 0x0b3f9a, emissiveIntensity: 0.4, roughness: 0.2, clearcoat: 1 })); Lm.position.set(0, 0.84, 0.73); Lm.rotation.x = -0.12; P.body.add(Lm); P.bellyStar = Lm;
+    const belt = new THREE.Mesh(new THREE.TorusGeometry(0.76, 0.045, 10, 64), navy); belt.rotation.x = Math.PI / 2; belt.scale.set(1, 0.92, 1); belt.position.y = 0.36; P.body.add(belt); P.belt = belt;
+    // mochila azul com estrela
+    P.pack = new THREE.Group(); P.body.add(P.pack);
+    const bag = sph(0.52, navy, 40); bag.scale.set(1, 1.08, 0.55); bag.position.set(0, 0.86, -0.72); P.pack.add(bag);
+    const pocket = sph(0.34, blue, 32); pocket.scale.set(1, 0.68, 0.42); pocket.position.set(0, 0.68, -0.95); P.pack.add(pocket);
+    const pst = starMesh(0.12, mat.gold()); pst.position.set(0, 0.7, -1.09); pst.rotation.y = Math.PI; P.pack.add(pst);
+    for (const s of [-1, 1]) P.pack.add(tube([[0.32 * s, 1.22, -0.6], [0.4 * s, 1.5, -0.1], [0.38 * s, 1.36, 0.42], [0.33 * s, 1.0, 0.62]], 0.055, navy));
+    P.tail = new THREE.Group(); P.bounce.add(P.tail); // robô não tem rabo
+    // braços
+    for (const s of [-1, 1]) {
+      const sh = new THREE.Group(); sh.position.set(0.66 * s, 1.36, 0.2); P.body.add(sh);
+      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.42, 8, 20), shellM); arm.position.y = -0.34; sh.add(arm);
+      const jt = sph(0.19, navy, 24); sh.add(jt);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.035, 8, 28), navy); ring.rotation.x = Math.PI / 2; ring.position.y = -0.47; sh.add(ring);
+      const hand = sph(0.2, navy, 28); hand.position.y = -0.64; hand.scale.set(1, 0.9, 0.95); sh.add(hand);
+      const th = sph(0.08, navy, 14); th.position.set(-0.14 * s, -0.58, 0.08); sh.add(th);
+      sh.rotation.z = 0.45 * s; P[s < 0 ? 'armL' : 'armR'] = sh;
+      const sl = new THREE.Group(); sh.add(sl); P[s < 0 ? 'sleeveL' : 'sleeveR'] = sl;
+    }
+    // cabeça com visor
+    P.head = new THREE.Group(); P.head.position.y = 1.75; P.bounce.add(P.head);
+    const H = new THREE.Group(); H.position.y = 0.88; P.head.add(H); P.H = H;
+    const head = sph(1.0, shellM, 64); head.scale.set(1.12, 0.98, 1.0); H.add(head); P.headMesh = head;
+    const visor = new THREE.Mesh(new THREE.SphereGeometry(1.0, 64, 40, Math.PI / 2 - 1.08, 2.16, 0.84, 1.26), visorM); visor.scale.set(1.13, 0.99, 1.025); H.add(visor);
+    const rimG = new THREE.Mesh(new THREE.SphereGeometry(1.0, 64, 40, Math.PI / 2 - 1.14, 2.28, 0.79, 1.36), navy); rimG.scale.set(1.125, 0.985, 1.018); H.add(rimG);
+    P.cheeks = []; P.tufts = [];
+    P.muzzle = new THREE.Group(); H.add(P.muzzle);
+    // boca de LED
+    P.mouth = new THREE.Group(); P.mouth.position.set(0, -0.38, 0.955); P.mouth.rotation.x = -0.36; H.add(P.mouth);
+    P.lip = tube([[-0.17, 0.03, 0], [-0.09, -0.05, 0.004], [0, -0.07, 0.006], [0.09, -0.05, 0.004], [0.17, 0.03, 0]], 0.022, glow); P.mouth.add(P.lip);
+    P.mouthIn = new THREE.Mesh(new THREE.CircleGeometry(0.13, 36), glow); P.mouthIn.scale.set(1, 0.02, 1); P.mouthIn.position.set(0, -0.1, 0.004); P.mouth.add(P.mouthIn);
+    P.tongue = new THREE.Mesh(new THREE.CircleGeometry(0.07, 24), new THREE.MeshBasicMaterial({ color: 0xff8cc6, toneMapped: false })); P.tongue.scale.set(1.1, 0.02, 1); P.tongue.position.set(0, -0.15, 0.008); P.mouth.add(P.tongue);
+    // olhos de LED
+    P.eyes = [];
+    for (const s of [-1, 1]) {
+      const g = new THREE.Group(); g.position.set(0.37 * s, 0.1, 0.99); g.rotation.set(-0.06, 0.34 * s, 0); H.add(g);
+      const open = new THREE.Group(); g.add(open);
+      const hl = new THREE.Mesh(new THREE.CircleGeometry(0.33, 40), halo); hl.scale.set(0.95, 1.12, 1); open.add(hl);
+      const e1 = new THREE.Mesh(new THREE.CircleGeometry(0.235, 48), glow); e1.scale.set(0.92, 1.12, 1); e1.position.z = 0.004; open.add(e1);
+      const pupil = new THREE.Group(); pupil.position.z = 0.008; open.add(pupil);
+      const e2 = new THREE.Mesh(new THREE.CircleGeometry(0.15, 40), glowHi); e2.scale.set(0.92, 1.12, 1); pupil.add(e2);
+      const h1 = new THREE.Mesh(new THREE.CircleGeometry(0.055, 20), mat.white()); h1.scale.set(1, 1.2, 1); h1.position.set(-0.07, 0.09, 0.004); pupil.add(h1);
+      const h2 = new THREE.Mesh(new THREE.CircleGeometry(0.025, 14), mat.white()); h2.position.set(0.07, -0.08, 0.004); pupil.add(h2);
+      const happy = tube([[-0.17, -0.05, 0.004], [-0.09, 0.07, 0.006], [0, 0.11, 0.008], [0.09, 0.07, 0.006], [0.17, -0.05, 0.004]], 0.04, glow); happy.visible = false; g.add(happy);
+      const sleep = tube([[-0.17, 0.03, 0.004], [-0.09, -0.06, 0.006], [0, -0.08, 0.008], [0.09, -0.06, 0.006], [0.17, 0.03, 0.004]], 0.035, glow); sleep.visible = false; g.add(sleep);
+      const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.16, 6, 12), glow); brow.rotation.z = Math.PI / 2 + 0.12 * s; brow.position.set(0, 0.42, 0.006); g.add(brow);
+      const blush = new THREE.Mesh(new THREE.CircleGeometry(0.13, 32), new THREE.MeshBasicMaterial({ color: 0xff8ccc, transparent: true, opacity: 0.8, depthWrite: false, toneMapped: false }));
+      blush.scale.set(1.3, 0.62, 1); blush.position.set(0.66 * s, -0.3, 0.8); blush.rotation.y = 0.62 * s; H.add(blush);
+      P.eyes.push({ g, open, pupil, happy, sleep, brow, blush, s });
+    }
+    // fones de ouvido com luz azul (giram de leve como orelhas)
+    for (const s of [-1, 1]) {
+      const g = new THREE.Group(); g.position.set(1.08 * s, 0.02, -0.02); H.add(g);
+      const inner = new THREE.Group(); inner.rotation.z = 0.38 * s; g.add(inner);
+      const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.2, 40), navy); pod.rotation.z = Math.PI / 2; pod.position.x = 0.04 * s; inner.add(pod);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.25, 0.08, 40), shellM); cap.rotation.z = Math.PI / 2; cap.position.x = 0.16 * s; inner.add(cap);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.235, 0.028, 10, 40), glow); ring.rotation.y = Math.PI / 2; ring.position.x = 0.15 * s; inner.add(ring);
+      P[s < 0 ? 'earL' : 'earR'] = g;
+    }
+    const hs = starMesh(0.13, mat.gold()); hs.position.set(0.48, 0.74, 0.6); hs.rotation.set(-0.35, 0.35, 0.2); H.add(hs); P.headStar = hs;
+    P.hat = new THREE.Group(); P.hat.position.set(0, 0.62, 0); H.add(P.hat);
+    P.face = new THREE.Group(); P.face.position.z = 0.1; H.add(P.face);
+    P.neck = new THREE.Group(); P.neck.position.y = 1.72; P.bounce.add(P.neck);
+    P.hood = new THREE.Group(); H.add(P.hood);
+    P.wear = new THREE.Group(); P.body.add(P.wear);
+    P.back = new THREE.Group(); P.body.add(P.back);
+    P.extra = new THREE.Group(); P.bounce.add(P.extra);
+    P.aura = makeAura(); P.aura.visible = false; R.add(P.aura);
+    P.feet = this._feet;
+  }
   /* ---- pelo fofinho: camadas (shell fur) que seguem a forma de cada parte ---- */
   addFurAll() {
     const P = this.p, sp = this.sp;
@@ -245,6 +340,8 @@ export class Lumi3D {
     P.belly.visible = P.bellyStar.visible = !top;
     if (P.plates) P.plates.forEach((pl) => (pl.visible = !top));
     if (P.dwings) P.dwings.visible = !costume && (!o.back || o.back === 'none');
+    if (P.pack) P.pack.visible = !costume && (!o.back || o.back === 'none');
+    if (P.belt) P.belt.visible = !top && !(o.legs && o.legs !== 'none');
     P.earL.visible = P.earR.visible = !costume && o.head !== 'astronaut';
     P.tufts.forEach((t) => (t.visible = !costume && !hatOn));
     P.cheeks.forEach((c) => (c.visible = !costume));

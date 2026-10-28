@@ -45,8 +45,18 @@ const PRESET = {
 let AUDIO = {}, actx = null, analyser = null, speakToken = 0, curSrc = null;
 const bufCache = {};
 const audioReady = fetch('audio/index.json').then((r) => r.json()).then((j) => { AUDIO = j; }).catch(() => {});
+// iPhone (Safari 17+): volta o áudio para o alto-falante depois do microfone
+function setSession(t) { try { if (navigator.audioSession) navigator.audioSession.type = t; } catch (e) {} }
 function audioCtx() {
-  if (!actx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; actx = new C(); analyser = actx.createAnalyser(); analyser.fftSize = 512; analyser.connect(actx.destination); }
+  if (!actx) {
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return null;
+    setSession('playback');
+    actx = new C(); analyser = actx.createAnalyser(); analyser.fftSize = 512;
+    // reforço de volume com limitador (o celular abaixa o som depois de usar o microfone)
+    const boost = actx.createGain(); boost.gain.value = 1.8;
+    const lim = actx.createDynamicsCompressor(); lim.threshold.value = -14; lim.knee.value = 6; lim.ratio.value = 8; lim.attack.value = 0.003; lim.release.value = 0.2;
+    analyser.connect(boost); boost.connect(lim); lim.connect(actx.destination);
+  }
   if (actx.state === 'suspended') actx.resume();
   return actx;
 }
@@ -119,7 +129,12 @@ function listen(target) {
     const r = new SR(); curRec = r;
     r.lang = 'en-US'; r.interimResults = true; r.maxAlternatives = 5; r.continuous = false;
     let best = { score: 0, text: '' }, done = false, heardAny = false;
-    const fin = (extra) => { if (done) return; done = true; curRec = null; try { r.abort(); } catch (e) {} resolve(Object.assign({ ok: best.score >= 0.55, score: best.score, heard: best.text, heardAny }, extra || {})); };
+    const fin = (extra) => {
+      if (done) return; done = true; curRec = null; try { r.abort(); } catch (e) {}
+      const res = Object.assign({ ok: best.score >= 0.55, score: best.score, heard: best.text, heardAny }, extra || {});
+      // devolve o som ao alto-falante e espera o Android liberar o áudio antes do Lumi falar
+      setSession('playback'); setTimeout(() => { if (actx && actx.state !== 'running') actx.resume(); resolve(res); }, 550);
+    };
     r.onresult = (ev) => {
       heardAny = true;
       for (const res of ev.results) for (const alt of res) { const s = match(alt.transcript, target); if (s > best.score) best = { score: s, text: alt.transcript }; }
@@ -129,6 +144,7 @@ function listen(target) {
     r.onerror = (e) => { if (['not-allowed', 'service-not-allowed', 'audio-capture', 'network', 'language-not-supported'].includes(e.error)) micBroken = true; fin({ error: e.error, broken: micBroken }); };
     r.onend = () => fin();
     setTimeout(() => fin(), 6500);
+    setSession('play-and-record');
     try { r.start(); } catch (e) { micBroken = true; fin({ broken: true }); }
   });
 }

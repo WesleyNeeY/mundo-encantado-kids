@@ -1171,7 +1171,9 @@ function makeEgg(robot) {
   const shellOf = (t) => new THREE.MeshPhysicalMaterial({ map: t, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 0.95 });
   const m = robot ? shellOf(robotTex('top')) : new THREE.MeshPhysicalMaterial({ map: tex, roughness: 0.35, clearcoat: 0.8, sheen: 0.4 });
   const mTop = robot ? shellOf(robotTex('bottom')) : m;
-  const prof = []; for (let i = 0; i <= 24; i++) { const a = (i / 24) * Math.PI; const y = 1.15 - Math.cos(a) * 1.15; const r = Math.sin(a) * (0.82 - 0.14 * (y / 2.3)); prof.push([Math.max(0.0001, r), y]); }
+  const prof = [];
+  if (robot) for (let i = 0; i <= 24; i++) { const a = (i / 24) * Math.PI, c = Math.cos(a), sn = Math.sin(a), n = 3.2; prof.push([Math.max(0.0001, 0.8 * Math.pow(sn, 2 / n)), 1.2 - 1.2 * Math.sign(c) * Math.pow(Math.abs(c), 2 / n)]); } // cápsula
+  else for (let i = 0; i <= 24; i++) { const a = (i / 24) * Math.PI; const y = 1.15 - Math.cos(a) * 1.15; const r = Math.sin(a) * (0.82 - 0.14 * (y / 2.3)); prof.push([Math.max(0.0001, r), y]); }
   const cut = 13;
   const bottom = new THREE.Mesh(new THREE.LatheGeometry(prof.slice(0, cut + 1).map(([r, y]) => new THREE.Vector2(r, y)), 48), m); bottom.material.side = THREE.DoubleSide;
   const top = new THREE.Mesh(new THREE.LatheGeometry(prof.slice(cut).map(([r, y]) => new THREE.Vector2(r, y)), 48), mTop);
@@ -1182,8 +1184,17 @@ function makeEgg(robot) {
     const pts = []; for (let i = 0; i <= 8; i++) { const a = -0.9 + c * 0.6 + (i / 8) * 0.9; pts.push(new THREE.Vector3(Math.sin(a) * (rc + 0.01), yc + (i % 2 ? 0.09 : -0.07), Math.cos(a) * (rc + 0.01))); }
     const cr = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 30, robot ? 0.026 : 0.022, 6), robot ? new THREE.MeshBasicMaterial({ color: 0x5fe0ff, toneMapped: false }) : mat.std(0x8a6a4a)); cr.visible = false; body.add(cr); cracks.push(cr);
   }
+  if (robot) { // janelinha com luz e pezinhos de pouso
+    const win = new THREE.Group(); win.position.set(0, 1.8, 0.775); win.rotation.x = -0.28; top.add(win);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.05, 14, 40), mat.std(0x1b2a63, { clearcoat: 1, roughness: 0.25 })); win.add(rim);
+    win.add(new THREE.Mesh(new THREE.CircleGeometry(0.25, 40), new THREE.MeshPhysicalMaterial({ color: 0x0a1230, roughness: 0.05, clearcoat: 1 })));
+    const lamp = new THREE.Mesh(new THREE.CircleGeometry(0.13, 32), new THREE.MeshBasicMaterial({ color: 0x5fe0ff, transparent: true, toneMapped: false })); lamp.position.z = 0.01; win.add(lamp);
+    const hl = new THREE.Mesh(new THREE.CircleGeometry(0.05, 16), new THREE.MeshBasicMaterial({ color: 0xffffff })); hl.position.set(-0.1, 0.1, 0.02); win.add(hl);
+    g.userData.lamp = lamp;
+    for (let k = 0; k < 3; k++) { const a = (k / 3) * TAU + 0.5, leg = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.34, 16), mat.std(0x1b2a63, { clearcoat: 1, roughness: 0.25 })); leg.position.set(Math.sin(a) * 0.62, 0.12, Math.cos(a) * 0.62); leg.rotation.set(Math.cos(a) * 0.4, 0, -Math.sin(a) * 0.4); body.add(leg); }
+  }
   shadowAll(g);
-  g.userData = { body, top, bottom, cracks, wob: 0, hatchT: -1 };
+  g.userData = Object.assign(g.userData, { body, top, bottom, cracks, wob: 0, hatchT: -1, robot });
   return g;
 }
 
@@ -1344,6 +1355,19 @@ export class Stage {
     const idle = Math.sin(this.t * 2.2) * 0.04;
     U.body.rotation.z = idle + Math.sin(this.t * 26) * 0.18 * U.wob;
     E.position.y = Math.abs(Math.sin(this.t * 2.2)) * 0.05;
+    if (U.lamp) U.lamp.material.opacity = 0.55 + Math.abs(Math.sin(this.t * (2 + U.cracks.filter((c) => c.visible).length * 2))) * 0.45;
+    if (U.robot && U.hatchT >= 0) {
+      U.hatchT += dt; const h = U.hatchT;
+      if (h < 0.7) U.body.rotation.z = Math.sin(h * 40) * 0.08;
+      else {
+        const k = Math.min(1, (h - 0.7) / 0.7);
+        U.top.position.set(0, k * 1.8, -k * 0.9); U.top.rotation.set(-k * 1.9, 0, 0);
+        U.bottom.scale.set(1 - k * 0.25, 1 - k, 1 - k * 0.25);
+        if (!this.lumi.root.visible) { this.lumi.root.visible = true; if (this.lumi.growCur) this.lumi.growCur.s = 0.05; this.lumi.celebrate(); }
+        if (k >= 1) { E.visible = false; U.hatchT = -1; U.done && U.done(); }
+      }
+      return;
+    }
     if (U.hatchT >= 0) {
       U.hatchT += dt; const h = U.hatchT;
       if (h < 0.7) U.body.rotation.z = Math.sin(h * 40) * 0.2;

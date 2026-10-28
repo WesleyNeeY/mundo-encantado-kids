@@ -30,8 +30,8 @@ function bind() {
   $$('[data-bind]').forEach((el) => { const k = el.dataset.bind; el.textContent = k === 'level' ? level() : k === 'xpin' ? S.xp % 300 : Math.round(S[k] ?? 0); });
   $$('[data-bind-w]').forEach((el) => { const k = el.dataset.bindW; el.style.width = (k === 'xp' ? (S.xp % 300) / 3 : Math.min(100, S[k])) + '%'; });
   const n = doneCount(), gi = growIdx(n), g = D.grow[gi], nx = D.grow[gi + 1];
-  const ic = $('#grow-ic'); if (ic) ic.textContent = S.hatched ? g.icon : '🥚';
-  const hn = $('#home-name'); if (hn) hn.textContent = !S.hatched ? 'Vai nascer!' : 'Lumi ' + g.name;
+  const ic = $('#grow-ic'); if (ic) ic.textContent = S.hatched ? g.icon : '🚀';
+  const hn = $('#home-name'); if (hn) hn.textContent = !S.hatched ? 'Vai chegar!' : 'Lumi ' + g.name;
   const gb = $('#grow-bar'); if (gb) gb.style.width = (!S.hatched ? 0 : nx ? ((n - g.min) / (nx.min - g.min)) * 100 : 100) + '%';
 }
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 1900); }
@@ -249,7 +249,7 @@ function show(name) {
   if (host) stage.mount(host, presetFor(name));
 }
 function go(name) {
-  if (!S.hatched && ['map', 'snack', 'rest', 'shop'].includes(name)) { toast('🥚 Primeiro faça o Lumi nascer!'); speak(T.pt.eggTap, 'pt'); return; }
+  if (!S.hatched && ['map', 'snack', 'rest', 'shop'].includes(name)) { toast('🚀 Primeiro abra a cápsula do Lumi!'); speak(T.pt.eggTap, 'pt'); return; }
   if (name !== 'lesson') LS = null;
   show(name);
   ({ home: enterHome, map: enterMap, rest: enterRest, snack: enterSnack, shop: enterShop }[name] || (() => {}))();
@@ -304,7 +304,7 @@ function enterHome() {
   bind();
   setTimeout(() => {
     if (current !== 'home') return;
-    if (!S.hatched) { say($('#home-bubble'), T.pt.eggTap, 'Toca no ovo 3 vezes para ele nascer! 🥚'); return; }
+    if (!S.hatched) { say($('#home-bubble'), T.pt.eggTap, 'Toca na cápsula 3 vezes para ela abrir! 🚀'); return; }
     if (S.sleeping) { say($('#home-bubble'), T.pt.sleeping); return; }
     lumi.doWave(1.8);
     const first = !S.seen.home; S.seen.home = 1; save();
@@ -313,7 +313,7 @@ function enterHome() {
     else say($('#home-bubble'), [[T.en.hello, 'en'], [T.pt.play, 'pt']], `<span class="en">Hello</span>, ${esc(S.name)}! Vamos jogar?`);
   }, 400);
 }
-$('#btn-play').addEventListener('click', () => { audioCtx(); if (!S.hatched) { toast('🥚 Toque no ovo para o Lumi nascer!'); say($('#home-bubble'), T.pt.eggTap); stage.tapEgg(Math.min(3, eggTaps)); return; } startLesson(unitIndex()); });
+$('#btn-play').addEventListener('click', () => { audioCtx(); if (!S.hatched) { toast('🚀 Toque na cápsula para o Lumi chegar!'); say($('#home-bubble'), T.pt.eggTap); stage.tapEgg(Math.min(3, eggTaps)); return; } startLesson(unitIndex()); });
 // ovo: 3 toques e o Lumi nasce
 let eggTaps = 0, hatching = false;
 stage.onEggTap = async () => {
@@ -324,7 +324,7 @@ stage.onEggTap = async () => {
   hatching = true; stopTalk(); $('#home-bubble').textContent = '';
   await stage.hatch();
   S.hatched = true; save(); confetti(70); avatarURL = null;
-  await say($('#home-bubble'), [[T.pt.hatched, 'pt'], [T.en.hello, 'en']], `Oi, ${esc(S.name)}! Eu nasci! Eu sou o Lumi! 🐣`);
+  await say($('#home-bubble'), [[T.pt.hatched, 'pt'], [T.en.hello, 'en']], `Oi, ${esc(S.name)}! Eu cheguei! Eu sou o Lumi! 🚀`);
   lumi.doWave(2);
   if (current === 'home') await say($('#home-bubble'), T.pt.growHint);
   hatching = false;

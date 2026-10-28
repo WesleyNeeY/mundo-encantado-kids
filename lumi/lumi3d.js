@@ -210,7 +210,7 @@ export class Lumi3D {
     const shellM = new THREE.MeshPhysicalMaterial({ color: 0xf7f9fd, roughness: 0.24, clearcoat: 1, clearcoatRoughness: 0.08, sheen: 0.25, sheenColor: new C(0xdfeaff), envMapIntensity: 0.95 });
     const navy = mat.std(0x1b2a63, { roughness: 0.28, clearcoat: 0.9, clearcoatRoughness: 0.1 }), blue = mat.std(0x2a6fe0, { roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.08 });
     const bezelM = mat.std(0xdbe8fb, { roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.06 });
-    const visorM = new THREE.MeshPhysicalMaterial({ map: visorTexture(), roughness: 0.05, clearcoat: 1, clearcoatRoughness: 0.02, metalness: 0.2, envMapIntensity: 1.35 });
+    const visorM = new THREE.MeshPhysicalMaterial({ map: visorTexture(), roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.2, metalness: 0.15, envMapIntensity: 0.55 });
     const glow = new THREE.MeshBasicMaterial({ color: 0x45d4ff, toneMapped: false });
     const glowSoft = (o) => new THREE.MeshBasicMaterial({ color: 0x2fb8ff, transparent: true, opacity: o, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
     P.halos = []; const halo = (m, o) => { m.userData.o = o; m.userData.ph = Math.random() * 6; P.halos.push(m); return m; };
@@ -365,7 +365,7 @@ export class Lumi3D {
       if (o.body && o.body !== 'none') buildTop(this, o.body, put);
       if (o.legs && o.legs !== 'none') buildLegs(this, o.legs, put);
     }
-    put(P.face, makeAccessory('face', o.face));
+    put(P.face, (this.sp.robot && robotFaceItem(o.face)) || makeAccessory('face', o.face));
     put(P.neck, makeAccessory('neck', o.neck));
     if (o.back && o.back !== 'none') put(P.back, makeBack(o.back));
     const hatOn = !costume && o.head && o.head !== 'none';
@@ -558,6 +558,44 @@ function roundRectGeo(w, h, r, depth) {
   const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
   s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r); s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h); s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r); s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
   const g = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 3, curveSegments: 10 }); g.center(); return g;
+}
+// moldura de cantos arredondados em volta da tela (anel entre duas superelipses)
+function squircleRing(inLon, inLat, outLon, outLat, latC, off, expo = 4.2, seg = 120, rings = 3) {
+  const pos = [], idx = [], sq = (t) => { const c = Math.cos(t), s = Math.sin(t); return [Math.sign(c) * Math.pow(Math.abs(c), 2 / expo), Math.sign(s) * Math.pow(Math.abs(s), 2 / expo)]; };
+  for (let r = 0; r <= rings; r++) { const k = r / rings, hl = inLon + (outLon - inLon) * k, ht = inLat + (outLat - inLat) * k;
+    for (let i = 0; i <= seg; i++) { const [X, Y] = sq((i / seg) * TAU); const { p } = headPoint(X * hl, latC + Y * ht, off); pos.push(p.x, p.y, p.z); } }
+  for (let r = 0; r < rings; r++) for (let i = 0; i < seg; i++) { const a = r * (seg + 1) + i, b = a + 1, c = a + seg + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+/* acessórios de rosto no robô: nada cobre os olhos de LED (a máscara vira moldura em volta da tela) */
+function robotFaceItem(id) {
+  if (!['mask', 'bolt-mask', 'robot-visor', 'ninja-mask'].includes(id)) return null;
+  const g = new THREE.Group(); g.position.z = -0.1; // compensa o deslocamento do grupo do rosto
+  const ring = (m) => new THREE.Mesh(squircleRing(1.0, 0.53, 1.17, 0.67, -0.03, 0.036), m);
+  if (id === 'mask' || id === 'bolt-mask') {
+    const col = id === 'mask' ? 0x2a2a35 : 0xffd21f, m = mat.std(col, { roughness: 0.4, clearcoat: 0.6, side: THREE.DoubleSide });
+    g.add(ring(m));
+    for (const s of [-1, 1]) { // pontinhas da máscara nas laterais
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.34, 4), m); tip.scale.z = 0.35;
+      const { p } = headPoint(1.16 * s, 0.24, 0.05); tip.position.copy(p); tip.rotation.set(0, 0.9 * s, -0.75 * s); g.add(tip);
+    }
+    if (id === 'mask') for (const x of [-1, 1]) { const tie = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.35, 4, 8), m); tie.position.set(0.25 * x, 0.05, -1.08); tie.rotation.z = 0.6 * x + Math.PI / 2; g.add(tie); }
+    else for (const x of [-1, 1]) { // raios da máscara relâmpago
+      const b = new THREE.Shape(); b.moveTo(0, 0.3); b.lineTo(0.1, 0.3); b.lineTo(0.03, 0.05); b.lineTo(0.12, 0.05); b.lineTo(-0.06, -0.3); b.lineTo(0, -0.04); b.lineTo(-0.09, -0.04); b.closePath();
+      const bolt = new THREE.Mesh(new THREE.ExtrudeGeometry(b, { depth: 0.05, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 2 }), mat.std(0xffe14d, { emissive: 0x7a5a00, emissiveIntensity: 0.4, roughness: 0.3 }));
+      const { p } = headPoint(1.05 * x, 0.62, 0.04); bolt.position.copy(p); bolt.rotation.set(0, 0.8 * x, -0.45 * x); g.add(bolt);
+    }
+  } else if (id === 'robot-visor') { // tela turbinada: moldura acesa e brilho ciano por cima
+    const glowR = ring(new THREE.MeshStandardMaterial({ color: 0x40e0ff, emissive: 0x00bcd4, emissiveIntensity: 0.9, roughness: 0.3, side: THREE.DoubleSide }));
+    glowR.userData.anim = (t, me) => { me.material.emissiveIntensity = 0.6 + Math.sin(t * 4) * 0.35; }; g.add(glowR);
+    g.add(new THREE.Mesh(squirclePatch(1.0, 0.53, -0.03, 0.038), new THREE.MeshBasicMaterial({ color: 0x40e0ff, transparent: true, opacity: 0.1, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false })));
+  } else { // máscara ninja: pano só na parte de baixo da tela (olhos aparecem) + nó atrás
+    const m = mat.std(0x26304d, { roughness: 0.85, side: THREE.DoubleSide });
+    g.add(new THREE.Mesh(squirclePatch(1.18, 0.3, -0.52, 0.09, 3.2), m));
+    const knot = sph(0.12, m, 16); knot.position.set(0, -0.2, -1.06); g.add(knot);
+    for (const x of [-1, 1]) { const tail = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.32, 4, 8), m); tail.position.set(0.12 * x, -0.42, -1.06); tail.rotation.z = 0.35 * x; g.add(tail); }
+  }
+  return g;
 }
 const TEX = {};
 function ledTexture() { // olho de LED: miolo branco, azul-claro e borda azul

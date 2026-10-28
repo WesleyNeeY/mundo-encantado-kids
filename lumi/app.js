@@ -118,33 +118,9 @@ function speakTTS(text, lang) {
     u.onend = fin; u.onerror = fin; setTimeout(fin, 1800 + text.length * 110); lumi.talk(true); synth.speak(u);
   });
 }
-/* nome da criança: áudio gravado na voz do Lumi (nomes comuns) ou voz do aparelho */
-let NAMES = {};
-const namesReady = fetch('audio/names.json').then((r) => r.json()).then((j) => { NAMES = j; }).catch(() => {});
-const normName = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
-function callName() { // nome completo se for conhecido (ex.: Maria Alice), senão o primeiro nome
-  const n = (S.name || '').trim(); if (!n) return '';
-  if (NAMES[normName(n)]) return n;
-  const w = n.split(/\s+/), two = w.slice(0, 2).join(' ');
-  if (w.length > 1 && NAMES[normName(two)]) return two;
-  return w[0];
-}
-// falas em que o Lumi chama a criança: antes ("Theo, estou com fome!") ou depois ("Boa noite, Theo!")
-const NAME_PRE = new Set([T.pt.hungry, T.pt.sleepy, T.pt.tired, T.pt.full, T.pt.yummy, T.pt.restHint, T.pt.noCoins, T.pt.pickOutfit, T.pt.tickle, T.pt.letsLearn, T.pt.giftDone, T.pt.growHint, T.pt.legendHint, T.pt.costume]);
-const NAME_POST = new Set([T.pt.goodnight, T.pt.goodmorning, T.pt.thanks, T.pt.pretty, T.pt.done, T.pt.levelUp, T.pt.chestWon, T.pt.sleeping, T.pt.gotRare, T.pt.gotEpic, T.pt.gotLegend, T.pt.setDone]);
-function withName(parts, html) {
-  const nm = callName(); if (!nm || html) return [parts, html];
-  const i = parts.findIndex(([t, l]) => l === 'pt' && (NAME_PRE.has(t) || NAME_POST.has(t) || (T.pt.praise.includes(t) && Math.random() < 0.5)));
-  if (i < 0) return [parts, html];
-  const t = parts[i][0], pre = NAME_PRE.has(t);
-  const out = parts.slice(); out.splice(pre ? i : i + 1, 0, [nm, 'name']);
-  const shown = pre ? `${nm}, ${t.charAt(0).toLowerCase()}${t.slice(1)}` : t.replace(/([!.?])$/, `, ${nm}$1`);
-  return [out, parts.map(([tt, l], k) => (k === i ? esc(shown) : l === 'en' ? `<span class="en">${esc(tt)}</span>` : esc(tt))).join(' ')];
-}
 async function speak(text, lang) {
   await audioReady;
-  if (lang === 'name') await namesReady;
-  const f = lang === 'name' ? (NAMES[normName(text)] || NAMES[normName(text.split(' ')[0])]) : AUDIO[keyOf(text, lang)];
+  const f = AUDIO[keyOf(text, lang)];
   if (f && audioCtx()) { const ok = await playFile(f, speakToken); if (ok) return; }
   return speakTTS(text, lang);
 }
@@ -152,7 +128,6 @@ function stopTalk() { if (synth) synth.cancel(); if (curSrc) { try { curSrc.onen
 // fala com balão: parts = [[texto, 'pt'|'en'], ...]; retorna false se foi interrompida
 async function say(bubble, parts, html) {
   if (typeof parts === 'string') parts = [[parts, 'pt']];
-  [parts, html] = withName(parts, html);
   stopTalk(); const my = speakToken;
   if (bubble) {
     bubble.innerHTML = html || parts.map(([t, l]) => (l === 'en' ? `<span class="en">${esc(t)}</span>` : esc(t))).join(' ');

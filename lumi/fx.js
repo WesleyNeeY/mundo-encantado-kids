@@ -43,7 +43,7 @@ document.querySelectorAll('.screen[data-scene]').forEach((sc) => {
   const t = sc.dataset.scene;
   const rays = document.createElement('div'); rays.className = 'fx fx-rays'; rays.style.backgroundImage = S.rays(t);
   const vines = document.createElement('div'); vines.className = 'fx fx-vines'; vines.style.backgroundImage = S.vines(t);
-  const dust = document.createElement('div'); dust.className = 'fx fx-dust' + (t === 'night' ? ' night' : '');
+  const dust = document.createElement('div'); dust.className = 'fx fx-dust' + (t === 'night' ? ' dnight' : '');
   for (let i = 0; i < 16; i++) {
     const p = document.createElement('i');
     p.style.left = (6 + Math.random() * 88).toFixed(1) + '%'; p.style.top = (14 + Math.random() * 60).toFixed(1) + '%';

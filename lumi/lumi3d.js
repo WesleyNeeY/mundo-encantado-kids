@@ -1117,20 +1117,32 @@ function makeAura() {
   return g;
 }
 /* ovo do começo */
-function makeEgg() {
+function makeEgg(robot) {
   const g = new THREE.Group();
   const tex = canvasTex(512, 256, (x, w, h) => { x.fillStyle = '#fffaf0'; x.fillRect(0, 0, w, h); ['#9fd4ff', '#ffc1e3', '#ffe27a', '#b9f0c4'].forEach((c, k) => { x.fillStyle = c; for (let i = 0; i < 7; i++) { x.beginPath(); x.arc(((i * 73 + k * 41) % w), 30 + ((i * 37 + k * 59) % (h - 60)), 16 + ((i + k) % 3) * 6, 0, TAU); x.fill(); } }); });
-  const m = new THREE.MeshPhysicalMaterial({ map: tex, roughness: 0.35, clearcoat: 0.8, sheen: 0.4 });
+  // ovo do robô: casco branco brilhante, faixa de luz azul na emenda e estrelinha
+  const robotTex = (band) => canvasTex(512, 256, (x, w, h) => {
+    x.fillStyle = '#f7f9fd'; x.fillRect(0, 0, w, h);
+    x.strokeStyle = 'rgba(40,70,140,.18)'; x.lineWidth = 3; for (const yy of [h * 0.42, h * 0.7]) { x.beginPath(); x.moveTo(0, yy); x.lineTo(w, yy); x.stroke(); }
+    const y0 = band === 'top' ? 0 : h - 26, gr = x.createLinearGradient(0, y0, 0, y0 + 26);
+    gr.addColorStop(0, band === 'top' ? '#3fd2ff' : 'rgba(63,210,255,0)'); gr.addColorStop(1, band === 'top' ? 'rgba(63,210,255,0)' : '#3fd2ff');
+    x.fillStyle = '#1b2a63'; x.fillRect(0, band === 'top' ? 0 : h - 14, w, 14); x.fillStyle = gr; x.fillRect(0, y0, w, 26);
+    for (let i = 0; i < 6; i++) { x.fillStyle = ['#6bffb4', '#ffd84a', '#ff7ab6'][i % 3]; x.beginPath(); x.arc(40 + i * 86, band === 'top' ? 40 : h - 44, 6, 0, TAU); x.fill(); }
+    if (band === 'bottom') for (const sx of [0, w]) { x.fillStyle = '#ffc928'; x.save(); x.translate(sx, h * 0.45); x.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + (i * Math.PI) / 5, r = i % 2 ? 11 : 26; x.lineTo(Math.cos(a) * r, Math.sin(a) * r); } x.closePath(); x.fill(); x.restore(); } // estrela na frente (emenda u=0)
+  });
+  const shellOf = (t) => new THREE.MeshPhysicalMaterial({ map: t, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 0.95 });
+  const m = robot ? shellOf(robotTex('top')) : new THREE.MeshPhysicalMaterial({ map: tex, roughness: 0.35, clearcoat: 0.8, sheen: 0.4 });
+  const mTop = robot ? shellOf(robotTex('bottom')) : m;
   const prof = []; for (let i = 0; i <= 24; i++) { const a = (i / 24) * Math.PI; const y = 1.15 - Math.cos(a) * 1.15; const r = Math.sin(a) * (0.82 - 0.14 * (y / 2.3)); prof.push([Math.max(0.0001, r), y]); }
   const cut = 13;
   const bottom = new THREE.Mesh(new THREE.LatheGeometry(prof.slice(0, cut + 1).map(([r, y]) => new THREE.Vector2(r, y)), 48), m); bottom.material.side = THREE.DoubleSide;
-  const top = new THREE.Mesh(new THREE.LatheGeometry(prof.slice(cut).map(([r, y]) => new THREE.Vector2(r, y)), 48), m);
+  const top = new THREE.Mesh(new THREE.LatheGeometry(prof.slice(cut).map(([r, y]) => new THREE.Vector2(r, y)), 48), mTop);
   const body = new THREE.Group(); body.add(bottom, top); g.add(body);
   const cracks = [];
   const yc = prof[cut][1], rc = prof[cut][0];
   for (let c = 0; c < 3; c++) {
     const pts = []; for (let i = 0; i <= 8; i++) { const a = -0.9 + c * 0.6 + (i / 8) * 0.9; pts.push(new THREE.Vector3(Math.sin(a) * (rc + 0.01), yc + (i % 2 ? 0.09 : -0.07), Math.cos(a) * (rc + 0.01))); }
-    const cr = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 30, 0.022, 6), mat.std(0x8a6a4a)); cr.visible = false; body.add(cr); cracks.push(cr);
+    const cr = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 30, robot ? 0.026 : 0.022, 6), robot ? new THREE.MeshBasicMaterial({ color: 0x5fe0ff, toneMapped: false }) : mat.std(0x8a6a4a)); cr.visible = false; body.add(cr); cracks.push(cr);
   }
   shadowAll(g);
   g.userData = { body, top, bottom, cracks, wob: 0, hatchT: -1 };
@@ -1207,7 +1219,7 @@ export class Stage {
     const rim2 = new THREE.DirectionalLight(0xfff0d8, 1.2); rim2.position.set(6, 3, -5); scene.add(rim2);
     const fill = (this.fill = new THREE.DirectionalLight(0xffe6cc, 0.55)); fill.position.set(-4, 2, 6); scene.add(fill);
     this.camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
-    this.lumi = new Lumi3D(window.LUMI_SPECIES); scene.add(this.lumi.root);
+    this.lumi = new Lumi3D(window.LUMI_SPECIES || 'robot'); scene.add(this.lumi.root);
     this.island = makeIsland(); scene.add(this.island);
     this.props = new THREE.Group(); scene.add(this.props);
     const tree = makeTree(); tree.position.set(-2.3, 0, -1.2); tree.scale.setScalar(1.15); this.props.add(tree);
@@ -1215,7 +1227,7 @@ export class Stage {
     const mu = makeMushroom(); mu.position.set(2.2, 0, -1.3); mu.scale.setScalar(1.3); this.props.add(mu);
     this.pillow = makeBed(); this.pillow.visible = false; scene.add(this.pillow);
     this.rug = makeRug(); this.rug.visible = false; scene.add(this.rug);
-    this.egg = makeEgg(); this.egg.visible = false; scene.add(this.egg);
+    this.egg = makeEgg(!!this.lumi.sp.robot); this.egg.visible = false; scene.add(this.egg);
     this.clock = new THREE.Clock(); this.t = 0;
     this.framing = { y: 1.9, dist: 11.5, x: 0, lookY: 1.9, fov: 30 };
     this.target = Object.assign({}, this.framing);

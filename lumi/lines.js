@@ -43,6 +43,12 @@ window.LUMI_LINES = {
     feedHint: 'Arrasta a comida até a minha boca!',
     memoryIntro: 'Jogo da memória! Acha os pares iguais.',
     memoryGood: 'Achou um par!',
+    eggTap: 'Toca no ovo para ele nascer!',
+    eggCrack: 'Ele está quase saindo! Toca de novo!',
+    hatched: 'Oi! Eu nasci! Eu sou o Lumi!',
+    grow: ['Oba! Eu cresci! Agora eu sou o Lumi Pequeno!', 'Oba! Eu cresci! Agora eu sou o Lumi Criança!', 'Oba! Eu cresci! Agora eu sou o Lumi Grande!', 'Uau! Eu virei o Super Lumi!'],
+    costume: 'Olha a minha fantasia!',
+    growHint: 'Quanto mais fases você fizer, mais eu cresço!',
   },
   en: {
     praise: ['Great job!', 'Awesome!', 'Well done!', 'Excellent!', 'Super!'],

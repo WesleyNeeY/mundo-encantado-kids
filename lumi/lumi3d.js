@@ -4,7 +4,7 @@ import { RoomEnvironment } from './vendor/RoomEnvironment.js';
 
 const C = THREE.Color;
 const mat = {
-  fur: () => new THREE.MeshPhysicalMaterial({ color: 0x2f8ff5, roughness: 0.7, sheen: 1, sheenRoughness: 0.5, sheenColor: new C(0x9fd4ff), envMapIntensity: 0.55 }),
+  fur: () => new THREE.MeshPhysicalMaterial({ color: 0x3a92ef, roughness: 0.7, sheen: 1, sheenRoughness: 0.5, sheenColor: new C(0x9fd4ff), envMapIntensity: 0.55 }),
   furDark: () => new THREE.MeshPhysicalMaterial({ color: 0x1f6fdc, roughness: 0.7, sheen: 1, sheenColor: new C(0x8cc8ff), envMapIntensity: 0.55 }),
   cream: () => new THREE.MeshPhysicalMaterial({ color: 0xfff6e8, roughness: 0.75, sheen: 1, sheenColor: new C(0xffffff), envMapIntensity: 0.5 }),
   navy: () => new THREE.MeshPhysicalMaterial({ color: 0x0c1f4d, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.05 }),
@@ -39,6 +39,7 @@ export class Lumi3D {
     this.nextBlink = 1.5; this.blinkT = 0; this.look = { x: 0, y: 0, tx: 0, ty: 0, next: 0 }; this.earTw = { s: 0, t: 0 };
     this.build();
     shadowAll(this.root);
+    this.addFurAll();
     this.outfit = {};
   }
   build() {
@@ -50,7 +51,7 @@ export class Lumi3D {
       const pad = sph(0.12, mat.pink()); pad.scale.set(1, 0.7, 0.4); pad.position.set(0.36 * s, 0.13, 0.5); P.bounce.add(pad); }
     // corpo
     P.body = new THREE.Group(); P.body.position.y = 0.2; P.bounce.add(P.body);
-    const body = sph(0.82, fur); body.scale.set(1, 1.04, 0.92); body.position.y = 0.78; P.body.add(body);
+    const body = sph(0.82, fur, 48); body.scale.set(1, 1.04, 0.92); body.position.y = 0.78; P.body.add(body); P.bodyMesh = body;
     const belly = sph(0.8, cream, 48); belly.scale.set(0.74, 0.8, 0.88); belly.position.set(0, 0.7, 0.13); P.body.add(belly); P.belly = belly;
     const bst = starMesh(0.17, mat.gold()); bst.position.set(0, 0.86, 0.84); bst.rotation.x = -0.15; P.body.add(bst); P.bellyStar = bst;
     P.feet = [];
@@ -69,7 +70,7 @@ export class Lumi3D {
     // cabeça
     P.head = new THREE.Group(); P.head.position.y = 1.75; P.bounce.add(P.head);
     const H = new THREE.Group(); H.position.y = 0.88; P.head.add(H); P.H = H;
-    const head = sph(1.0, fur, 56); head.scale.set(1.13, 0.96, 0.98); H.add(head);
+    const head = sph(1.0, fur, 56); head.scale.set(1.13, 0.96, 0.98); H.add(head); P.headMesh = head;
     for (const s of [-1, 1]) { // bochechas fofas
       const ch = sph(0.36, fur, 28); ch.scale.set(1, 0.8, 0.85); ch.position.set(0.98 * s, -0.32, 0.2); H.add(ch);
       const ch2 = sph(0.24, fur, 24); ch2.position.set(1.08 * s, -0.12, 0.05); H.add(ch2); (P.cheeks = P.cheeks || []).push(ch, ch2);
@@ -77,7 +78,7 @@ export class Lumi3D {
     for (const [x, y, z, r, rz] of [[-0.18, 0.92, 0.1, 0.22, 0.4], [0.06, 1.0, 0.05, 0.25, -0.1], [0.28, 0.9, 0.08, 0.2, -0.5]]) { // topete
       const c = new THREE.Mesh(new THREE.ConeGeometry(r, r * 2.2, 20), fur); c.position.set(x, y, z); c.rotation.z = rz; H.add(c); (P.tufts = P.tufts || []).push(c);
     }
-    const muz = sph(0.52, cream); muz.scale.set(1.18, 0.74, 0.62); muz.position.set(0, -0.36, 0.7); H.add(muz);
+    const muz = sph(0.52, cream); muz.scale.set(1.18, 0.74, 0.62); muz.position.set(0, -0.36, 0.7); H.add(muz); P.muzzle = muz;
     const nose = sph(0.1, navy, 24); nose.scale.set(1.35, 0.9, 0.8); nose.position.set(0, -0.2, 1.02); H.add(nose);
     // boca
     P.mouth = new THREE.Group(); P.mouth.position.set(0, -0.42, 1.0); P.mouth.scale.setScalar(1.35); H.add(P.mouth);
@@ -123,6 +124,24 @@ export class Lumi3D {
     P.aura = makeAura(); P.aura.visible = false; R.add(P.aura);
     P.feet = this._feet;
   }
+  /* ---- pelo fofinho: camadas (shell fur) que seguem a forma de cada parte ---- */
+  addFurAll() {
+    const P = this.p, blue = [0x2c7ad8, 0xd2efff], cream = [0xe6d6c0, 0xffffff];
+    const add = (m, col, n, len, rep, mask) => { if (m) furShells(m, col, n, len, rep, mask); };
+    const lite = (navigator.deviceMemory || 4) < 4 ? 0.6 : 1, N = (x) => Math.max(4, Math.round(x * lite));
+    // no rosto o pelo é bem curtinho para não cobrir olhos, focinho e bochechas
+    const face = new THREE.Vector3(0, -0.12, 1).normalize(), v = new THREE.Vector3();
+    const faceMask = (x, y, z) => { const d = v.set(x, y, z).normalize().dot(face); return Math.min(1, Math.max(0.06, (0.72 - d) / 0.3)); };
+    add(P.headMesh, blue, N(12), 0.15, [5, 3], faceMask); add(P.bodyMesh, blue, N(10), 0.13, [4, 3]);
+    add(P.belly, cream, N(6), 0.07, [3, 2]);
+    this.fur = { face: faceMask };
+    P.cheeks.forEach((c) => add(c, blue, N(8), 0.12, [2, 1]));
+    for (const a of [P.armL, P.armR]) add(a.children[0], blue, N(7), 0.08, [2, 2]);
+    P.tail.children.forEach((t, i) => add(t, i > 10 ? cream : blue, N(6), 0.1, [1, 1]));
+    for (const e of [P.earL, P.earR]) add(e.children[0], blue, N(6), 0.05, [2, 2]);
+    P.tufts.forEach((t) => add(t, blue, N(5), 0.06, [1, 1]));
+  }
+  setFur(mesh, on) { if (mesh) mesh.children.forEach((c) => c.userData.fur && (c.visible = on)); }
   /* ---- acessórios em 3D ---- */
   setOutfit(o) {
     this.outfit = Object.assign({}, o);
@@ -148,6 +167,10 @@ export class Lumi3D {
     P.tufts.forEach((t) => (t.visible = !costume && !hatOn));
     P.cheeks.forEach((c) => (c.visible = !costume));
     P.tail.visible = !costume && o.back !== 'turtle';
+    const legsOn = !costume && o.legs && o.legs !== 'none' && o.legs !== 'hero-boots';
+    this.setFur(P.bodyMesh, !top && !legsOn); this.setFur(P.belly, !top && !legsOn);
+    this.setFur(P.headMesh, !costume && !['astronaut', 'galaxy-helmet', 'robot-helmet'].includes(o.head));
+    for (const a of [P.armL, P.armR]) this.setFur(a.children[0], !top);
     const mermaid = !costume && o.legs === 'mermaid-tail';
     P.feet.forEach((f) => (f.visible = !mermaid));
   }
@@ -285,6 +308,28 @@ export class Lumi3D {
       case 'sleep': for (const e of P.eyes) { e.open.visible = false; e.happy.visible = false; e.sleep.visible = true; } P.head.rotation.x = 0.2 * ease; P.head.rotation.z = 0.18 * ease; P.mouthIn.scale.set(1, 0.15, 0.35); break;
       case 'no': P.head.rotation.y = Math.sin(A.t * 14) * 0.35 * ease; break;
     }
+  }
+}
+
+/* ------------------------------------------------------------ pelo */
+let FUR_TEX = null;
+function furTexture() {
+  if (FUR_TEX) return FUR_TEX;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256; const x = cv.getContext('2d');
+  x.fillStyle = '#000'; x.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 2600; i++) { const px = Math.random() * 256, py = Math.random() * 256, r = 1.8 + Math.random() * 2.6; const g = x.createRadialGradient(px, py, 0, px, py, r); const v = 150 + Math.random() * 105; g.addColorStop(0, `rgb(${v},${v},${v})`); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, Math.PI * 2); x.fill(); }
+  FUR_TEX = new THREE.CanvasTexture(cv); FUR_TEX.wrapS = FUR_TEX.wrapT = THREE.RepeatWrapping; return FUR_TEX;
+}
+function furShells(mesh, [c0, c1], n, len, rep, mask) {
+  const base = mesh.geometry, pos = base.attributes.position, nor = base.attributes.normal;
+  const tex = furTexture().clone(); tex.needsUpdate = true; tex.repeat.set(rep[0], rep[1]);
+  const a = new C(c0), b = new C(c1);
+  for (let i = 1; i <= n; i++) {
+    const k = i / n, g = base.clone(), p = g.attributes.position;
+    const droop = len * 0.35 * k * k; for (let v = 0; v < p.count; v++) { const f = mask ? mask(pos.getX(v), pos.getY(v), pos.getZ(v)) : 1, L = len * k * f; p.setXYZ(v, pos.getX(v) + nor.getX(v) * L, pos.getY(v) + nor.getY(v) * L - droop * f, pos.getZ(v) + nor.getZ(v) * L); }
+    const m = new THREE.MeshStandardMaterial({ color: a.clone().lerp(b, Math.pow(k, 1.3)), alphaMap: tex, alphaTest: 0.08 + Math.pow(k, 0.8) * 0.7, roughness: 1, envMapIntensity: 0.35 });
+    const sh = new THREE.Mesh(g, m); sh.userData.fur = true; sh.castShadow = false; sh.receiveShadow = false; sh.raycast = () => {};
+    mesh.add(sh);
   }
 }
 
@@ -821,6 +866,21 @@ function makeMushroom() {
   for (const [x, z] of [[0.1, 0.12], [-0.12, 0.05], [0.02, -0.15]]) { const d = sph(0.04, mat.white(), 10); d.position.set(x, 0.43, z); g.add(d); }
   shadowAll(g); return g;
 }
+function makeRug() {
+  const t = canvasTex(512, 512, (x, w) => { const c = w / 2; [['#e8743b', 250], ['#fff1d6', 225], ['#f2a33a', 200], ['#fff1d6', 150], ['#e8743b', 128], ['#ffd27a', 100], ['#fff1d6', 50]].forEach(([col, r]) => { x.fillStyle = col; x.beginPath(); x.arc(c, c, r, 0, Math.PI * 2); x.fill(); });
+    x.fillStyle = '#e8743b'; for (let i = 0; i < 24; i++) { const a = (i / 24) * Math.PI * 2; x.beginPath(); x.arc(c + Math.cos(a) * 175, c + Math.sin(a) * 175, 9, 0, Math.PI * 2); x.fill(); } });
+  const r = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.65, 0.08, 64), [new THREE.MeshStandardMaterial({ color: 0xd8662f, roughness: 1 }), new THREE.MeshStandardMaterial({ map: t, roughness: 1 }), new THREE.MeshStandardMaterial({ color: 0xd8662f })]);
+  r.scale.z = 0.8; r.position.y = -0.03; r.receiveShadow = true; return r;
+}
+function makeBed() {
+  // caminha redonda fofinha
+  const g = new THREE.Group(), soft = (c) => mat.std(c, { roughness: 0.9, clearcoat: 0, sheen: 1, sheenColor: new C(0xffffff) });
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(1.75, 0.55, 24, 64), soft(0x9b7bea)); rim.rotation.x = Math.PI / 2; rim.scale.set(1, 0.85, 1); rim.position.y = 0.45; g.add(rim);
+  const cush = sph(1.75, soft(0xc9b6ff), 48); cush.scale.set(1, 0.22, 0.85); cush.position.y = 0.3; g.add(cush);
+  const pil = sph(0.5, soft(0xffffff), 28); pil.scale.set(1.3, 0.5, 0.8); pil.position.set(0, 0.62, -0.95); g.add(pil);
+  for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; const st = starMesh(0.08, mat.std(0xffe082)); st.position.set(Math.cos(a) * 1.75, 0.95, Math.sin(a) * 1.75 * 0.85); st.rotation.x = -0.5; g.add(st); }
+  g.scale.setScalar(0.78); g.position.z = -0.35; shadowAll(g); return g;
+}
 function makePillow() {
   const g = new THREE.Group();
   const p = sph(1.2, mat.std(0xb9a6ff, { roughness: 0.8, sheen: 1, sheenColor: new C(0xffffff) }), 36); p.scale.set(1.4, 0.28, 1.0); p.position.set(0, 0.15, -0.2); g.add(p);
@@ -849,7 +909,8 @@ export class Stage {
     const tree = makeTree(); tree.position.set(-2.3, 0, -1.2); tree.scale.setScalar(1.15); this.props.add(tree);
     [[2.4, 0.9, 0xff8ac0], [2.0, 1.6, 0xffffff], [-1.8, 1.4, 0xffc928], [2.7, -0.2, 0x9d6bff], [-2.7, 0.6, 0xff6b6b]].forEach(([x, z, c]) => { const f = makeFlower(c); f.position.set(x, 0, z); this.props.add(f); });
     const mu = makeMushroom(); mu.position.set(2.2, 0, -1.3); mu.scale.setScalar(1.3); this.props.add(mu);
-    this.pillow = makePillow(); this.pillow.visible = false; scene.add(this.pillow);
+    this.pillow = makeBed(); this.pillow.visible = false; scene.add(this.pillow);
+    this.rug = makeRug(); this.rug.visible = false; scene.add(this.rug);
     this.egg = makeEgg(); this.egg.visible = false; scene.add(this.egg);
     this.clock = new THREE.Clock(); this.t = 0;
     this.framing = { y: 1.9, dist: 11.5, x: 0, lookY: 1.9, fov: 30 };
@@ -865,7 +926,8 @@ export class Stage {
     const p = Object.assign({ x: 0, y: 1.9, dist: 11.5, lookY: 1.9, props: true, night: false, rotY: 0 }, preset);
     this.target = p;
     if (preset.instant || !this.mounted) { this.mounted = true; this.framing = Object.assign({}, p); this.snapNext = true; }
-    this.props.visible = p.props; this.pillow.visible = !!p.night;
+    const room = p.scene === 'room' || p.night; this.island.visible = !room; this.rug.visible = room && !p.night;
+    this.props.visible = p.props && !room; this.pillow.visible = !!p.night;
     this.hemi.color.set(p.night ? 0x5c6bc0 : 0xdff1ff); this.hemi.groundColor.set(p.night ? 0x2b2f74 : 0x8fd47e); this.hemi.intensity = p.night ? 0.7 : 0.9;
     this.key.color.set(p.night ? 0xaac4ff : 0xfff4e0); this.key.intensity = p.night ? 1.2 : 2.4;
     this.renderer.toneMappingExposure = p.night ? 0.95 : 1.05;
@@ -891,16 +953,19 @@ export class Stage {
     const dt = Math.min(0.05, this.clock.getDelta()); this.t += dt;
     const f = this.framing, tg = this.target, k = this.snapNext ? 1 : Math.min(1, dt * 4); this.snapNext = false;
     if (tg.fit) { // enquadra o Lumi entre as frações [topo, base] da tela
-      const [a, b] = tg.fit, th = Math.tan((this.camera.fov * Math.PI) / 360), H = 4.3;
-      let d = H / ((b - a) * 2 * th); d = Math.max(d, 3.8 / (this.aspect || 1) / (2 * th));
-      const hv = 2 * d * th; tg.dist = d; tg.lookY = 2.05 + ((a + b) / 2 - 0.5) * hv; tg.y = tg.lookY + 0.5;
+      // o enquadramento acompanha só metade do crescimento: o bebê parece menor, mas continua bem visível
+      const [a, b] = tg.fit, th = Math.tan((this.camera.fov * Math.PI) / 360), z = 0.45 + 0.55 * this.lumi.size, H = 4.3 * z;
+      let d = H / ((b - a) * 2 * th); d = Math.max(d, (3.8 * z) / (this.aspect || 1) / (2 * th));
+      const hv = 2 * d * th, cy = 2.05 * this.lumi.size; tg.dist = d; tg.lookY = cy + ((a + b) / 2 - 0.5) * hv; tg.y = tg.lookY + 0.5 * z + (tg.tilt || 0);
     }
     for (const key of ['x', 'y', 'dist', 'lookY', 'rotY']) f[key] = (f[key] ?? 0) + ((tg[key] ?? 0) - (f[key] ?? 0)) * k;
     // em telas estreitas, afasta a câmera para caber o Lumi inteiro
     const narrow = tg.fit ? 1 : this.aspect < 0.62 ? 0.62 / this.aspect : 1;
     this.camera.position.set(f.x, f.y + (tg.fit ? 0 : 0.4), f.dist * Math.max(1, narrow * 0.92));
     this.camera.lookAt(f.x, f.lookY, 0);
-    this.lumi.root.rotation.y = f.rotY + Math.sin(this.t * 0.4) * 0.06;
+    const lie = tg.night && this.lumi.mood === 'sleep' ? 1 : 0; this.lieK = (this.lieK || 0) + (lie - (this.lieK || 0)) * Math.min(1, dt * 3);
+    this.lumi.root.rotation.y = (f.rotY + Math.sin(this.t * 0.4) * 0.06) * (1 - this.lieK);
+    this.lumi.root.rotation.x = -1.3 * this.lieK; this.lumi.root.position.set(0, 0.55 * this.lieK, -0.2 * this.lieK);
     this.lumi.update(this.t, dt);
     this.eggTick(dt);
     this.renderer.render(this.scene, this.camera);
@@ -939,8 +1004,8 @@ export class Stage {
   /* miniatura do Lumi vestindo uma peça (para a loja) */
   outfitSnapshot(outfit, focus, size = 140) {
     const L = this.lumi, saved = Object.assign({}, L.outfit), z = L.size;
-    const vis = { p: this.props.visible, i: this.island.visible, e: this.egg.visible, l: L.root.visible, ry: L.root.rotation.y };
-    this.props.visible = this.island.visible = this.egg.visible = false; L.root.visible = true;
+    const vis = { p: this.props.visible, i: this.island.visible, e: this.egg.visible, l: L.root.visible, ry: L.root.rotation.y, r: this.rug.visible, b: this.pillow.visible };
+    this.props.visible = this.island.visible = this.egg.visible = this.rug.visible = this.pillow.visible = false; L.root.visible = true;
     L.setOutfit(outfit);
     const F = { head: [3.15, 5.4], face: [2.75, 3.6], body: [1.25, 4.8], legs: [0.75, 4.8], neck: [1.7, 4.0], costume: [2.25, 8.6], back: [1.5, 6.8] }[focus] || [2.2, 8.8];
     if (focus === 'back') L.root.rotation.y = Math.PI * 0.82;
@@ -951,19 +1016,19 @@ export class Stage {
     const url = this.canvas.toDataURL('image/png');
     this.renderer.setSize(old.x, old.y, false);
     L.setOutfit(saved); L.root.rotation.y = vis.ry;
-    this.props.visible = vis.p; this.island.visible = vis.i; this.egg.visible = vis.e; L.root.visible = vis.l;
+    this.props.visible = vis.p; this.island.visible = vis.i; this.egg.visible = vis.e; L.root.visible = vis.l; this.rug.visible = vis.r; this.pillow.visible = vis.b;
     return url;
   }
   /* imagem do Lumi (para o mapa) */
   snapshot(w = 256, h = 256) {
-    const old = { pv: this.props.visible, iv: this.island.visible, size: new THREE.Vector2() };
+    const old = { pv: this.props.visible, iv: this.island.visible, rv: this.rug.visible, bv: this.pillow.visible, size: new THREE.Vector2() };
     this.renderer.getSize(old.size);
-    this.props.visible = false; this.island.visible = false;
+    this.props.visible = this.island.visible = this.rug.visible = this.pillow.visible = false;
     const z = this.lumi.size; const cam = new THREE.PerspectiveCamera(26, w / h, 0.1, 50); cam.position.set(0, 2.6 * z, 7.2 * z + 0.6); cam.lookAt(0, 2.3 * z, 0);
     this.renderer.setSize(w, h, false); this.renderer.render(this.scene, cam);
     const url = this.canvas.toDataURL('image/png');
     this.renderer.setSize(old.size.x, old.size.y, false);
-    this.props.visible = old.pv; this.island.visible = old.iv;
+    this.props.visible = old.pv; this.island.visible = old.iv; this.rug.visible = old.rv; this.pillow.visible = old.bv;
     return url;
   }
   accessorySnapshot(slot, id, size = 160) {

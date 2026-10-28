@@ -27,11 +27,11 @@ const legOwned = (it) => !!S.owned[it.slot + ':' + it.id];
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} bind(); };
 const level = () => Math.floor(S.xp / 300) + 1;
 function bind() {
-  $$('[data-bind]').forEach((el) => { const k = el.dataset.bind; el.textContent = k === 'level' ? level() : Math.round(S[k] ?? 0); });
+  $$('[data-bind]').forEach((el) => { const k = el.dataset.bind; el.textContent = k === 'level' ? level() : k === 'xpin' ? S.xp % 300 : Math.round(S[k] ?? 0); });
   $$('[data-bind-w]').forEach((el) => { const k = el.dataset.bindW; el.style.width = (k === 'xp' ? (S.xp % 300) / 3 : Math.min(100, S[k])) + '%'; });
   const n = doneCount(), gi = growIdx(n), g = D.grow[gi], nx = D.grow[gi + 1];
   const ic = $('#grow-ic'); if (ic) ic.textContent = S.hatched ? g.icon : '🥚';
-  const hn = $('#home-name'); if (hn) hn.textContent = S.hatched ? 'Lumi ' + g.name : 'Lumi vai nascer!';
+  const hn = $('#home-name'); if (hn) hn.textContent = !S.hatched ? 'Lumi vai nascer!' : nx ? `Lumi ${g.name} · cresce em ${nx.min - n} fase${nx.min - n > 1 ? 's' : ''}` : 'Lumi ' + g.name;
   const gb = $('#grow-bar'); if (gb) gb.style.width = (!S.hatched ? 0 : nx ? ((n - g.min) / (nx.min - g.min)) * 100 : 100) + '%';
 }
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 1900); }
@@ -46,14 +46,17 @@ lumi.setGrowth(growIdx(), true);
 setTimeout(() => updateFx(), 0);
 if (!S.hatched) stage.setEgg(true);
 const PRESET = {
-  splash: { fit: [0.17, 0.72], props: true },
-  home: { fit: [0.22, 0.73], props: true },
-  lesson: { fit: [0.2, 0.99], props: false },
-  result: { fit: [0.25, 0.79], props: true },
-  rest: { fit: [0.22, 0.75], props: false, night: true },
-  snack: { fit: [0.2, 0.75], props: false },
-  shop: { fit: [0.22, 0.53], props: false },
+  splash: { fit: [0.2, 0.7], scene: 'room' },
+  home: { fit: [0.17, 0.555], x: 0.55, scene: 'room' },
+  lesson: { fit: [0.07, 0.5], x: 0.95, scene: 'room' },
+  result: { fit: [0.26, 0.74], scene: 'room' },
+  rest: { fit: [0.18, 0.6], night: true, tilt: 4 },
+  snack: { fit: [0.15, 0.5], scene: 'room' },
+  shop: { fit: [0.13, 0.43], scene: 'room' },
 };
+// cenários pintados e barra de baixo
+$$('[data-scene]').forEach((el) => { el.style.backgroundImage = window.LUMI_SCENES.room(el.dataset.scene); });
+$$('[data-nav]').forEach((n) => { n.innerHTML = [['home', '🏠', 'Início'], ['rest', '🌙', 'Descanso'], ['snack', '🍎', 'Lanche'], ['shop', '🎩', 'Acessórios']].map(([g, i, l]) => `<button data-go="${g}"><span>${i}</span>${l}</button>`).join(''); });
 
 /* ---------------- voz (áudios gravados com voz de criança) ---------------- */
 let AUDIO = {}, actx = null, analyser = null, speakToken = 0, curSrc = null;
@@ -177,6 +180,7 @@ function show(name) {
   stopTalk(); stopListen();
   if (current === 'shop') { preview = null; lumi.setOutfit(S.outfit); }
   $$('.screen').forEach((s) => s.classList.toggle('on', s.id === 's-' + name));
+  $$('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.go === name));
   current = name;
   if (stage.egg.visible !== !S.hatched) stage.setEgg(!S.hatched);
   const host = $('#s-' + name + ' [data-host]');
@@ -230,7 +234,8 @@ $('#btn-start').addEventListener('click', () => {
 function enterHome() {
   tickSleep();
   const i = unitIndex(), u = D.units[i];
-  $('#play-sub').textContent = `Fase ${u.num} · ${worldOf(u).name} · ${u.name}`;
+  $('#home-unit-ic').textContent = u.icon; $('#home-unit-name').textContent = u.name;
+  $('#home-unit-meta').textContent = `Fase ${u.num} · ${worldOf(u).name} · +50 XP`;
   $('#btn-gift').classList.toggle('glow', S.giftDay !== today());
   renderChestBtn();
   lumi.setMood(S.sleeping ? 'sleep' : 'idle');
@@ -297,16 +302,17 @@ function enterMap() {
     html += `<div class="band" style="top:${top}px;height:${bottom - top}px;background:linear-gradient(180deg,${w.color}10,${w.color}38)"></div>`;
     html += `<div class="wban" style="top:${bottom - BAN / 2 - 6}px;--wc:${w.color}"><span class="wi">${w.icon}</span><div><b>Mundo ${wi + 1} · ${w.name}</b><small>${done}/${idx.length} fases</small></div></div>`;
   });
-  html += `<svg class="mapsvg" viewBox="0 0 400 ${H}" preserveAspectRatio="none"><path d="${path}" stroke="rgba(255,255,255,.8)" stroke-width="26" fill="none" stroke-linecap="round"/><path d="${path}" stroke="#ffc928" stroke-width="9" stroke-dasharray="1 22" fill="none" stroke-linecap="round"/></svg>`;
+  void path;
   D.units.forEach((u, i) => {
     const st = S.units[u.id] || {};
     const cls = (st.done ? 'done' : i === cur ? 'cur' : i > cur ? 'lock' : '') + (u.type === 'game' ? ' game' : '');
     const stars = st.stars ? '⭐'.repeat(st.stars) + '<span style="opacity:.3">' + '⭐'.repeat(3 - st.stars) + '</span>' : '';
-    html += `<button class="node ${cls}" data-u="${i}" style="left:${pts[i].x * 100}%;top:${pts[i].y}px"><div class="disc"><span class="n">${u.num}</span>${u.icon}${i > cur ? '<span class="lk">🔒</span>' : ''}</div><label>${u.name}</label><div class="st">${stars}</div></button>`;
+    html += `<button class="node ${cls}" data-u="${i}" style="left:${pts[i].x * 100}%;top:${pts[i].y}px"><div class="disc">${i > cur ? '<span class="lk">🔒</span>' : `<span class="n">${u.num}</span>`}<span class="ico">${u.icon}</span></div><label>${u.name}</label><div class="st">${stars}</div></button>`;
   });
   if (!avatarURL) avatarURL = stage.snapshot(220, 220);
   html += `<img class="mapav" src="${avatarURL}" alt="" style="left:calc(${pts[cur].x * 100}% + ${pts[cur].x > 0.5 ? -88 : 88}px);top:${pts[cur].y + 40}px">`;
   wrap.innerHTML = html;
+  wrap.style.backgroundImage = window.LUMI_SCENES.map(H, pts.map((q) => ({ x: q.x, y: q.y })));
   const sc = $('#map-scroll');
   requestAnimationFrame(() => { sc.scrollTop = Math.max(0, pts[cur].y - sc.clientHeight / 2); });
 }
@@ -321,7 +327,7 @@ $('#mapwrap').addEventListener('click', (e) => {
 let LS = null;
 const STARS = 8;
 function picHTML(w) { return w.txt ? `<span class="num">${w.txt}</span>` : w.img; }
-function setStars() { $('#stars').innerHTML = Array.from({ length: STARS }, (_, i) => `<span class="${i < LS.stars ? 'on' : ''}">⭐</span>`).join(''); }
+function setStars() { $('#lbar').style.width = (LS.stars / STARS) * 100 + '%'; $('#lcount').textContent = LS.stars + '/' + STARS; $('#ltitle').textContent = (LS.u.type === 'game' ? 'Fase ' : 'Aula ') + LS.u.num; }
 function addStar(el) {
   LS.stars = Math.min(STARS, LS.stars + 1); setStars();
   if (el) coinFly(el, '+2 🪙'); S.coins += 2; LS.coins += 2; save();
@@ -376,7 +382,7 @@ async function runLesson(ls) {
     for (const w of ls.words) { if (!alive(ls)) return; await teachWord(ls, w); }
     if (!alive(ls)) return;
     await quizIntro(ls);
-    for (const w of shuffle(ls.words)) { if (!alive(ls)) return; await quizWord(ls, w); }
+    let qi = 0; for (const w of shuffle(ls.words)) { if (!alive(ls)) return; await (qi++ % 2 ? quizWord2(ls, w) : quizWord(ls, w)); }
   } else if (g === 'simon') await playSimon(ls);
   else if (g === 'balloon') await playBalloon(ls);
   else if (g === 'feed') await playFeed(ls);
@@ -486,6 +492,32 @@ async function quizWord(ls, w) {
       }
     });
     ls.abort = resolve;
+  });
+}
+
+// "Como se diz ... em inglês?" com 3 palavras (ouve cada uma ao tocar)
+async function quizWord2(ls, w) {
+  const B = $('#lbody'), bub = $('#lesson-bubble');
+  const opts = shuffle([w, ...shuffle(ls.u.words.filter((x) => x.en !== w.en)).slice(0, 2)]);
+  B.innerHTML = `<div class="qcard in card"><button class="spk" id="qspk">🔊</button><div class="pic">${picHTML(w)}</div><div class="qtxt">Como se diz “${esc(w.pt)}” em inglês?</div>
+    <div class="wopts">${opts.map((o) => `<button class="wopt" data-en="${esc(o.en)}">${esc(o.en)}</button>`).join('')}</div></div>`;
+  $('#qspk').onclick = () => speak(w.en, 'en');
+  say(bub, [[cap(w.pt) + '! ' + T.pt.inEn, 'pt']], `Como se diz <b>${esc(w.pt)}</b> em inglês?`);
+  await new Promise((resolve) => {
+    ls.abort = resolve; let busy = false;
+    $$('.wopt', B).forEach((b) => b.onclick = async () => {
+      if (busy || $('.wopt.ok', B) || !alive(ls)) return;
+      busy = true; stopTalk(); await speak(b.dataset.en, 'en'); busy = false;
+      if (b.dataset.en === w.en) {
+        b.classList.add('ok'); $$('.wopt', B).forEach((x) => x !== b && x.classList.add('dim'));
+        lumi.celebrate(); addStar(b);
+        await say(bub, [[rnd(T.en.praise), 'en'], [rnd(T.pt.praise), 'pt']]);
+        lumi.setMood('idle'); resolve();
+      } else {
+        ls.misses++; b.classList.add('bad'); setTimeout(() => { b.classList.remove('bad'); b.classList.add('dim'); }, 450);
+        lumi.encourage(); await say(bub, [[T.pt.notThis, 'pt']]); lumi.setMood('idle');
+      }
+    });
   });
 }
 
@@ -711,6 +743,7 @@ function checkAwards(levelBefore, growBefore) {
 }
 function renderChestBtn() { const b = $('#btn-chest'); if (!b) return; b.style.display = S.chests.length ? '' : 'none'; $('#chest-n').textContent = S.chests.length; }
 $('#btn-chest').addEventListener('click', () => { audioCtx(); openChest(); });
+$('#btn-legend').addEventListener('click', () => { audioCtx(); slot = 'legend'; go('shop'); });
 function wornSet() { return D.legendary.find((c) => c.items.every((it) => (it.slot === 'costume' ? S.outfit.costume === it.id : S.outfit[it.slot] === it.id && (!S.outfit.costume || S.outfit.costume === 'none' || !COVERED.includes(it.slot))))); }
 function updateFx(announce) {
   const c = wornSet(); lumi.setEffect(c ? c.fx : null);
@@ -768,7 +801,7 @@ function renderRest() {
   const b = $('#btn-sleep');
   b.textContent = S.sleeping ? '☀️ Acordar o Lumi' : '🌙 Colocar para dormir';
   b.className = S.sleeping ? 'big blue' : 'big yellow';
-  $('#rest-hint').textContent = S.sleeping ? (S.energy >= 100 ? 'Energia cheia! Pode acordar o Lumi.' : 'Shhh… o Lumi está recuperando energia.') : 'Dormindo, o Lumi recupera energia rapidinho.';
+  const secs = Math.max(0, (100 - S.energy) * 3); $('#rest-hint').textContent = S.energy >= 100 ? 'Energia cheia! ⚡' : S.sleeping ? `${Math.floor(secs / 60)}min ${secs % 60}s` : `${Math.ceil(secs / 60)} min dormindo`;
   $('#zzz').classList.toggle('on', S.sleeping);
   bind();
 }
@@ -794,7 +827,7 @@ $('#btn-sleep').addEventListener('click', async () => {
 /* ---------------- LANCHE ---------------- */
 function enterSnack() {
   tickSleep(); wake(); lumi.setMood('idle');
-  $('#foods').innerHTML = D.foods.map((f) => `<button class="food" data-id="${f.id}"><span class="em">${f.img}</span><b>${f.en}</b><span class="pr"><span>🪙${f.price}</span><span style="color:var(--greenD)">⚡+${f.energy}</span></span></button>`).join('');
+  $('#foods').innerHTML = D.foods.map((f) => `<button class="food" data-id="${f.id}"><span class="em">${f.img}</span><b>${f.pt}</b><span class="pr"><span>${f.price} 🪙</span><span style="color:var(--greenD)">+${f.energy} ⚡</span></span><span class="dar">Dar</span></button>`).join('');
   setTimeout(() => current === 'snack' && say($('#snack-bubble'), [[T.pt.hungry, 'pt'], [T.en.hungry, 'en']]), 350);
 }
 $('#foods').addEventListener('click', async (e) => {

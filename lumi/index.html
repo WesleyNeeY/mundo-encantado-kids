@@ -336,6 +336,135 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 .item.leg.locked img{filter:brightness(0) opacity(.28)}
 .item.leg .tag.rar{background:var(--rc);color:#fff;font-size:11px}
 .lnote{font-size:13px;color:var(--muted);font-weight:600;text-align:center;margin:4px 6px 8px}
+/* ===================== visual da referência ===================== */
+.screen.room{background-color:#c9773a;background-size:cover;background-position:center top}
+.screen.forest{background:#2f8a46}
+#s-lesson.room::before{content:"";position:absolute;inset:-10px;background:inherit;filter:blur(3px) saturate(1.05);z-index:0}
+.logo{font-size:46px;font-weight:700;color:#fff;letter-spacing:.5px;line-height:1;-webkit-text-stroke:2px #1f6fe0;paint-order:stroke fill;text-shadow:0 4px 0 #1a5fc4,0 8px 16px rgba(10,40,100,.35)}
+.logo i{font-style:normal;color:#ffc928;font-size:30px;vertical-align:top;-webkit-text-stroke:1.5px #c98a00}
+.logo.sm{font-size:40px}
+.tagline,.hlogo small{display:block;font-size:14px;font-weight:600;color:#fff;text-shadow:0 2px 4px rgba(60,25,5,.6)}
+.htop{position:absolute;left:0;right:0;top:0;z-index:4;display:flex;align-items:flex-start;gap:8px;padding:calc(12px + env(safe-area-inset-top,0px)) 14px 0}
+.hlogo{display:flex;flex-direction:column;gap:2px}
+.pill{height:42px;background:rgba(255,255,255,.96);font-size:19px;box-shadow:0 4px 0 rgba(90,40,10,.18),0 8px 16px rgba(60,25,5,.2)}
+.side{position:absolute;left:12px;top:calc(104px + env(safe-area-inset-top,0px));z-index:4;display:flex;flex-direction:column;gap:10px}
+.sbtn{width:64px;padding:7px 0 6px;border-radius:18px;background:rgba(255,255,255,.96);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:700;color:var(--ink);box-shadow:0 4px 0 rgba(90,40,10,.2),0 8px 16px rgba(60,25,5,.2)}
+.sbtn span{font-size:28px;line-height:1.1}
+.sbtn:active{transform:translateY(3px)}
+.sbtn.glow{animation:glow 1.4s ease-in-out infinite}
+.bubble.hb{left:auto;right:16px;transform:none;top:calc(150px + env(safe-area-inset-top,0px));max-width:52%;font-size:17px}
+.bubble.hb::after{left:30px}
+.bubble.hb.pop{animation:popr .4s cubic-bezier(.2,1.6,.4,1)}
+@keyframes popr{from{transform:scale(.5);opacity:0}}
+.hcards{position:absolute;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:4;display:flex;flex-direction:column;gap:10px}
+.hcard{background:rgba(255,255,255,.97);border-radius:24px;padding:12px 14px;box-shadow:0 6px 0 rgba(90,40,10,.16),0 12px 24px rgba(60,25,5,.22)}
+.lvrow{display:flex;align-items:center;gap:8px}
+.lvrow b{font-size:19px}
+.xpt{margin-left:auto;font-weight:600;color:var(--muted);font-size:15px}
+.chestmini{position:relative;font-size:30px;line-height:1;margin:-6px -4px -6px 4px;animation:cpulse 1.2s ease-in-out infinite}
+.chestmini i{position:absolute;top:-6px;right:-8px;min-width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;font-style:normal;font-size:12px;font-weight:700;display:grid;place-items:center}
+.xpbar.big{height:12px;margin-top:6px;background:#e3ebf8}
+.xpbar.big i{background:linear-gradient(90deg,#5ab8ff,#2f7bff)}
+.growline{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;font-weight:600;color:var(--muted)}
+.growline .gbar{flex:1;height:6px;border-radius:6px;background:#eef2f8;overflow:hidden;margin-left:4px}
+.growline .gbar i{display:block;height:100%;background:linear-gradient(90deg,#8de38f,#34c96b);border-radius:6px}
+.today .trow{display:flex;align-items:center;gap:12px;cursor:pointer}
+.tic{width:62px;height:62px;border-radius:18px;background:linear-gradient(180deg,#ffe8a8,#ffc35c);display:grid;place-items:center;font-size:36px;flex:none;box-shadow:inset 0 -3px 0 rgba(0,0,0,.08)}
+.tt{flex:1;min-width:0;display:flex;flex-direction:column}
+.tt small{font-size:13px;font-weight:700;color:var(--muted)}
+.tt b{font-size:21px;color:#1e3a8a;line-height:1.15}
+.tt span{font-size:13.5px;color:var(--muted);font-weight:600}
+.chev{font-size:34px;color:var(--blue);font-weight:700}
+.big.go{margin-top:10px;height:56px;font-size:22px;border-radius:20px;background:linear-gradient(180deg,#5fe08a,#24b25a);box-shadow:0 6px 0 #178a43,0 10px 18px rgba(20,120,60,.3)}
+.big.go span{font-size:26px}
+.tabbar{position:absolute;left:0;right:0;bottom:0;z-index:6;display:flex;gap:4px;background:#fff;border-radius:26px 26px 0 0;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 24px rgba(60,25,5,.18)}
+.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border-radius:16px;font-size:12.5px;font-weight:600;color:#7b86a8}
+.tabbar button span{font-size:24px;line-height:1.1;filter:grayscale(.7);opacity:.75}
+.tabbar button.on{color:var(--blue);background:#e6f0ff}
+.tabbar button.on span{filter:none;opacity:1}
+/* aula */
+.ltop{position:absolute;left:0;right:0;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 0}
+.round{width:44px;height:44px;font-size:30px;line-height:1;color:var(--blue);padding-bottom:3px}
+.lmid{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.lmid b{font-size:22px;color:#fff;text-shadow:0 2px 0 rgba(80,35,5,.5),0 3px 10px rgba(60,25,5,.4)}
+.lbar{width:100%;height:12px;border-radius:8px;background:rgba(255,255,255,.55);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.15)}
+.lbar i{display:block;height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,#5ab8ff,#2f7bff);transition:width .5s}
+.lcount{min-width:44px;text-align:right;font-weight:700;font-size:18px;color:#fff;text-shadow:0 2px 0 rgba(80,35,5,.5)}
+.bubble.lb{left:auto;right:12px;transform:none;top:calc(78px + env(safe-area-inset-top,0px));max-width:50%;font-size:16.5px}
+.bubble.lb::after{left:-6px;bottom:auto;top:24px}
+.bubble.lb.pop{animation:popr .4s cubic-bezier(.2,1.6,.4,1)}
+#s-lesson .lbody{position:absolute;left:0;right:0;top:31%;bottom:0;padding:0 16px calc(14px + env(safe-area-inset-bottom,0px));z-index:4}
+#s-lesson .card{border-radius:30px;box-shadow:0 8px 0 rgba(90,40,10,.15),0 16px 30px rgba(60,25,5,.25)}
+#s-lesson .pic{background:linear-gradient(180deg,#eaf6ff,#d6ecff);border-radius:22px;padding:6px 0;margin:0 auto;width:min(48vw,190px)}
+#s-lesson .turn{background:rgba(255,255,255,.9);border-radius:26px;padding:10px 12px 8px;box-shadow:0 6px 18px rgba(60,25,5,.2);min-height:0;margin-top:auto}
+#s-lesson .qtitle{background:#fff;border-radius:22px;padding:10px 14px;box-shadow:0 6px 18px rgba(60,25,5,.2)}
+.wopts{display:flex;flex-direction:column;gap:10px;width:100%;max-width:360px;margin-top:12px}
+.wopt{height:52px;border-radius:18px;background:#e9f1ff;font-size:21px;font-weight:700;color:var(--ink);box-shadow:0 4px 0 #c9d8f3;display:flex;align-items:center;justify-content:center;gap:10px;position:relative}
+.wopt.ok{background:linear-gradient(180deg,#5fe08a,#24b25a);color:#fff;box-shadow:0 4px 0 #178a43}
+.wopt.ok::after{content:"✓";position:absolute;right:16px;width:28px;height:28px;border-radius:50%;background:#fff;color:#24b25a;display:grid;place-items:center;font-size:18px}
+.wopt.bad{background:#ffe2e7;box-shadow:0 4px 0 #ffb3c0;animation:shake .45s}
+.wopt.dim{opacity:.45}
+.qcard{background:#fff;border-radius:30px;padding:14px 14px 16px;width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center;box-shadow:0 8px 0 rgba(90,40,10,.15),0 16px 30px rgba(60,25,5,.25);position:relative}
+.qcard .qtxt{font-size:21px;font-weight:700;text-align:center;line-height:1.2;margin-top:8px}
+.qcard .spk{position:absolute;right:12px;top:12px}
+/* mapa */
+.mtop,.ptop{position:relative;z-index:5;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 8px}
+.mtop{position:absolute;left:0;right:0;top:0;background:linear-gradient(180deg,rgba(20,70,30,.55),rgba(20,70,30,0))}
+.mtt,.ptt{flex:1;display:flex;flex-direction:column;min-width:0}
+.mtt b,.ptt b{font-size:24px;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.3),0 3px 10px rgba(0,0,0,.3)}
+.mtt small,.ptt small{font-size:13px;font-weight:600;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.mapic{width:46px;height:46px;border-radius:14px;background:#fff;display:grid;place-items:center;font-size:26px;box-shadow:0 4px 0 rgba(0,0,0,.15)}
+#s-map .mapscroll{position:absolute;inset:0}
+.mapwrap{background-size:100% 100%;background-repeat:no-repeat}
+.node{width:130px}
+.node .disc{width:104px;height:72px;border-radius:40px;border:0;background:linear-gradient(180deg,#8ff09a,#2fbf5a);box-shadow:0 7px 0 #1e8f40,0 12px 20px rgba(0,0,0,.25);color:#fff;font-size:30px;flex-direction:column;line-height:1;display:flex;align-items:center;justify-content:center}
+.node .disc::before,.node .disc::after{content:"";position:absolute;border-radius:50%;background:inherit;z-index:-1}
+.node .disc::before{width:56px;height:56px;left:10px;top:-20px}
+.node .disc::after{width:46px;height:46px;right:12px;top:-14px}
+.node .disc .n{position:static;width:auto;height:auto;background:none;box-shadow:none;font-size:30px;font-weight:700;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.2)}
+.node .disc .ico{font-size:22px;line-height:1}
+.node label{background:none;box-shadow:none;color:#fff;font-size:14px;text-shadow:0 2px 3px rgba(0,0,0,.6);padding:0}
+.node.cur .disc{background:linear-gradient(180deg,#ffe27a,#ffb000);box-shadow:0 7px 0 #c98a00,0 0 0 6px rgba(255,255,255,.5),0 12px 20px rgba(0,0,0,.25)}
+.node.lock .disc{background:linear-gradient(180deg,#b8a28e,#8a6f58);box-shadow:0 7px 0 #5f4a39,0 12px 20px rgba(0,0,0,.25);filter:none;opacity:1}
+.node.game .disc{background:linear-gradient(180deg,#ffb3dc,#ff5aa5);box-shadow:0 7px 0 #c93b7c,0 12px 20px rgba(0,0,0,.25)}
+.node.game.lock .disc{background:linear-gradient(180deg,#c9a9bd,#9c7590);box-shadow:0 7px 0 #6d4f62,0 12px 20px rgba(0,0,0,.25)}
+.node .lk{position:static;width:auto;height:auto;background:none;box-shadow:none;font-size:22px}
+.wban{background:linear-gradient(180deg,#d29355,#a86a33);border:4px solid #7a4a24;color:#fff;box-shadow:0 6px 0 #5a3417,0 12px 22px rgba(0,0,0,.3)}
+.wban b{color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.wban small{color:#ffe9c9}
+.band{display:none}
+/* descanso / lanche / loja */
+.ptop{position:absolute;left:0;right:0;top:0}
+.pbottom{position:absolute;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:5;display:flex;flex-direction:column;gap:10px}
+.gcard{display:flex;align-items:center;gap:12px;border-radius:22px;padding:12px 14px;background:rgba(25,22,70,.72);border:1.5px solid rgba(255,255,255,.18);color:#fff;backdrop-filter:blur(6px)}
+.gcard.light{background:rgba(255,255,255,.95);color:var(--ink);border:0;box-shadow:0 6px 0 rgba(90,40,10,.14)}
+.gi{font-size:28px}
+.gc{flex:1;display:flex;flex-direction:column;gap:4px}
+.gl{display:flex;justify-content:space-between;font-weight:700}
+.gc small{font-weight:600;opacity:.85}
+.gc b{font-size:18px}
+.ebar{height:14px;border-radius:9px;background:rgba(255,255,255,.22);overflow:hidden}
+.gcard.light .ebar{background:#e6edf7}
+.ebar i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#9cf29e,#2fc46a);transition:width .6s}
+.bubble.pb{top:calc(96px + env(safe-area-inset-top,0px))}
+.zzz{left:62%;top:32%}
+.foods{gap:10px;padding:2px 2px 6px}
+.food{width:110px;border-radius:24px;padding:10px 6px 10px;gap:3px;box-shadow:0 6px 0 rgba(90,40,10,.15),0 10px 18px rgba(60,25,5,.18);border:3px solid transparent}
+.food:first-child{border-color:#34c96b}
+.food .em{font-size:52px}
+.food b{font-size:17px;color:var(--ink)}
+.food .pr{font-size:15px;flex-direction:column;align-items:center;gap:0}
+.food .dar{margin-top:4px;width:86px;height:34px;border-radius:12px;background:linear-gradient(180deg,#5fb0ff,#2f86ff);color:#fff;font-weight:700;font-size:16px;display:grid;place-items:center;box-shadow:0 4px 0 var(--blueD)}
+.food:first-child .dar{background:linear-gradient(180deg,#5fe08a,#24b25a);box-shadow:0 4px 0 #178a43}
+.spanel{position:absolute;left:10px;right:10px;bottom:calc(80px + env(safe-area-inset-bottom,0px));z-index:5;background:rgba(255,255,255,.95);border-radius:26px;padding:10px 10px 6px;box-shadow:0 8px 24px rgba(60,25,5,.25)}
+#s-shop .tabs{margin:0 0 8px;padding:0 0 4px}
+#s-shop .tab{background:#f2f4fb;color:#5d6fa3;height:38px;font-size:14px;border-radius:14px}
+#s-shop .tab.on{background:#fff;color:var(--blue);box-shadow:0 0 0 2px #2f86ff inset}
+#s-shop .items{grid-template-columns:repeat(3,1fr);max-height:calc(40vh - 60px)}
+#s-shop .item{border-radius:18px;border:2px solid #edf0f7;box-shadow:none;padding:6px 2px 8px}
+#s-shop .item.wear{border-color:#34c96b;background:#f1fff5}
+#s-shop .item.sel{border-color:var(--blue)}
+.item img{width:74px;height:74px}
 @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -343,10 +472,9 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 <div id="app">
 
  <!-- SPLASH -->
- <section class="screen sky" id="s-splash">
-  <div class="clouds" data-clouds></div>
+ <section class="screen room" id="s-splash" data-scene="day">
   <div class="host" data-host></div>
-  <div class="brand" style="top:calc(40px + env(safe-area-inset-top,0px))"><div class="logo">Lumi<i>★</i></div><div class="tagline">Aprenda inglês brincando!</div></div>
+  <div class="brand" style="top:calc(46px + env(safe-area-inset-top,0px))"><div class="logo">Lumi<i>★</i></div><div class="tagline">Seu mundo de inglês</div></div>
   <div class="splashui">
    <input id="kidname" maxlength="16" placeholder="Qual é o seu nome?" autocomplete="off">
    <button class="big" id="btn-start">Vamos lá! ▶</button>
@@ -354,93 +482,105 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
  </section>
 
  <!-- HOME -->
- <section class="screen sky" id="s-home">
-  <div class="clouds" data-clouds></div>
+ <section class="screen room" id="s-home" data-scene="day">
   <div class="host" data-host></div>
-  <div class="top ui">
-   <div class="lvl"><div class="b" id="grow-ic">🍼</div><div class="t"><b id="home-name">Lumi</b><div class="xpbar"><i id="grow-bar"></i></div></div></div>
+  <div class="htop ui">
+   <div class="hlogo"><div class="logo sm">Lumi<i>★</i></div><small>Seu mundo de inglês</small></div>
    <div class="spacer"></div>
    <div class="pill"><span class="ic coin">$</span><span data-bind="coins">0</span></div>
-   <div class="pill"><span class="ic bolt">⚡</span><span data-bind="energy">0</span></div>
+   <div class="pill"><span class="ic fire">🔥</span><span data-bind="streak">0</span></div>
   </div>
-  <div class="bubble pop" id="home-bubble" style="top:calc(78px + env(safe-area-inset-top,0px))"></div>
-  <button class="chestbtn" id="btn-chest" style="display:none"><span class="cb">🎁</span><b>Baú!</b><i id="chest-n">1</i></button>
-  <div class="homeacts">
-   <div class="acts">
-    <button class="act" data-go="map"><span class="c map">🗺️</span>Mapa</button>
-    <button class="act" data-go="snack"><span class="c food">🍎</span>Lanche</button>
-    <button class="act" id="btn-gift"><span class="c gift">🎁</span>Presente</button>
-    <button class="act" data-go="rest"><span class="c moon">🌙</span>Dormir</button>
-    <button class="act" data-go="shop"><span class="c hat">🎩</span>Roupas</button>
+  <div class="side ui">
+   <button class="sbtn" id="btn-gift"><span>🎁</span>Presente</button>
+   <button class="sbtn" id="btn-legend"><span>✨</span>Coleções</button>
+   <button class="sbtn" data-go="map"><span>🗺️</span>Mapa</button>
+  </div>
+  <div class="bubble hb pop" id="home-bubble"></div>
+  <div class="hcards">
+   <div class="hcard lvlcard">
+    <div class="lvrow"><b>Nível <span data-bind="level">1</span></b><span class="xpt"><span data-bind="xpin">0</span>/300 XP</span>
+     <button class="chestmini" id="btn-chest" style="display:none"><svg width="38" height="32" viewBox="0 0 38 32"><rect x="2" y="12" width="34" height="18" rx="3" fill="#c0392b" stroke="#7a1f14" stroke-width="2"/><path d="M2 14 Q2 2 19 2 Q36 2 36 14 Z" fill="#e74c3c" stroke="#7a1f14" stroke-width="2"/><rect x="2" y="12" width="34" height="4" fill="#f1c40f"/><rect x="16" y="11" width="6" height="9" rx="1.5" fill="#f1c40f" stroke="#a87b00"/><rect x="8" y="2.5" width="3" height="27" fill="#f1c40f" opacity=".9"/><rect x="27" y="2.5" width="3" height="27" fill="#f1c40f" opacity=".9"/></svg><i id="chest-n">1</i></button></div>
+    <div class="xpbar big"><i data-bind-w="xp"></i></div>
+    <div class="growline"><span id="grow-ic">🍼</span> <span id="home-name">Lumi</span><span class="gbar"><i id="grow-bar"></i></span></div>
    </div>
-   <button class="big play pulse" id="btn-play"><span class="l1">▶ JOGAR</span><span class="l2" id="play-sub">Aula 1 · Primeiras palavras</span></button>
+   <div class="hcard today">
+    <div class="trow" data-go="map"><div class="tic" id="home-unit-ic">🌟</div><div class="tt"><small>Aula de hoje</small><b id="home-unit-name">Primeiras palavras</b><span id="home-unit-meta">4 palavras · +50 XP</span></div><span class="chev">›</span></div>
+    <button class="big go" id="btn-play">Começar agora <span>→</span></button>
+   </div>
   </div>
+  <nav class="tabbar" data-nav></nav>
  </section>
 
  <!-- MAP -->
- <section class="screen sky" id="s-map">
-  <div class="clouds" data-clouds></div>
-  <div class="ptitle"><button class="round" data-go="home" aria-label="Voltar">←</button><h1 style="color:#fff;text-shadow:0 3px 0 #2a72e6">Mapa de Aventuras</h1></div>
+ <section class="screen forest" id="s-map">
+  <div class="mtop">
+   <button class="round" data-go="home" aria-label="Voltar">‹</button>
+   <div class="mtt"><b>Mapa de Aventuras</b><small>Complete as lições e explore novos lugares!</small></div>
+   <span class="mapic">🗺️</span>
+  </div>
   <div class="mapscroll" id="map-scroll"><div class="mapwrap" id="mapwrap"></div></div>
  </section>
 
  <!-- LESSON -->
- <section class="screen lessonbg" id="s-lesson">
+ <section class="screen room" id="s-lesson" data-scene="lesson">
+  <div class="host" data-host></div>
   <div class="ltop">
-   <button class="round" id="btn-quit" aria-label="Sair">✕</button>
-   <div class="stars" id="stars"></div>
-   <div class="pill"><span class="ic coin">$</span><span data-bind="coins">0</span></div>
+   <button class="round" id="btn-quit" aria-label="Sair">‹</button>
+   <div class="lmid"><b id="ltitle">Aula 1</b><div class="lbar"><i id="lbar"></i></div></div>
+   <span class="lcount" id="lcount">0/8</span>
+   <div class="stars" id="stars" hidden></div>
   </div>
-  <div class="lstage"><div class="host" data-host></div><div class="bubble pop" id="lesson-bubble"></div></div>
+  <div class="bubble lb pop" id="lesson-bubble"></div>
   <div class="lbody" id="lbody"></div>
  </section>
 
  <!-- RESULT -->
- <section class="screen sky" id="s-result">
-  <div class="clouds" data-clouds></div>
+ <section class="screen room" id="s-result" data-scene="day">
   <div class="host" data-host></div>
   <div class="rtitle"><h1 id="result-title">Aula completa!</h1><div class="big3" id="result-stars"><span>⭐</span><span>⭐</span><span>⭐</span></div></div>
   <div class="rbox">
    <div class="rchest" id="result-chest"></div>
    <div class="rewards"><div class="reward"><span class="ic coin" style="width:30px;height:30px;border-radius:50%;display:grid;place-items:center">$</span>+<span id="result-coins">0</span></div><div class="reward">✨ +<span id="result-xp">0</span> XP</div></div>
-   <button class="big" id="btn-result">Continuar ▶</button>
+   <button class="big go" id="btn-result">Continuar <span>→</span></button>
   </div>
  </section>
 
  <!-- REST -->
- <section class="screen night" id="s-rest">
-  <div class="clouds" data-stars></div>
+ <section class="screen room night" id="s-rest" data-scene="night">
   <div class="host" data-host></div>
-  <div class="ptitle"><button class="round" data-go="home" aria-label="Voltar">←</button><h1>Hora de dormir</h1></div>
-  <div class="bubble pop" id="rest-bubble" style="top:calc(76px + env(safe-area-inset-top,0px))"></div>
+  <div class="ptop"><button class="round" data-go="home" aria-label="Voltar">‹</button><div class="ptt"><b>Descansar</b><small>O Lumi precisa de energia para continuar aprendendo!</small></div></div>
+  <div class="bubble pb pop" id="rest-bubble"></div>
   <div class="zzz" id="zzz"><span>Z</span><span>z</span><span>z</span></div>
-  <div class="panel">
-   <div class="ebar"><span style="font-size:24px">⚡</span><div class="track"><i data-bind-w="energy"></i></div><span><span data-bind="energy">0</span>/100</span></div>
-   <p class="hint" id="rest-hint"></p>
-   <button class="big yellow" id="btn-sleep">🌙 Dormir</button>
+  <div class="pbottom">
+   <div class="gcard"><span class="gi">⚡</span><div class="gc"><div class="gl"><b>Energia</b><span><span data-bind="energy">0</span>/100</span></div><div class="ebar"><i data-bind-w="energy"></i></div></div></div>
+   <div class="gcard"><span class="gi">⏰</span><div class="gc"><small>Energia cheia em</small><b id="rest-hint">—</b></div></div>
+   <button class="big yellow" id="btn-sleep">🌙 Colocar para dormir</button>
   </div>
+  <nav class="tabbar" data-nav></nav>
  </section>
 
  <!-- SNACK -->
- <section class="screen candy" id="s-snack">
+ <section class="screen room" id="s-snack" data-scene="kitchen">
   <div class="host" data-host></div>
-  <div class="ptitle"><button class="round" data-go="home" aria-label="Voltar">←</button><h1>Lanchinho</h1><div class="spacer"></div><div class="pill"><span class="ic coin">$</span><span data-bind="coins">0</span></div></div>
-  <div class="bubble pop" id="snack-bubble" style="top:calc(76px + env(safe-area-inset-top,0px))"></div>
-  <div class="panel">
-   <div class="ebar" style="margin-bottom:12px"><span style="font-size:24px">⚡</span><div class="track"><i data-bind-w="energy"></i></div><span><span data-bind="energy">0</span>/100</span></div>
+  <div class="ptop"><button class="round" data-go="home" aria-label="Voltar">‹</button><div class="ptt"><b>Lanchinho</b><small>Alimente o Lumi e ganhe energia!</small></div><div class="pill"><span class="ic coin">$</span><span data-bind="coins">0</span></div></div>
+  <div class="bubble pb pop" id="snack-bubble"></div>
+  <div class="pbottom">
+   <div class="gcard light"><span class="gi">⚡</span><div class="gc"><div class="gl"><b>Energia</b><span><span data-bind="energy">0</span>/100</span></div><div class="ebar"><i data-bind-w="energy"></i></div></div></div>
    <div class="foods" id="foods"></div>
   </div>
+  <nav class="tabbar" data-nav></nav>
  </section>
 
  <!-- SHOP -->
- <section class="screen grape" id="s-shop">
+ <section class="screen room" id="s-shop" data-scene="wardrobe">
   <div class="host" data-host></div>
-  <div class="ptitle"><button class="round" data-go="home" aria-label="Voltar">←</button><h1>Roupinhas</h1><div class="spacer"></div><div class="pill"><span class="ic coin">$</span><span data-bind="coins">0</span></div></div>
-  <div class="bubble pop" id="shop-bubble" style="top:calc(76px + env(safe-area-inset-top,0px))"></div>
-  <div class="panel">
+  <div class="ptop"><button class="round" data-go="home" aria-label="Voltar">‹</button><div class="ptt"><b>Acessórios</b><small>Deixe o Lumi ainda mais especial!</small></div><div class="pill"><span class="ic coin">$</span><span data-bind="coins">0</span></div></div>
+  <div class="bubble pb pop" id="shop-bubble"></div>
+  <div class="spanel">
    <div class="tabs" id="shop-tabs"></div>
    <div class="items" id="shop-items"></div>
   </div>
+  <nav class="tabbar" data-nav></nav>
  </section>
 
  <div class="chestmodal" id="chestmodal"></div>
@@ -450,6 +590,7 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 </div>
 <script src="data.js"></script>
 <script src="lines.js"></script>
+<script src="scenes.js"></script>
 <script type="module" src="app.js"></script>
 </body>
 </html>

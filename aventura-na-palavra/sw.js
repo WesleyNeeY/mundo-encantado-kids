@@ -1,0 +1,18 @@
+// Aventura na Palavra — funciona sem internet depois da primeira visita (mesma estratégia do Lumi).
+const CACHE = 'aventura-v1';
+const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
+self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())); });
+self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url), own = url.origin === location.origin, nav = e.request.mode === 'navigate';
+  // página e código sempre conferidos no servidor (pega a versão nova na hora); o resto segue o cache
+  const fresh = own && (nav || url.pathname.endsWith('/') || /\.(?:html|js|css|json|webmanifest)$/.test(url.pathname));
+  const req = !fresh ? e.request : nav ? new Request(url.href, { cache: 'no-cache', credentials: 'same-origin' }) : new Request(e.request, { cache: 'no-cache' });
+  e.respondWith(fetch(req).then((r) => {
+    if (nav && r.redirected) r = new Response(r.body, { status: r.status, statusText: r.statusText, headers: r.headers });
+    const copy = r.clone();
+    if (r.ok && (own || url.hostname.endsWith('gstatic.com') || url.hostname.endsWith('googleapis.com'))) caches.open(CACHE).then((c) => c.put(e.request, copy));
+    return r;
+  }).catch(() => caches.match(e.request)));
+});

@@ -586,6 +586,9 @@ async function playBalloon(ls) {
   lumi.hop();
   await say(bub, [[T.pt.balloonIntro, 'pt']]); if (!alive(ls)) return;
   const area = $('#bplay'); area.innerHTML = '<button class="spk bspk" id="bspk">🔊</button>';
+  { const sc = $('#s-lesson'); sc.classList.add('bfull');
+    const fitArea = () => { const lb = $('#lbody'), hd = $('#s-lesson .ltop'); if (!lb || !$('#bplay')) return; area.style.top = -(lb.getBoundingClientRect().top - (hd ? hd.getBoundingClientRect().bottom : 0)) + 'px'; };
+    fitArea(); addEventListener('resize', fitArea); const mo = new MutationObserver(() => { if (!$('#bplay')) { sc.classList.remove('bfull'); removeEventListener('resize', fitArea); mo.disconnect(); } }); mo.observe($('#lbody'), { childList: true }); }
   let target = null;
   $('#bspk').onclick = () => target && speak(target.en, 'en');
   const pool = ls.items;

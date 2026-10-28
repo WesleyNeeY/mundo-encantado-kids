@@ -678,6 +678,27 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 .wopt{background:rgba(233,241,255,.7);border:1.5px solid rgba(255,255,255,.8)}
 #s-shop .tab.on{background:rgba(255,255,255,.85)}
 .gcard.light .ebar,.xpbar.big{background:rgba(200,215,240,.55)}
+/* ===== escola futurista (tela principal): camadas animadas leves ===== */
+.sch-lights,.sch-holo{position:absolute;inset:0;pointer-events:none;background-size:cover;background-position:center;z-index:0}
+.sch-lights{mix-blend-mode:screen;animation:schPulse 4.5s ease-in-out infinite}
+.sch-holo{mix-blend-mode:screen;animation:schFlicker 5s steps(1,end) infinite}
+@keyframes schPulse{0%,100%{opacity:.3}50%{opacity:.75}}
+@keyframes schFlicker{0%,100%{opacity:.85}47%{opacity:.85}48%{opacity:.4}49%{opacity:.9}72%{opacity:.7}73%{opacity:.95}}
+.sch-rays{animation:raysPulse 8s ease-in-out infinite;opacity:.22}
+/* com a escola 3D na tela, as camadas desenhadas (reserva sem WebGL) ficam escondidas atrás dela: desliga para poupar o celular */
+[data-scene="school"]:has(canvas.stage3d) :is(.sch-win,.sch-rays,.sch-lights,.sch-holo){display:none}
+[data-scene="school"] > .host::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 85% at 50% 42%,rgba(20,12,80,0) 58%,rgba(20,12,80,.28) 100%)}
+[data-scene="school"] .hlogo small{text-shadow:0 1px 2px rgba(22,16,96,.9),0 2px 10px rgba(22,16,96,.55)}
+.sch-win{position:absolute;overflow:hidden;pointer-events:none;z-index:0}
+.sch-car{position:absolute;left:0;width:30px;height:9px;border-radius:9px;background:linear-gradient(180deg,#ffffff,#c9d4ff);box-shadow:0 0 8px rgba(120,230,255,.8);animation:schCar 14s linear infinite;will-change:transform}
+.sch-car::before{content:"";position:absolute;right:100%;top:3px;width:46px;height:3px;border-radius:3px;background:linear-gradient(90deg,rgba(79,227,255,0),rgba(79,227,255,.85))}
+.sch-car::after{content:"";position:absolute;left:8px;top:-4px;width:13px;height:6px;border-radius:6px 6px 0 0;background:#7ff3ff;opacity:.85}
+.sch-car.c1{top:38%}.sch-car.c2{top:24%;transform:scale(.7);animation-duration:19s}.sch-car.c3{top:52%;animation-duration:11s}.sch-car.c4{top:15%;animation-duration:23s;animation-direction:reverse}
+.sch-car.c4::before{right:auto;left:100%;background:linear-gradient(270deg,rgba(255,138,216,0),rgba(255,138,216,.85))}
+@keyframes schCar{from{transform:translateX(-80px)}to{transform:translateX(420px)}}
+.sch-dust i{background:radial-gradient(circle,#ffffff 0,#7ff3ff 45%,rgba(127,243,255,0) 72%);box-shadow:0 0 8px 2px rgba(127,243,255,.55)}
+.sch-dust i.l{background:radial-gradient(circle,#ffffff 0,#c3a8ff 45%,rgba(195,168,255,0) 72%);box-shadow:0 0 8px 2px rgba(195,168,255,.55)}
+@media (prefers-reduced-motion:reduce){.sch-lights,.sch-holo,.sch-car,.sch-rays{animation:none}}
 </style>
 </head>
 <body>
@@ -694,7 +715,7 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
  </section>
 
  <!-- HOME -->
- <section class="screen room" id="s-home" data-scene="day">
+ <section class="screen room" id="s-home" data-scene="school">
   <div class="host" data-host></div>
   <div class="htop ui">
    <div class="hlogo"><div class="logo sm">Lumi<i>★</i></div><small>Seu mundo de inglês</small><div class="gchip"><span id="grow-ic">🍼</span><span id="home-name">Lumi</span><span class="gbar"><i id="grow-bar"></i></span></div></div>

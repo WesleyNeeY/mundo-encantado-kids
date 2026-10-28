@@ -41,6 +41,7 @@ document.querySelectorAll('.ic.fire').forEach((e) => { e.classList.add('svgic');
 const S = window.LUMI_SCENES;
 document.querySelectorAll('.screen[data-scene]').forEach((sc) => {
   const t = sc.dataset.scene;
+  if (t === 'school') { schoolFx(sc); return; }
   const rays = document.createElement('div'); rays.className = 'fx fx-rays'; rays.style.backgroundImage = S.rays(t);
   const vines = document.createElement('div'); vines.className = 'fx fx-vines'; vines.style.backgroundImage = S.vines(t);
   const dust = document.createElement('div'); dust.className = 'fx fx-dust' + (t === 'night' ? ' dnight' : '');
@@ -117,4 +118,27 @@ if (mapWrap) {
   ov.querySelectorAll('.mleaf').forEach((e) => { e.style.backgroundImage = S.mapLeaves(e.classList.contains('l1') || e.classList.contains('l2') ? 0 : 1); });
   scr.appendChild(ov);
   const mic = scr.querySelector('.mapic'); if (mic) { mic.innerHTML = ICONS.map(); mic.classList.add('svgic'); }
+}
+
+/* ---------- escola futurista: luzes pulsando, holograma, partículas e carros voadores ---------- */
+function schoolFx(sc) {
+  const host = sc.querySelector('[data-host]');
+  const mk = (cls, bg) => { const d = document.createElement('div'); d.className = 'fx ' + cls; if (bg) d.style.backgroundImage = bg; return d; };
+  const rays = mk('fx-rays sch-rays', S.schoolRays()), lights = mk('sch-lights', S.schoolLights()), holo = mk('sch-holo', S.schoolHolo());
+  // janela: carros voadores passam por trás do vidro (posição calculada do enquadramento do fundo)
+  const win = mk('sch-win'); const W = S.schoolWindow;
+  [['c1', 0], ['c2', -6], ['c3', -12], ['c4', -3]].forEach(([c, d]) => { const car = document.createElement('i'); car.className = 'sch-car ' + c; car.style.animationDelay = d + 's'; win.appendChild(car); });
+  const place = () => { const w = sc.clientWidth, h = sc.clientHeight; if (!w || !h) return; const k = Math.max(w / 390, h / 844), ox = (w - 390 * k) / 2, oy = (h - 844 * k) / 2;
+    Object.assign(win.style, { left: ox + (W.x + 10) * k + 'px', top: oy + (W.y + 10) * k + 'px', width: (W.w - 20) * k + 'px', height: (W.h - 20) * k + 'px', borderRadius: (W.r - 10) * k + 'px' }); };
+  place(); addEventListener('resize', place); new ResizeObserver(place).observe(sc);
+  const dust = mk('fx-dust sch-dust');
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('i');
+    p.style.left = (5 + Math.random() * 90).toFixed(1) + '%'; p.style.top = (12 + Math.random() * 62).toFixed(1) + '%';
+    p.style.animationDelay = (-Math.random() * 9).toFixed(2) + 's'; p.style.animationDuration = (7 + Math.random() * 6).toFixed(2) + 's';
+    const z = 3 + Math.random() * 4; p.style.width = p.style.height = z.toFixed(1) + 'px'; if (i % 2) p.className = 'l';
+    dust.appendChild(p);
+  }
+  sc.insertBefore(win, host || sc.firstChild); sc.insertBefore(rays, host || sc.firstChild); sc.insertBefore(lights, host || sc.firstChild); sc.insertBefore(holo, host || sc.firstChild);
+  if (host) host.after(dust); else sc.append(dust);
 }

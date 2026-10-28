@@ -156,6 +156,7 @@
   }
 
   function room(theme) {
+    if (theme === 'school') return school();
     seed = { day: 11, lesson: 21, kitchen: 31, wardrobe: 41, night: 51 }[theme];
     const P = PAL[theme], night = theme === 'night';
     let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice">
@@ -622,6 +623,133 @@
     return s + '</g></svg>';
   }
 
+  /* ================= ESCOLA FUTURISTA (tela principal) ================= */
+  const SCH = { wall: ['#c3c8fb', '#a9aef2', '#8d91e2'], ceil: ['#1e2470', '#2f3596', '#4a46b8'], cyan: '#4fe3ff', lilac: '#a98bff', pink: '#ff8ad8', navy: '#1b2a63', white: '#f7f9ff' };
+  const WIN = { x: 26, y: 118, w: 338, h: 404, r: 64 }; // janela panorâmica (usada também pelas animações)
+  function schoolDefs() {
+    return `<defs>
+      <linearGradient id="sw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${SCH.wall[0]}"/><stop offset=".6" stop-color="${SCH.wall[1]}"/><stop offset="1" stop-color="${SCH.wall[2]}"/></linearGradient>
+      <linearGradient id="sc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${SCH.ceil[0]}"/><stop offset=".7" stop-color="${SCH.ceil[1]}"/><stop offset="1" stop-color="${SCH.ceil[2]}"/></linearGradient>
+      <linearGradient id="ssky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c2f8f"/><stop offset=".4" stop-color="#3f5fd6"/><stop offset=".72" stop-color="#8f72e8"/><stop offset="1" stop-color="#f29ad6"/></linearGradient>
+      <radialGradient id="ssun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fffdf2"/><stop offset=".35" stop-color="#fff0f8" stop-opacity=".8"/><stop offset="1" stop-color="#ffd6f2" stop-opacity="0"/></radialGradient>
+      <linearGradient id="st1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6f6fd6"/><stop offset=".5" stop-color="#8e8cec"/><stop offset="1" stop-color="#6461c9"/></linearGradient>
+      <linearGradient id="st2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2f3aa8"/><stop offset=".45" stop-color="#4a56cf"/><stop offset="1" stop-color="#26308f"/></linearGradient>
+      <linearGradient id="st3" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1d2272"/><stop offset=".45" stop-color="#2f3596"/><stop offset="1" stop-color="#181c5e"/></linearGradient>
+      <linearGradient id="sframe" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#e3e8ff"/><stop offset="1" stop-color="#c7cff7"/></linearGradient>
+      <linearGradient id="sfloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8f93e0"/><stop offset=".5" stop-color="#5e62c2"/><stop offset="1" stop-color="#363a92"/></linearGradient>
+      <linearGradient id="sholo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7ff3ff" stop-opacity=".55"/><stop offset="1" stop-color="#3fa9ff" stop-opacity=".25"/></linearGradient>
+      <linearGradient id="sbeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bff6ff" stop-opacity=".55"/><stop offset="1" stop-color="#bff6ff" stop-opacity="0"/></linearGradient>
+      <linearGradient id="sref" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".45"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+      <linearGradient id="sdesk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d6dcfb"/></linearGradient>
+      <radialGradient id="sbloom" cx=".5" cy=".42" r=".55"><stop offset="0" stop-color="#e6fbff" stop-opacity=".22"/><stop offset=".5" stop-color="#cfe6ff" stop-opacity=".06"/><stop offset="1" stop-color="#cfe6ff" stop-opacity="0"/></radialGradient>
+      <radialGradient id="svig" cx=".5" cy=".45" r=".8"><stop offset=".55" stop-color="#1b1f6a" stop-opacity="0"/><stop offset="1" stop-color="#11145a" stop-opacity=".6"/></radialGradient>
+      <radialGradient id="sglobe" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#d9fbff" stop-opacity=".9"/><stop offset=".6" stop-color="#4fe3ff" stop-opacity=".45"/><stop offset="1" stop-color="#3f7fff" stop-opacity=".15"/></radialGradient>
+      <filter id="sblur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4"/></filter>
+      <clipPath id="swin"><rect x="${WIN.x + 10}" y="${WIN.y + 10}" width="${WIN.w - 20}" height="${WIN.h - 20}" rx="${WIN.r - 10}"/></clipPath>
+    </defs>`;
+  }
+  function tower(x, base, w, h, top, fill, lit, cols) { // torre arredondada com janelas acesas
+    let s = `<path d="M${x} ${base} L${x} ${base - h + w * 0.5} Q ${x} ${base - h} ${x + w / 2} ${base - h} Q ${x + w} ${base - h} ${x + w} ${base - h + w * 0.5} L${x + w} ${base} Z" fill="${fill}"/>`;
+    s += `<rect x="${f(x + w * 0.62)}" y="${f(base - h + w * 0.3)}" width="${f(w * 0.16)}" height="${f(h - w * 0.3)}" fill="#fff" opacity=".18"/>`;
+    for (let yy = base - h + w * 0.55; yy < base - 6; yy += 9) for (let c = 0; c < cols; c++) if (rnd() < 0.62) s += `<rect x="${f(x + 4 + c * ((w - 8) / cols))}" y="${f(yy)}" width="${f((w - 8) / cols - 2.5)}" height="3.2" rx="1" fill="${rnd() < 0.7 ? lit : '#fff6c4'}" opacity="${f(0.55 + rnd() * 0.45)}"/>`;
+    if (top === 'antenna') s += `<line x1="${x + w / 2}" y1="${base - h}" x2="${x + w / 2}" y2="${base - h - 18}" stroke="#dfe4ff" stroke-width="2"/><circle cx="${x + w / 2}" cy="${base - h - 19}" r="2.8" fill="#ff7ad9"/>`;
+    if (top === 'dome') s += `<ellipse cx="${x + w / 2}" cy="${base - h + 2}" rx="${w * 0.42}" ry="${w * 0.3}" fill="#bff6ff" opacity=".85"/>`;
+    if (top === 'ring') s += `<ellipse cx="${x + w / 2}" cy="${base - h + w * 0.7}" rx="${w * 0.75}" ry="4" fill="none" stroke="${SCH.cyan}" stroke-width="2.4" opacity=".9"/>`;
+    return s;
+  }
+  function cityView() { // cidade do futuro vista pela janela
+    seed = 909;
+    let s = `<g clip-path="url(#swin)"><rect x="${WIN.x}" y="${WIN.y}" width="${WIN.w}" height="${WIN.h}" fill="url(#ssky)"/>`;
+    for (let i = 0; i < 26; i++) s += `<circle cx="${f(WIN.x + rnd() * WIN.w)}" cy="${f(WIN.y + 8 + rnd() * 110)}" r="${f(0.6 + rnd() * 1.1)}" fill="#fff" opacity="${f(0.3 + rnd() * 0.5)}"/>`;
+    s += `<circle cx="282" cy="214" r="78" fill="url(#ssun)"/><circle cx="282" cy="214" r="20" fill="#fffaf0" opacity=".95"/>`;
+    s += `<circle cx="96" cy="176" r="26" fill="#d6c8ff" opacity=".75"/><ellipse cx="96" cy="176" rx="44" ry="8" fill="none" stroke="#f4eeff" stroke-width="3" opacity=".7" transform="rotate(-14 96 176)"/>`;
+    for (const [x, y, w] of [[70, 262, 90], [250, 290, 110], [160, 238, 70]]) s += `<g opacity=".75"><ellipse cx="${x}" cy="${y}" rx="${w / 2}" ry="9" fill="#fff"/><circle cx="${x - w * 0.15}" cy="${y - 7}" r="${w * 0.17}" fill="#fff"/><circle cx="${x + w * 0.12}" cy="${y - 9}" r="${w * 0.2}" fill="#fff"/></g>`;
+    // camada distante (névoa lilás)
+    let x = WIN.x - 4; while (x < WIN.x + WIN.w) { const w = 16 + rnd() * 22, h = 70 + rnd() * 110; s += tower(f(x), 470, f(w), f(h), rnd() < 0.3 ? 'antenna' : '', 'url(#st1)', '#ffffff', 2); x += w + 3 + rnd() * 6; }
+    s += `<rect x="${WIN.x}" y="390" width="${WIN.w}" height="90" fill="#b9a2ff" opacity=".25"/>`;
+    // monotrilho iluminado
+    s += `<path d="M${WIN.x - 10} 404 C 120 372, 260 430, ${WIN.x + WIN.w + 10} 392" stroke="#f2f4ff" stroke-width="7" fill="none"/><path d="M${WIN.x - 10} 404 C 120 372, 260 430, ${WIN.x + WIN.w + 10} 392" stroke="${SCH.cyan}" stroke-width="2" fill="none" opacity=".9"/>`;
+    // camada do meio
+    x = WIN.x - 8; while (x < WIN.x + WIN.w) { const w = 22 + rnd() * 26, h = 90 + rnd() * 140; s += tower(f(x), 500, f(w), f(h), ['antenna', 'dome', 'ring', ''][Math.floor(rnd() * 4)], 'url(#st2)', SCH.cyan, 3); x += w + 6 + rnd() * 12; }
+    // ponte suspensa / parque flutuante
+    s += `<ellipse cx="300" cy="352" rx="40" ry="9" fill="#5a63d8"/><ellipse cx="300" cy="349" rx="38" ry="6" fill="#7be0a0"/><circle cx="288" cy="338" r="9" fill="#4cc38a"/><circle cx="304" cy="334" r="11" fill="#5fd39a"/><circle cx="318" cy="340" r="8" fill="#4cc38a"/><path d="M300 361 L296 376 L304 376 Z" fill="${SCH.cyan}" opacity=".6"/>`;
+    // camada da frente
+    x = WIN.x - 12; while (x < WIN.x + WIN.w) { const w = 30 + rnd() * 30, h = 70 + rnd() * 90; s += tower(f(x), 530, f(w), f(h), rnd() < 0.4 ? 'ring' : 'antenna', 'url(#st3)', SCH.cyan, 3); x += w + 10 + rnd() * 16; }
+    s += `<rect x="${WIN.x}" y="${WIN.y}" width="${WIN.w}" height="${WIN.h}" fill="url(#sref)" opacity=".08"/>`;
+    return s + '</g>';
+  }
+  function holoPanel(x, y, w, h) { // tela holográfica flutuante
+    let s = `<g><rect x="${x - 6}" y="${y - 6}" width="${w + 12}" height="${h + 12}" rx="18" fill="${SCH.cyan}" opacity=".25" filter="url(#sblur)"/>`;
+    s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="14" fill="url(#sholo)" stroke="#b8f8ff" stroke-width="2"/>`;
+    for (let yy = y + 6; yy < y + h; yy += 5) s += `<rect x="${x + 3}" y="${yy}" width="${w - 6}" height="1" fill="#e8feff" opacity=".18"/>`;
+    s += `<text x="${x + w / 2}" y="${y + 30}" text-anchor="middle" font-family="Arial Rounded MT Bold, Arial, sans-serif" font-weight="700" font-size="16" fill="#ffffff">Let's Learn</text>`;
+    s += `<text x="${x + w / 2}" y="${y + 52}" text-anchor="middle" font-family="Arial Rounded MT Bold, Arial, sans-serif" font-weight="700" font-size="19" fill="#fff6a8">English!</text>`;
+    s += `<g font-family="Arial, sans-serif" font-weight="700" font-size="16" text-anchor="middle"><text x="${x + 22}" y="${y + h - 16}" fill="#ff9ae0">A</text><text x="${x + w / 2}" y="${y + h - 16}" fill="#9dffb8">B</text><text x="${x + w - 22}" y="${y + h - 16}" fill="#ffe27a">C</text></g>`;
+    s += `<path d="M${x + 10} ${y + 6} l2.4 5.6 5.6 .8 -4 4 .8 5.6 -4.8 -2.4 -4.8 2.4 .8 -5.6 -4 -4 5.6 -.8z" fill="#fff6a8"/>`;
+    return s + '</g>';
+  }
+  function school() {
+    seed = 61;
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice">${schoolDefs()}`;
+    // paredes claras com painéis arredondados
+    s += `<rect width="390" height="844" fill="url(#sw)"/>`;
+    for (const [x, y, w, h] of [[-20, 120, 40, 420], [370, 120, 40, 420]]) s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="#dfe2ff" opacity=".35"/>`;
+    // teto curvo escuro com faixas de luz
+    s += `<path d="M0 0 L390 0 L390 92 Q 195 140 0 92 Z" fill="url(#sc)"/>`;
+    for (const [dy, c, o] of [[0, SCH.cyan, 1], [-14, SCH.lilac, 0.85], [-28, SCH.pink, 0.6]]) s += `<path d="M0 ${92 + dy} Q 195 ${140 + dy} 390 ${92 + dy}" stroke="${c}" stroke-width="3" fill="none" opacity="${o}"/><path d="M0 ${92 + dy} Q 195 ${140 + dy} 390 ${92 + dy}" stroke="${c}" stroke-width="10" fill="none" opacity="${o * 0.18}"/>`;
+    for (const x of [70, 150, 240, 320]) s += `<ellipse cx="${x}" cy="${f(64 + Math.sin((x / 390) * Math.PI) * 22)}" rx="12" ry="4" fill="#e9fbff"/><ellipse cx="${x}" cy="${f(64 + Math.sin((x / 390) * Math.PI) * 22)}" rx="22" ry="8" fill="#bff6ff" opacity=".35"/>`;
+    // janela panorâmica com a cidade
+    s += `<rect x="${WIN.x - 8}" y="${WIN.y - 8}" width="${WIN.w + 16}" height="${WIN.h + 16}" rx="${WIN.r + 8}" fill="#b8c2f4" opacity=".55"/>`;
+    s += `<rect x="${WIN.x}" y="${WIN.y}" width="${WIN.w}" height="${WIN.h}" rx="${WIN.r}" fill="url(#sframe)"/>`;
+    s += cityView();
+    s += `<rect x="${WIN.x + 10}" y="${WIN.y + 10}" width="${WIN.w - 20}" height="${WIN.h - 20}" rx="${WIN.r - 10}" fill="none" stroke="${SCH.cyan}" stroke-width="2" opacity=".75"/>`;
+    for (const mx of [140, 250]) s += `<rect x="${mx - 4}" y="${WIN.y + 8}" width="8" height="${WIN.h - 16}" rx="4" fill="url(#sframe)"/><rect x="${mx - 1}" y="${WIN.y + 30}" width="2" height="${WIN.h - 60}" fill="${SCH.cyan}" opacity=".45"/>`;
+    s += `<rect x="${WIN.x + 6}" y="300" width="${WIN.w - 12}" height="7" rx="3.5" fill="url(#sframe)"/>`;
+    // reflexo suave no vidro
+    s += `<path d="M60 140 L110 140 L70 330 L36 330 Z" fill="#fff" opacity=".12"/><path d="M120 140 L134 140 L96 330 L86 330 Z" fill="#fff" opacity=".1"/>`;
+    // painel holográfico à esquerda e projetor
+    s += holoPanel(266, 206, 112, 100);
+    // estante arredondada à direita com livros, globo holográfico e plantinha
+    s += `<rect x="296" y="318" width="92" height="210" rx="22" fill="#ffffff"/><rect x="302" y="324" width="80" height="198" rx="18" fill="#e3e1ff"/>`;
+    for (const yy of [380, 446, 512]) s += `<rect x="300" y="${yy}" width="84" height="7" rx="3.5" fill="#ffffff"/><rect x="304" y="${yy + 6}" width="76" height="2" fill="${SCH.cyan}" opacity=".7"/>`;
+    const bk = ['#ff6fa8', '#4fc3ff', '#ffd54f', '#8f7bff', '#5fd39a', '#ff9a4d'];
+    for (const [yy, n] of [[446, 6], [512, 5]]) { let bx = 310; for (let i = 0; i < n; i++) { const w = 7 + rnd() * 4, h = 30 + rnd() * 18; s += `<rect x="${f(bx)}" y="${f(yy - h)}" width="${f(w)}" height="${f(h)}" rx="3" fill="${bk[(i + yy) % 6]}"/><rect x="${f(bx + 1.5)}" y="${f(yy - h + 4)}" width="${f(w - 3)}" height="2" fill="#fff" opacity=".6"/>`; bx += w + 2; } }
+    s += `<ellipse cx="341" cy="377" rx="14" ry="3" fill="${SCH.cyan}" opacity=".6"/><circle cx="341" cy="356" r="17" fill="url(#sglobe)"/><ellipse cx="341" cy="356" rx="17" ry="6" fill="none" stroke="#e8feff" stroke-width="1.2" opacity=".8"/><ellipse cx="341" cy="356" rx="7" ry="17" fill="none" stroke="#e8feff" stroke-width="1.2" opacity=".8"/>`;
+    s += `<path d="M362 378 l4 -14 q-8 -6 -4 -16 q8 2 6 14 q8 -10 14 -4 q-6 8 -14 6 l-2 14 z" fill="#4cc38a"/><rect x="356" y="370" width="22" height="10" rx="4" fill="#ffffff" opacity=".9"/>`;
+    // faixa de luz e rodapé abaixo da janela
+    s += `<rect x="0" y="540" width="390" height="56" fill="#f4f6ff"/><rect x="0" y="552" width="390" height="3" fill="${SCH.cyan}" opacity=".85"/><rect x="0" y="549" width="390" height="9" fill="${SCH.cyan}" opacity=".15"/>`;
+    // piso brilhante com reflexos e anéis de luz
+    s += `<rect x="0" y="596" width="390" height="248" fill="url(#sfloor)"/>`;
+    s += `<path d="M${WIN.x + 20} 596 L${WIN.x + WIN.w - 20} 596 L${WIN.x + WIN.w + 40} 844 L${WIN.x - 40} 844 Z" fill="url(#sref)" opacity=".35"/>`;
+    for (const [rx, ry, o] of [[150, 26, 0.5], [210, 42, 0.32], [280, 64, 0.18]]) s += `<ellipse cx="195" cy="690" rx="${rx}" ry="${ry}" fill="none" stroke="${SCH.lilac}" stroke-width="2" opacity="${o}"/>`;
+    for (let k = 0; k < 7; k++) s += `<line x1="${f(-40 + k * 78)}" y1="596" x2="${f(-140 + k * 112)}" y2="844" stroke="#ffffff" stroke-width="1.2" opacity=".18"/>`;
+    // móveis arredondados: mesinha com tablet holográfico (esq.) e pufe (dir.)
+    s += `<ellipse cx="62" cy="676" rx="70" ry="16" fill="#5a5fc8" opacity=".25"/><rect x="-14" y="616" width="140" height="44" rx="22" fill="url(#sdesk)"/><rect x="-10" y="650" width="132" height="4" rx="2" fill="${SCH.cyan}" opacity=".9"/><rect x="34" y="660" width="20" height="26" rx="8" fill="#c9cff7"/>`;
+    s += `<path d="M30 616 L44 588 L92 588 L80 616 Z" fill="${SCH.cyan}" opacity=".35"/><rect x="40" y="590" width="44" height="6" rx="3" fill="#e8feff" opacity=".7"/>`;
+    s += `<ellipse cx="334" cy="690" rx="62" ry="14" fill="#5a5fc8" opacity=".25"/><path d="M282 690 Q 280 628 334 622 Q 390 628 388 690 Z" fill="${SCH.lilac}"/><path d="M296 650 Q 312 632 336 632" stroke="#fff" stroke-width="6" fill="none" opacity=".35" stroke-linecap="round"/><ellipse cx="334" cy="690" rx="54" ry="8" fill="#7d68e8"/>`;
+    // luz geral: brilho no centro e vinheta azulada
+    s += `<rect width="390" height="844" fill="url(#sbloom)"/><rect width="390" height="844" fill="url(#svig)"/>`;
+    return s + '</svg>';
+  }
+  // camadas animadas da escola (mesmo enquadramento do fundo)
+  function schoolLights() { // faixas de luz que pulsam
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice"><defs><filter id="b" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="3"/></filter></defs>`;
+    for (const [dy, c] of [[0, SCH.cyan], [-14, SCH.lilac], [-28, SCH.pink]]) s += `<path d="M0 ${92 + dy} Q 195 ${140 + dy} 390 ${92 + dy}" stroke="${c}" stroke-width="7" fill="none" filter="url(#b)"/>`;
+    s += `<rect x="0" y="549" width="390" height="9" fill="${SCH.cyan}" filter="url(#b)"/>`;
+    s += `<rect x="${WIN.x + 10}" y="${WIN.y + 10}" width="${WIN.w - 20}" height="${WIN.h - 20}" rx="${WIN.r - 10}" fill="none" stroke="${SCH.cyan}" stroke-width="5" filter="url(#b)"/>`;
+    for (const [rx, ry] of [[150, 26], [210, 42]]) s += `<ellipse cx="195" cy="690" rx="${rx}" ry="${ry}" fill="none" stroke="${SCH.lilac}" stroke-width="4" filter="url(#b)"/>`;
+    return s + '</svg>';
+  }
+  function schoolHolo() { // brilho e linhas da tela holográfica (piscam de leve)
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice"><defs><filter id="b"><feGaussianBlur stdDeviation="5"/></filter><linearGradient id="h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bff6ff" stop-opacity=".0"/><stop offset=".5" stop-color="#bff6ff" stop-opacity=".55"/><stop offset="1" stop-color="#bff6ff" stop-opacity="0"/></linearGradient></defs>
+      <rect x="262" y="202" width="120" height="108" rx="16" fill="none" stroke="#7ff3ff" stroke-width="5" filter="url(#b)"/>
+      <circle cx="341" cy="356" r="24" fill="#7ff3ff" opacity=".35" filter="url(#b)"/></svg>`;
+  }
+  function schoolRays() { // feixes de luz das lâmpadas do teto
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8f8ff" stop-opacity=".5"/><stop offset="1" stop-color="#d8f8ff" stop-opacity="0"/></linearGradient></defs>
+      ${[70, 150, 240, 320].map((x) => { const y = f(64 + Math.sin((x / 390) * Math.PI) * 22); return `<path d="M${x - 10} ${y} L${x + 10} ${y} L${x + 60} 640 L${x - 60} 640 Z" fill="url(#r)"/>`; }).join('')}</svg>`;
+  }
+
   const cache = {};
   const memo = (k, fn) => cache[k] || (cache[k] = enc(fn()));
   window.LUMI_SCENES = {
@@ -630,6 +758,10 @@
     rays: (theme) => memo('y' + theme, () => rays(theme)),
     map: (H, pts) => map(H, pts),
     mapChunks,
+    schoolLights: () => memo('sl', schoolLights),
+    schoolHolo: () => memo('sh', schoolHolo),
+    schoolRays: () => memo('sr', schoolRays),
+    schoolWindow: WIN,
     mapLeaves: (side) => memo('ml' + side, () => mapLeaves(side)),
   };
 })();

@@ -659,6 +659,9 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 #s-lesson.bfull .bspk{right:auto;left:12px;top:12px}
 /* microfone: anel que cresce com o volume da voz */
 .mic.listen{box-shadow:0 7px 0 var(--redD),0 0 0 calc(var(--lv,0) * 16px) rgba(255,90,115,.35),0 14px 24px rgba(200,40,70,.3)}
+/* barra de nível: não herda o centralizado dos botões ".big" — o preenchimento começa da esquerda */
+.xpbar.big{display:block;border-radius:9px;transition:none}
+.xpbar.big:active{transform:none}
 </style>
 </head>
 <body>

@@ -291,6 +291,51 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 .mcard.up .face{transform:rotateY(360deg)}
 .mcard.ok .face{background:#dcfbe7;box-shadow:0 6px 0 var(--green)}
 .mcard.no .face{background:#ffe6ea;animation:shake .45s}
+
+/* baús e lendárias */
+.chestbtn{position:absolute;right:14px;top:calc(120px + env(safe-area-inset-top,0px));z-index:5;display:flex;flex-direction:column;align-items:center;gap:2px;background:linear-gradient(180deg,#ffe27a,#ffb000);border-radius:22px;padding:8px 10px 6px;box-shadow:0 6px 0 #c98a00,0 0 0 6px rgba(255,214,60,.35);animation:cpulse 1.2s ease-in-out infinite;color:#6d4300}
+.chestbtn .cb{font-size:34px;line-height:1}
+.chestbtn b{font-size:14px}
+.chestbtn i{position:absolute;top:-8px;right:-8px;width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;font-style:normal;font-weight:700;font-size:14px;display:grid;place-items:center;box-shadow:0 2px 0 var(--redD)}
+@keyframes cpulse{50%{transform:scale(1.08) rotate(-4deg)}}
+.rchest{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.chip{padding:8px 14px;border-radius:999px;font-weight:700;color:#fff;font-size:16px;animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+.chip.raro{background:#2f86ff}.chip.epico{background:#9a55ff}.chip.lendario{background:linear-gradient(90deg,#ffb000,#ff7a00)}
+.chestmodal{position:absolute;inset:0;z-index:80;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(circle at 50% 45%,#3b2a8a 0%,#120c3a 70%);color:#fff;overflow:hidden;padding:20px}
+.chestmodal.on{display:flex;animation:fadeIn .3s}
+.chestmodal.raro{--cc:#2f86ff}.chestmodal.epico{--cc:#9a55ff}.chestmodal.lendario{--cc:#ffb000}
+.chestmodal h2{margin:0;font-size:34px;text-shadow:0 3px 0 rgba(0,0,0,.3);position:relative;z-index:2}
+.chestmodal .rays{position:absolute;left:50%;top:45%;width:900px;height:900px;margin:-450px 0 0 -450px;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--cc) 45%,transparent) 0 10deg,transparent 10deg 20deg);border-radius:50%;animation:spin 14s linear infinite;opacity:.6;mask:radial-gradient(circle,#000 20%,transparent 65%);-webkit-mask:radial-gradient(circle,#000 20%,transparent 65%)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.chest{position:relative;width:170px;height:150px;cursor:pointer;z-index:2;animation:cshake 1s ease-in-out infinite}
+@keyframes cshake{0%,60%,100%{transform:rotate(0)}70%{transform:rotate(-6deg)}80%{transform:rotate(6deg)}90%{transform:rotate(-3deg)}}
+.chest .box{position:absolute;left:0;right:0;bottom:0;height:92px;border-radius:12px 12px 18px 18px;background:linear-gradient(180deg,color-mix(in srgb,var(--cc) 75%,#fff),var(--cc));box-shadow:inset 0 -10px 0 rgba(0,0,0,.18),0 10px 30px rgba(0,0,0,.4);border:5px solid #ffd54a}
+.chest .lid{position:absolute;left:-6px;right:-6px;top:6px;height:62px;border-radius:40px 40px 10px 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--cc) 60%,#fff),var(--cc));border:5px solid #ffd54a;transform-origin:50% 100%;transition:transform .6s cubic-bezier(.3,1.6,.5,1);z-index:2}
+.chest .lock{position:absolute;left:50%;top:-14px;width:34px;height:40px;margin-left:-17px;border-radius:8px;background:#ffd54a;box-shadow:0 3px 0 #c98a00;z-index:3}
+.chestmodal.open .chest{animation:none}
+.chestmodal.open .chest .lid{transform:translateY(-40px) rotateX(70deg) rotate(-18deg)}
+.chestmodal.open .ctip{display:none}
+.ctip{font-weight:600;font-size:18px;opacity:.9;z-index:2;animation:pulse 1.4s infinite}
+.reveal{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;z-index:4;background:radial-gradient(circle,rgba(18,12,58,.2),rgba(18,12,58,.85));animation:fadeIn .4s}
+.rcard{position:relative;background:#fff;color:var(--ink);border-radius:30px;padding:18px 22px 16px;display:flex;flex-direction:column;align-items:center;gap:4px;border:6px solid var(--rc,#ffb000);box-shadow:0 0 0 8px color-mix(in srgb,var(--rc,#ffb000) 35%,transparent),0 0 60px var(--rc,#ffb000);animation:cardIn .6s cubic-bezier(.2,1.5,.4,1);min-width:240px}
+.rcard img{width:200px;height:200px}
+.rcard .big{font-size:90px}
+.rcard b{font-size:22px}
+.rcard small{color:var(--muted);font-weight:600}
+.rtag{position:absolute;top:-18px;padding:6px 16px;border-radius:999px;background:var(--rc);color:#fff;font-weight:700;font-size:16px;box-shadow:0 3px 0 rgba(0,0,0,.2)}
+.reveal .row{width:100%;max-width:340px}
+.items.legend{display:block}
+.lcol{background:#fff;border-radius:22px;padding:10px;margin-bottom:12px;box-shadow:0 4px 0 #e2d6ff}
+.lcol.full{background:linear-gradient(180deg,#fff8dd,#fff);box-shadow:0 4px 0 #ffd54a,0 0 0 3px #ffd54a}
+.lhead{display:flex;align-items:center;gap:8px;font-size:16px}
+.lhead span{font-size:22px}
+.lhead em{margin-left:auto;font-style:normal;font-weight:700;color:var(--purpleD);background:#f1ecff;border-radius:999px;padding:2px 10px;font-size:13px}
+.lfx{font-size:12.5px;color:var(--muted);font-weight:600;margin:2px 0 8px}
+.litems{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.item.leg{border-color:var(--rc);box-shadow:0 4px 0 color-mix(in srgb,var(--rc) 40%,#fff)}
+.item.leg.locked img{filter:brightness(0) opacity(.28)}
+.item.leg .tag.rar{background:var(--rc);color:#fff;font-size:11px}
+.lnote{font-size:13px;color:var(--muted);font-weight:600;text-align:center;margin:4px 6px 8px}
 @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -319,6 +364,7 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
    <div class="pill"><span class="ic bolt">⚡</span><span data-bind="energy">0</span></div>
   </div>
   <div class="bubble pop" id="home-bubble" style="top:calc(78px + env(safe-area-inset-top,0px))"></div>
+  <button class="chestbtn" id="btn-chest" style="display:none"><span class="cb">🎁</span><b>Baú!</b><i id="chest-n">1</i></button>
   <div class="homeacts">
    <div class="acts">
     <button class="act" data-go="map"><span class="c map">🗺️</span>Mapa</button>
@@ -355,6 +401,7 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
   <div class="host" data-host></div>
   <div class="rtitle"><h1 id="result-title">Aula completa!</h1><div class="big3" id="result-stars"><span>⭐</span><span>⭐</span><span>⭐</span></div></div>
   <div class="rbox">
+   <div class="rchest" id="result-chest"></div>
    <div class="rewards"><div class="reward"><span class="ic coin" style="width:30px;height:30px;border-radius:50%;display:grid;place-items:center">$</span>+<span id="result-coins">0</span></div><div class="reward">✨ +<span id="result-xp">0</span> XP</div></div>
    <button class="big" id="btn-result">Continuar ▶</button>
   </div>
@@ -396,6 +443,7 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
   </div>
  </section>
 
+ <div class="chestmodal" id="chestmodal"></div>
  <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
  <div class="toast" id="toast"></div>
  <div class="loading" id="loading">Carregando o Lumi…</div>

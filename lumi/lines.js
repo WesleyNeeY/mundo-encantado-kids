@@ -49,6 +49,13 @@ window.LUMI_LINES = {
     grow: ['Oba! Eu cresci! Agora eu sou o Lumi Pequeno!', 'Oba! Eu cresci! Agora eu sou o Lumi Criança!', 'Oba! Eu cresci! Agora eu sou o Lumi Grande!', 'Uau! Eu virei o Super Lumi!'],
     costume: 'Olha a minha fantasia!',
     growHint: 'Quanto mais fases você fizer, mais eu cresço!',
+    chestWon: 'Você ganhou um baú!',
+    chestTap: 'Toca no baú para abrir!',
+    gotRare: 'Uau! Uma peça rara!',
+    gotEpic: 'Incrível! Uma peça épica!',
+    gotLegend: 'É lendária! Que demais!',
+    setDone: 'Coleção completa! Olha que lindo!',
+    legendHint: 'Essas roupas não estão à venda. Ganha baús jogando!',
   },
   en: {
     praise: ['Great job!', 'Awesome!', 'Well done!', 'Excellent!', 'Super!'],

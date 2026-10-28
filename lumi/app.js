@@ -21,6 +21,9 @@ for (const k of Object.keys(D.shop)) { if (!S.outfit[k]) S.outfit[k] = 'none'; S
 const doneCount = () => D.units.filter((u) => S.units[u.id] && S.units[u.id].done).length;
 const growIdx = (n = doneCount()) => { let i = 0; D.grow.forEach((g, k) => { if (n >= g.min) i = k; }); return i; };
 if (S.hatched === undefined) S.hatched = doneCount() > 0;
+S.awards = S.awards || {}; S.chests = S.chests || [];
+const LEG = D.legendary.flatMap((c) => c.items.map((it) => Object.assign({ col: c }, it)));
+const legOwned = (it) => !!S.owned[it.slot + ':' + it.id];
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} bind(); };
 const level = () => Math.floor(S.xp / 300) + 1;
 function bind() {
@@ -40,6 +43,7 @@ if (!stage) { $('#loading').innerHTML = '<div class="nogl">Seu aparelho não con
 const lumi = stage.lumi;
 lumi.setOutfit(S.outfit);
 lumi.setGrowth(growIdx(), true);
+setTimeout(() => updateFx(), 0);
 if (!S.hatched) stage.setEgg(true);
 const PRESET = {
   splash: { fit: [0.17, 0.72], props: true },
@@ -228,6 +232,7 @@ function enterHome() {
   const i = unitIndex(), u = D.units[i];
   $('#play-sub').textContent = `Fase ${u.num} · ${worldOf(u).name} · ${u.name}`;
   $('#btn-gift').classList.toggle('glow', S.giftDay !== today());
+  renderChestBtn();
   lumi.setMood(S.sleeping ? 'sleep' : 'idle');
   bind();
   setTimeout(() => {
@@ -260,9 +265,12 @@ stage.onEggTap = async () => {
 $('#btn-gift').addEventListener('click', () => {
   audioCtx();
   if (S.giftDay === today()) { say($('#home-bubble'), T.pt.giftDone); return; }
-  S.giftDay = today(); S.coins += 30; save();
+  S.giftDay = today(); S.coins += 30;
+  const lucky = Math.random() < 0.15; if (lucky) S.chests.push('raro');
+  save(); renderChestBtn();
   $('#btn-gift').classList.remove('glow'); lumi.celebrate(); confetti(30);
-  say($('#home-bubble'), [[T.pt.gift, 'pt'], [T.en.thanks, 'en']], 'Surpresa! Você ganhou <b>30 moedas</b>! 🪙');
+  if (lucky) say($('#home-bubble'), [[T.pt.gift, 'pt'], [T.pt.chestWon, 'pt']], 'Surpresa! <b>30 moedas</b> 🪙 e um <b>baú raro</b>! 🎁');
+  else say($('#home-bubble'), [[T.pt.gift, 'pt'], [T.en.thanks, 'en']], 'Surpresa! Você ganhou <b>30 moedas</b>! 🪙');
 });
 
 /* ---------------- MAPA (6 mundos) ---------------- */
@@ -672,6 +680,9 @@ function finishLesson(ls) {
   $$('#result-stars span').forEach((s, i) => { s.classList.remove('on'); setTimeout(() => s.classList.toggle('on', i < stars), 500 + i * 380); });
   confetti(70); lumi.celebrate(); setTimeout(() => current === 'result' && lumi.celebrate(), 1400);
   const up = level() > before, gAfter = growIdx();
+  const won = checkAwards(before, gBefore);
+  $('#result-chest').innerHTML = won.length ? won.map((t) => `<span class="chip ${t}">🎁 Baú ${D.rarity[t].name.replace(/a$/, 'o')}</span>`).join('') : '';
+  if (won.length) setTimeout(() => current === 'result' && say(null, [[T.pt.chestWon, 'pt']]), gAfter > gBefore ? 7500 : 4200);
   if (gAfter > gBefore) setTimeout(async () => {
     if (current !== 'result') return;
     $('#result-title').textContent = 'O Lumi cresceu! 🎉';
@@ -680,7 +691,68 @@ function finishLesson(ls) {
   }, 3000);
   say(null, up ? [[T.pt.levelUp, 'pt'], [T.en.amazing, 'en']] : [[T.pt.done, 'pt'], [T.en.amazing, 'en']]);
 }
-$('#btn-result').addEventListener('click', () => go('home'));
+$('#btn-result').addEventListener('click', () => { go('home'); if (S.chests.length) setTimeout(openChest, 600); });
+
+/* ---------------- BAÚS E COLEÇÕES LENDÁRIAS ---------------- */
+// regras: nível novo = raro; mundo completo = épico; 3 estrelas em todo o mundo = lendário;
+// sequência de 3/7/14/30 dias; cada vez que o Lumi cresce; 15% de chance no presente diário
+function checkAwards(levelBefore, growBefore) {
+  const won = []; const give = (key, tier) => { if (S.awards[key]) return; S.awards[key] = 1; S.chests.push(tier); won.push(tier); };
+  for (let l = levelBefore + 1; l <= level(); l++) give('level-' + l, 'raro');
+  D.worlds.forEach((w) => {
+    const st = w.units.map((u) => S.units[u.id] || {});
+    if (st.every((x) => x.done)) give('world-' + w.id, 'epico');
+    if (st.every((x) => x.done && x.stars >= 3)) give('stars-' + w.id, 'lendario');
+  });
+  [[3, 'raro'], [7, 'epico'], [14, 'lendario'], [30, 'lendario']].forEach(([d, t]) => { if (S.streak >= d) give('streak-' + d, t); });
+  for (let g = growBefore + 1; g <= growIdx(); g++) give('grow-' + g, ['raro', 'raro', 'epico', 'lendario', 'lendario'][g]);
+  save(); renderChestBtn();
+  return won;
+}
+function renderChestBtn() { const b = $('#btn-chest'); if (!b) return; b.style.display = S.chests.length ? '' : 'none'; $('#chest-n').textContent = S.chests.length; }
+$('#btn-chest').addEventListener('click', () => { audioCtx(); openChest(); });
+function wornSet() { return D.legendary.find((c) => c.items.every((it) => (it.slot === 'costume' ? S.outfit.costume === it.id : S.outfit[it.slot] === it.id && (!S.outfit.costume || S.outfit.costume === 'none' || !COVERED.includes(it.slot))))); }
+function updateFx(announce) {
+  const c = wornSet(); lumi.setEffect(c ? c.fx : null);
+  if (c && announce && S.awards['set-' + c.id] !== 2) { S.awards['set-' + c.id] = 2; save(); confetti(80); lumi.celebrate(); return c; }
+  return null;
+}
+function pickDrop(tier) {
+  const pool = LEG.filter((it) => !legOwned(it));
+  if (!pool.length) return null;
+  const same = pool.filter((it) => it.rarity === tier);
+  return rnd(same.length ? same : pool);
+}
+let chestOpen = false;
+function openChest() {
+  if (chestOpen || !S.chests.length) return;
+  chestOpen = true;
+  const tier = S.chests[0], R = D.rarity[tier];
+  const M = $('#chestmodal'); M.className = 'chestmodal on ' + tier;
+  M.innerHTML = `<div class="rays"></div><h2>Baú ${R.name.replace(/a$/, 'o')}!</h2>
+    <div class="chest" id="chestbox"><div class="lid"></div><div class="box"><span class="lock"></span></div></div>
+    <p class="ctip">Toque no baú para abrir!</p>`;
+  say(null, [[T.pt.chestTap, 'pt']]);
+  $('#chestbox').onclick = async () => {
+    if (M.classList.contains('open')) return;
+    stopTalk(); M.classList.add('open');
+    S.chests.shift();
+    const it = pickDrop(tier);
+    if (!it) { S.coins += 300; save(); renderChestBtn(); confetti(60);
+      M.insertAdjacentHTML('beforeend', `<div class="reveal"><div class="rcard"><div class="big">🪙</div><b>+300 moedas</b><small>Você já tem todas as peças lendárias!</small></div><button class="big" id="chestok">Oba! ▶</button></div>`);
+      $('#chestok').onclick = closeChest; return; }
+    S.owned[it.slot + ':' + it.id] = 1; save(); renderChestBtn();
+    const img = thumb(it.slot, it.id, 220);
+    const have = it.col.items.filter(legOwned).length;
+    await wait(700); confetti(tier === 'lendario' ? 120 : 70);
+    M.insertAdjacentHTML('beforeend', `<div class="reveal"><div class="rcard" style="--rc:${D.rarity[it.rarity].color}"><span class="rtag">${D.rarity[it.rarity].name}</span><img src="${img}" alt=""><b>${esc(it.pt)}</b><small>${it.col.icon} ${esc(it.col.name)} · ${have}/${it.col.items.length}</small></div>
+      <div class="row"><button class="big sm blue" id="chestlater">Depois</button><button class="big sm" id="chestwear">Vestir agora ✨</button></div></div>`);
+    say(null, [[{ raro: T.pt.gotRare, epico: T.pt.gotEpic, lendario: T.pt.gotLegend }[it.rarity], 'pt'], [it.en + '!', 'en']]);
+    $('#chestlater').onclick = closeChest;
+    $('#chestwear').onclick = () => { S.outfit = outfitWith(it.slot, it.id); save(); lumi.setOutfit(S.outfit); avatarURL = null; const done = updateFx(true); closeChest(); lumi.celebrate(); if (done) say($('#home-bubble'), [[T.pt.setDone, 'pt']], `Coleção <b>${esc(done.name)}</b> completa! ${done.icon}`); };
+  };
+}
+function closeChest() { const M = $('#chestmodal'); M.className = 'chestmodal'; M.innerHTML = ''; chestOpen = false; stopTalk(); if (S.chests.length) setTimeout(openChest, 400); }
 function confetti(n) {
   const app = $('#app'), cols = ['#ffc928', '#2f86ff', '#ff5d73', '#34c96b', '#9a63ff', '#ff9ecf'];
   for (let i = 0; i < n; i++) {
@@ -744,13 +816,13 @@ $('#foods').addEventListener('click', async (e) => {
 });
 
 /* ---------------- ROUPAS ---------------- */
-const SLOTS = [['costume', '🐻 Fantasias'], ['body', '👕 Camisetas'], ['legs', '👖 Calças'], ['head', '🎩 Chapéus'], ['face', '👓 Óculos'], ['back', '🦋 Costas'], ['neck', '🎀 Pescoço']];
+const SLOTS = [['legend', '✨ Lendárias'], ['costume', '🐻 Fantasias'], ['body', '👕 Camisetas'], ['legs', '👖 Calças'], ['head', '🎩 Chapéus'], ['face', '👓 Óculos'], ['back', '🦋 Costas'], ['neck', '🎀 Pescoço']];
 const COVERED = ['head', 'body', 'legs'];
 let slot = 'costume', preview = null;
 const thumbs = {};
-function thumb(slotName, id) {
-  const k = slotName + ':' + id;
-  if (!(k in thumbs)) { const o = {}; Object.keys(D.shop).forEach((x) => (o[x] = 'none')); o[slotName] = id; thumbs[k] = stage.outfitSnapshot(o, slotName === 'head' ? 'head' : slotName, 140); }
+function thumb(slotName, id, size = 140) {
+  const k = slotName + ':' + id + ':' + size;
+  if (!(k in thumbs)) { const o = {}; Object.keys(D.shop).forEach((x) => (o[x] = 'none')); o[slotName] = id; thumbs[k] = stage.outfitSnapshot(o, id === 'parrot' ? 'costume' : slotName, size); }
   return thumbs[k];
 }
 function outfitWith(sl, id) {
@@ -764,8 +836,19 @@ function enterShop() {
   renderShop();
   setTimeout(() => current === 'shop' && say($('#shop-bubble'), T.pt.pickOutfit), 350);
 }
+function renderLegend() {
+  $('#shop-items').innerHTML = D.legendary.map((c) => {
+    const have = c.items.filter(legOwned).length, full = have === c.items.length;
+    return `<div class="lcol ${full ? 'full' : ''}"><div class="lhead"><span>${c.icon}</span><b>${esc(c.name)}</b><em>${have}/${c.items.length}</em></div>
+      <div class="lfx">${full ? '✨ Use tudo junto: ' + c.fxName + '!' : 'Coleção completa ganha ' + c.fxName}</div>
+      <div class="litems">${c.items.map((it) => { const own = legOwned(it), wear = S.outfit[it.slot] === it.id; const R = D.rarity[it.rarity];
+        return `<button class="item leg ${own ? '' : 'locked'} ${wear ? 'wear' : ''}" data-slot="${it.slot}" data-id="${it.id}" style="--rc:${R.color}"><img src="${thumb(it.slot, it.id)}" alt=""><small>${own ? esc(it.pt) : '???'}</small><span class="tag rar">${own ? (wear ? 'Usando' : 'Usar') : '🔒 ' + R.name}</span></button>`; }).join('')}</div></div>`;
+  }).join('') + '<p class="lnote">🎁 Ganhe baús terminando mundos, fazendo 3 estrelas, subindo de nível, jogando vários dias seguidos e quando o Lumi cresce.</p>';
+}
 function renderShop() {
   $$('#shop-tabs .tab').forEach((t) => t.classList.toggle('on', t.dataset.slot === slot));
+  $('#shop-items').classList.toggle('legend', slot === 'legend');
+  if (slot === 'legend') return renderLegend();
   const costumeOn = S.outfit.costume && S.outfit.costume !== 'none';
   $('#shop-items').innerHTML = D.shop[slot].map((it) => {
     const own = S.owned[slot + ':' + it.id], wear = S.outfit[slot] === it.id && !(costumeOn && COVERED.includes(slot) && it.id !== 'none');
@@ -778,10 +861,20 @@ $('#shop-tabs').addEventListener('click', (e) => { const t = e.target.closest('.
 $('#shop-items').addEventListener('click', (e) => {
   const b = e.target.closest('.item'); if (!b) return;
   audioCtx();
+  if (b.classList.contains('leg')) {
+    const it = LEG.find((x) => x.id === b.dataset.id && x.slot === b.dataset.slot);
+    if (!legOwned(it)) { lumi.encourage(); toast('🔒 Só sai em baús!'); say($('#shop-bubble'), T.pt.legendHint); return; }
+    const off = S.outfit[it.slot] === it.id;
+    S.outfit = off ? Object.assign({}, S.outfit, { [it.slot]: 'none' }) : outfitWith(it.slot, it.id); save(); lumi.setOutfit(S.outfit); avatarURL = null; lumi.hop();
+    const done = updateFx(true); renderShop();
+    if (done) say($('#shop-bubble'), [[T.pt.setDone, 'pt']], `Coleção <b>${esc(done.name)}</b> completa! ${done.icon}`);
+    else if (!off) say($('#shop-bubble'), [[it.en + '!', 'en'], [T.pt.pretty, 'pt']]);
+    return;
+  }
   const it = D.shop[slot].find((x) => x.id === b.dataset.id), key = slot + ':' + it.id;
   const cheer = () => (slot === 'costume' && it.id !== 'none' ? [[it.en + '!', 'en'], [T.pt.costume, 'pt']] : it.en ? [[it.en + '!', 'en'], [T.pt.pretty, 'pt']] : [[T.pt.pretty, 'pt']]);
   if (S.owned[key]) {
-    S.outfit = outfitWith(slot, it.id); save(); lumi.setOutfit(S.outfit); preview = null; renderShop(); lumi.hop(); avatarURL = null;
+    S.outfit = outfitWith(slot, it.id); save(); lumi.setOutfit(S.outfit); preview = null; renderShop(); lumi.hop(); avatarURL = null; updateFx();
     say($('#shop-bubble'), cheer());
     return;
   }
@@ -791,7 +884,7 @@ $('#shop-items').addEventListener('click', (e) => {
     return;
   }
   if (S.coins < it.price) { lumi.encourage(); say($('#shop-bubble'), T.pt.noCoins); return; }
-  S.coins -= it.price; S.owned[key] = 1; S.outfit = outfitWith(slot, it.id); save(); lumi.setOutfit(S.outfit); preview = null; renderShop(); avatarURL = null;
+  S.coins -= it.price; S.owned[key] = 1; S.outfit = outfitWith(slot, it.id); save(); lumi.setOutfit(S.outfit); preview = null; renderShop(); avatarURL = null; updateFx();
   lumi.celebrate(); confetti(30);
   say($('#shop-bubble'), [[T.pt.thanks, 'pt'], ...cheer().slice(0, 1)]);
 });
@@ -813,5 +906,5 @@ function openTired() {
 bind();
 enterSplash();
 setTimeout(() => $('#loading').classList.add('off'), 250);
-window.__lumi = { S, stage, go, startLesson, get LS() { return LS; }, setMicBroken: (v) => { micBroken = v; } };
+window.__lumi = { S, stage, go, startLesson, openChest, checkAwards, updateFx, get LS() { return LS; }, setMicBroken: (v) => { micBroken = v; } };
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});

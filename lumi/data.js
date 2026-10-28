@@ -200,6 +200,48 @@
         { id: 'medal', pt: 'Medalha', en: 'Medal', price: 90 },
       ],
     },
+    // coleções lendárias: não estão à venda, só saem em baús
+    legendary: [
+      { id: 'princess', name: 'Princesa das Estrelas', icon: '✨', fx: 'sparkle', fxName: 'brilho de estrelas', items: [
+        { slot: 'head', id: 'crystal-tiara', pt: 'Tiara de cristal', en: 'Crystal tiara', rarity: 'raro' },
+        { slot: 'neck', id: 'star-necklace', pt: 'Colar de estrela', en: 'Star necklace', rarity: 'raro' },
+        { slot: 'body', id: 'star-dress', pt: 'Vestido das estrelas', en: 'Star dress', rarity: 'epico' },
+        { slot: 'back', id: 'light-wings', pt: 'Asas de luz', en: 'Wings of light', rarity: 'lendario' } ] },
+      { id: 'hero', name: 'Herói Relâmpago', icon: '⚡', fx: 'bolt', fxName: 'raios em volta', items: [
+        { slot: 'face', id: 'bolt-mask', pt: 'Máscara relâmpago', en: 'Lightning mask', rarity: 'raro' },
+        { slot: 'legs', id: 'hero-boots', pt: 'Botas de herói', en: 'Hero boots', rarity: 'raro' },
+        { slot: 'body', id: 'bolt-suit', pt: 'Uniforme relâmpago', en: 'Lightning suit', rarity: 'epico' },
+        { slot: 'back', id: 'glow-cape', pt: 'Capa brilhante', en: 'Shining cape', rarity: 'lendario' } ] },
+      { id: 'pirate', name: 'Pirata dos Mares', icon: '🏴‍☠️', fx: 'coins', fxName: 'moedas de ouro', items: [
+        { slot: 'face', id: 'eyepatch', pt: 'Tapa-olho', en: 'Eye patch', rarity: 'raro' },
+        { slot: 'body', id: 'pirate-coat', pt: 'Casaco de capitão', en: 'Captain coat', rarity: 'epico' },
+        { slot: 'head', id: 'captain-hat', pt: 'Chapéu de capitão', en: 'Captain hat', rarity: 'epico' },
+        { slot: 'back', id: 'parrot', pt: 'Papagaio amigo', en: 'Parrot friend', rarity: 'lendario' } ] },
+      { id: 'space', name: 'Astronauta Galáctico', icon: '🚀', fx: 'planets', fxName: 'planetas girando', items: [
+        { slot: 'neck', id: 'comet-pendant', pt: 'Pingente de cometa', en: 'Comet pendant', rarity: 'raro' },
+        { slot: 'body', id: 'space-suit', pt: 'Traje espacial', en: 'Space suit', rarity: 'epico' },
+        { slot: 'back', id: 'rocket-pack', pt: 'Foguete nas costas', en: 'Rocket pack', rarity: 'epico' },
+        { slot: 'head', id: 'galaxy-helmet', pt: 'Capacete da galáxia', en: 'Galaxy helmet', rarity: 'lendario' } ] },
+      { id: 'ninja', name: 'Ninja da Folha', icon: '🥷', fx: 'leaves', fxName: 'redemoinho de folhas', items: [
+        { slot: 'head', id: 'ninja-band', pt: 'Faixa ninja', en: 'Ninja headband', rarity: 'raro' },
+        { slot: 'face', id: 'ninja-mask', pt: 'Máscara ninja', en: 'Ninja mask', rarity: 'epico' },
+        { slot: 'body', id: 'ninja-gi', pt: 'Roupa ninja', en: 'Ninja suit', rarity: 'epico' },
+        { slot: 'back', id: 'leaf-cape', pt: 'Capa de folhas', en: 'Leaf cape', rarity: 'lendario' } ] },
+      { id: 'mermaid', name: 'Sereia do Mar', icon: '🧜', fx: 'bubbles', fxName: 'bolhas mágicas', items: [
+        { slot: 'head', id: 'shell-crown', pt: 'Coroa de conchas', en: 'Shell crown', rarity: 'raro' },
+        { slot: 'neck', id: 'pearl-necklace', pt: 'Colar de pérolas', en: 'Pearl necklace', rarity: 'raro' },
+        { slot: 'body', id: 'shell-top', pt: 'Blusa de conchas', en: 'Shell top', rarity: 'epico' },
+        { slot: 'legs', id: 'mermaid-tail', pt: 'Cauda de sereia', en: 'Mermaid tail', rarity: 'lendario' } ] },
+      { id: 'dragon', name: 'Dragão de Fogo', icon: '🐉', fx: 'fire', fxName: 'faíscas de fogo', items: [
+        { slot: 'neck', id: 'dragon-amulet', pt: 'Amuleto do dragão', en: 'Dragon amulet', rarity: 'epico' },
+        { slot: 'costume', id: 'fire-dragon', pt: 'Fantasia de dragão', en: 'Fire dragon costume', rarity: 'lendario' } ] },
+      { id: 'robot', name: 'Robô Turbo', icon: '🤖', fx: 'lights', fxName: 'luzes piscando', items: [
+        { slot: 'face', id: 'robot-visor', pt: 'Visor de robô', en: 'Robot visor', rarity: 'raro' },
+        { slot: 'head', id: 'robot-helmet', pt: 'Capacete de robô', en: 'Robot helmet', rarity: 'epico' },
+        { slot: 'body', id: 'robot-chest', pt: 'Peito de robô', en: 'Robot chest', rarity: 'epico' },
+        { slot: 'back', id: 'gear-pack', pt: 'Engrenagens turbo', en: 'Turbo gears', rarity: 'lendario' } ] },
+    ],
+    rarity: { raro: { name: 'Rara', color: '#2f86ff' }, epico: { name: 'Épica', color: '#9a55ff' }, lendario: { name: 'Lendária', color: '#ffb000' } },
     // o Lumi cresce conforme as fases completas
     grow: [
       { min: 0, name: 'Bebê', icon: '🍼' },

@@ -1,292 +1,152 @@
 [
  {
   "s": 0.0,
-  "e": 1.426,
-  "text": "Flower"
+  "e": 1.752625,
+  "text": "Crystal Tiara"
  },
  {
-  "s": 1.426,
-  "e": 2.8298125,
-  "text": "Dress."
+  "s": 1.752625,
+  "e": 3.4605,
+  "text": "Star Necklace"
  },
  {
-  "s": 2.8298125,
-  "e": 4.3779375,
-  "text": "Backpack"
+  "s": 3.4605,
+  "e": 5.0965,
+  "text": "Star Dress"
  },
  {
-  "s": 4.3779375,
-  "e": 5.7181875,
-  "text": "Metal"
+  "s": 5.0965,
+  "e": 6.7961875,
+  "text": "Wings of light."
  },
  {
-  "s": 5.7181875,
-  "e": 7.3944375,
-  "text": "Sunglasses"
+  "s": 6.7961875,
+  "e": 8.5198125,
+  "text": "Lightning Mask"
  },
  {
-  "s": 7.3944375,
-  "e": 9.0606875,
-  "text": "Bear costume."
+  "s": 8.5198125,
+  "e": 10.110375,
+  "text": "Hero Boots"
  },
  {
-  "s": 9.0606875,
-  "e": 10.7746875,
-  "text": "Bunny costume"
+  "s": 10.110375,
+  "e": 11.754375,
+  "text": "Lightning suit."
  },
  {
-  "s": 10.7746875,
-  "e": 12.444125,
-  "text": "Cat costume"
+  "s": 11.754375,
+  "e": 13.3155,
+  "text": "Shining Cape"
  },
  {
-  "s": 12.444125,
-  "e": 14.1765,
-  "text": "Frog costume"
+  "s": 13.3155,
+  "e": 14.772375,
+  "text": "Ipatch"
  },
  {
-  "s": 14.1765,
-  "e": 15.8399375,
-  "text": "Chick costume"
+  "s": 14.772375,
+  "e": 16.428125,
+  "text": "Captain Cote"
  },
  {
-  "s": 15.8399375,
-  "e": 17.6579375,
-  "text": "Panda costume"
+  "s": 16.428125,
+  "e": 18.014,
+  "text": "Captain Hat"
  },
  {
-  "s": 17.6579375,
-  "e": 19.4841875,
-  "text": "Tiger costume"
+  "s": 18.014,
+  "e": 19.665125,
+  "text": "Parrot Friend"
  },
  {
-  "s": 19.4841875,
-  "e": 21.343,
-  "text": "Dinosaur costume."
+  "s": 19.665125,
+  "e": 21.3240625,
+  "text": "Comet Pendant"
  },
  {
-  "s": 21.343,
-  "e": 23.1018125,
-  "text": "Shark costume"
+  "s": 21.3240625,
+  "e": 22.9240625,
+  "text": "Space suit."
  },
  {
-  "s": 23.1018125,
-  "e": 25.0605625,
-  "text": "Unicorn costume"
+  "s": 22.9240625,
+  "e": 24.5319375,
+  "text": "Rocket Pack"
  },
  {
-  "s": 25.0605625,
-  "e": 26.8225625,
-  "text": "Red t-shirt"
+  "s": 24.5319375,
+  "e": 26.2619375,
+  "text": "Galaxy helmet"
  },
  {
-  "s": 26.8225625,
-  "e": 28.6720625,
-  "text": "Yellow t-shirt"
+  "s": 26.2619375,
+  "e": 28.048375,
+  "text": "Ninja headband"
  },
  {
-  "s": 28.6720625,
-  "e": 30.4838125,
-  "text": "Striped t-shirt"
+  "s": 28.048375,
+  "e": 29.6196875,
+  "text": "Ninja mask"
  },
  {
-  "s": 30.4838125,
-  "e": 32.20925,
-  "text": "Pink t-shirt."
+  "s": 29.6196875,
+  "e": 31.1778125,
+  "text": "Ninja suit."
  },
  {
-  "s": 32.20925,
-  "e": 33.7945625,
-  "text": "Soccer shirt"
+  "s": 31.1778125,
+  "e": 32.6219375,
+  "text": "Leaf Cape"
  },
  {
-  "s": 33.7945625,
-  "e": 35.705875,
-  "text": "Rainbow T-Shart"
+  "s": 32.6219375,
+  "e": 34.199,
+  "text": "Shell Crown"
  },
  {
-  "s": 35.705875,
-  "e": 37.277,
-  "text": "pajamas"
+  "s": 34.199,
+  "e": 35.8589375,
+  "text": "Pearl Necklace"
  },
  {
-  "s": 37.277,
-  "e": 38.587,
-  "text": "Hoodie."
+  "s": 35.8589375,
+  "e": 37.343,
+  "text": "Shell Top"
  },
  {
-  "s": 38.587,
-  "e": 39.90875,
-  "text": "Dress."
+  "s": 37.343,
+  "e": 39.0434375,
+  "text": "Mermaid tail"
  },
  {
-  "s": 39.90875,
-  "e": 41.7065625,
-  "text": "Superhero suit"
+  "s": 39.0434375,
+  "e": 40.809625,
+  "text": "Drag and Amulet"
  },
  {
-  "s": 41.7065625,
-  "e": 43.0955,
-  "text": "Shorts"
+  "s": 40.809625,
+  "e": 42.92025,
+  "text": "Fire Dragon costume"
  },
  {
-  "s": 43.0955,
-  "e": 44.453875,
-  "text": "Jeans"
+  "s": 42.92025,
+  "e": 44.64475,
+  "text": "Robot Visor"
  },
  {
-  "s": 44.453875,
-  "e": 45.819125,
-  "text": "skirt"
+  "s": 44.64475,
+  "e": 46.292625,
+  "text": "Robot helmet"
  },
  {
-  "s": 45.819125,
-  "e": 47.549625,
-  "text": "pajama pants"
+  "s": 46.292625,
+  "e": 47.9880625,
+  "text": "Robot Chest"
  },
  {
-  "s": 47.549625,
-  "e": 48.935625,
-  "text": "Toodle."
- },
- {
-  "s": 48.935625,
-  "e": 50.459,
-  "text": "Overalls"
- },
- {
-  "s": 50.459,
-  "e": 51.920125,
-  "text": "Party hat."
- },
- {
-  "s": 51.920125,
-  "e": 53.5795,
-  "text": "Flower crown"
- },
- {
-  "s": 53.5795,
-  "e": 55.2935,
-  "text": "Explorer Hat"
- },
- {
-  "s": 55.2935,
-  "e": 56.7698125,
-  "text": "Chef Hat"
- },
- {
-  "s": 56.7698125,
-  "e": 58.295625,
-  "text": "headphones"
- },
- {
-  "s": 58.295625,
-  "e": 59.861875,
-  "text": "Pirate Hat"
- },
- {
-  "s": 59.861875,
-  "e": 61.474,
-  "text": "Cowboy hat"
- },
- {
-  "s": 61.474,
-  "e": 63.135125,
-  "text": "Propeller hat"
- },
- {
-  "s": 63.135125,
-  "e": 64.6980625,
-  "text": "Wizard hat."
- },
- {
-  "s": 64.6980625,
-  "e": 66.07375,
-  "text": "Tiara"
- },
- {
-  "s": 66.07375,
-  "e": 67.736125,
-  "text": "Space helmet"
- },
- {
-  "s": 67.736125,
-  "e": 69.2395,
-  "text": "mustache"
- },
- {
-  "s": 69.2395,
-  "e": 70.899875,
-  "text": "Heart glasses."
- },
- {
-  "s": 70.899875,
-  "e": 72.692,
-  "text": "Star glasses."
- },
- {
-  "s": 72.692,
-  "e": 74.3518125,
-  "text": "Sunglasses"
- },
- {
-  "s": 74.3518125,
-  "e": 75.9123125,
-  "text": "Hero mask"
- },
- {
-  "s": 75.9123125,
-  "e": 77.4044375,
-  "text": "Backpack"
- },
- {
-  "s": 77.4044375,
-  "e": 78.8699375,
-  "text": "Hero Cape"
- },
- {
-  "s": 78.8699375,
-  "e": 80.3484375,
-  "text": "Wizard cape."
- },
- {
-  "s": 80.3484375,
-  "e": 81.871875,
-  "text": "Turtle Shell"
- },
- {
-  "s": 81.871875,
-  "e": 83.482875,
-  "text": "Fairy Wings"
- },
- {
-  "s": 83.482875,
-  "e": 85.1801875,
-  "text": "Angel wings."
- },
- {
-  "s": 85.1801875,
-  "e": 86.729375,
-  "text": "That wings"
- },
- {
-  "s": 86.729375,
-  "e": 88.18225,
-  "text": "Jetpack"
- },
- {
-  "s": 88.18225,
-  "e": 89.459375,
-  "text": "tie"
- },
- {
-  "s": 89.459375,
-  "e": 91.20675,
-  "text": "Flower necklace"
- },
- {
-  "s": 91.20675,
-  "e": 92.5223125,
-  "text": "Metal"
+  "s": 47.9880625,
+  "e": 49.666375,
+  "text": "Turbogears"
  }
 ]

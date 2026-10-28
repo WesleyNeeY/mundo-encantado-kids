@@ -1005,4 +1005,16 @@ bind();
 enterSplash();
 setTimeout(() => $('#loading').classList.add('off'), 250);
 window.__lumi = { S, stage, go, startLesson, openChest, checkAwards, updateFx, get LS() { return LS; }, setMicBroken: (v) => { micBroken = v; }, get micMode() { return micBroken ? 'tap' : srBroken ? 'vad' : 'sr'; } };
-if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  const SW = navigator.serviceWorker, hadSW = !!SW.controller;
+  SW.register('sw.js', { updateViaCache: 'none' }).then((reg) => {
+    // o iPhone só "retoma" o app quando ele volta para a tela: procura versão nova nessa hora
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+  }).catch(() => {});
+  // chegou versão nova do app: recarrega sozinho quando estiver na abertura ou no início (nunca no meio de aula, jogo ou janela aberta)
+  SW.addEventListener('controllerchange', () => {
+    if (!hadSW) return;
+    const tryReload = () => { if (!LS && (current === 'splash' || current === 'home') && !$('#modal').classList.contains('on')) { location.reload(); return true; } return false; };
+    if (!tryReload()) { const iv = setInterval(() => { if (tryReload()) clearInterval(iv); }, 4000); }
+  });
+}

@@ -1276,9 +1276,10 @@ function makeFloorMirror(geo, strength = 0.42) {
     P.setFromNormalAndCoplanarPoint(N, RW).applyMatrix4(cam.matrixWorldInverse); CL.set(P.normal.x, P.normal.y, P.normal.z, P.constant);
     const e = cam.projectionMatrix.elements; Q.set((Math.sign(CL.x) + e[8]) / e[0], (Math.sign(CL.y) + e[9]) / e[5], -1, (1 + e[10]) / e[14]); CL.multiplyScalar(2 / CL.dot(Q));
     e[2] = CL.x; e[6] = CL.y; e[10] = CL.z + 1 - 0.003; e[14] = CL.w;
-    m.visible = false; const rt0 = renderer.getRenderTarget(), sh = renderer.shadowMap.autoUpdate; renderer.shadowMap.autoUpdate = false;
-    renderer.setRenderTarget(rt); renderer.state.buffers.depth.setMask(true); if (renderer.autoClear === false) renderer.clear(); renderer.render(scene, cam);
-    renderer.shadowMap.autoUpdate = sh; renderer.setRenderTarget(rt0); m.visible = true;
+    m.visible = false; const rt0 = renderer.getRenderTarget(), sh = renderer.shadowMap.autoUpdate; renderer.shadowMap.autoUpdate = false; let ok = true;
+    try { renderer.setRenderTarget(rt); renderer.state.buffers.depth.setMask(true); if (renderer.autoClear === false) renderer.clear(); renderer.render(scene, cam); }
+    catch (err) { ok = false; console.warn('reflexo do piso desligado', err); } // se o aparelho não aguentar, o piso fica só brilhante
+    renderer.shadowMap.autoUpdate = sh; renderer.setRenderTarget(rt0); m.visible = ok; if (!ok) m.onBeforeRender = () => {};
   };
   return m;
 }
@@ -1648,17 +1649,20 @@ export class Stage {
     const room = p.scene === 'room' || p.night; this.island.visible = !room;
     const school = !!(host.closest && host.closest('[data-scene="school"]')); // escola futurista: base holográfica no lugar do tapete
     this.rug.visible = room && !p.night && !school; this.pad.visible = room && !p.night && school;
-    if (school && !this.school) { // monta a escola e compila os materiais em segundo plano antes de mostrar (sem travar a tela)
-      const S = (this.school = makeSchool()), R = this.renderer; S.visible = false; this.scene.add(S);
-      const show = () => { this.schoolReady = true; S.visible = !!(this.host && this.host.closest && this.host.closest('[data-scene="school"]')); };
-      try {
-        if (!R.compileAsync || !R.extensions.has('KHR_parallel_shader_compile')) throw 0; // sem compilação paralela: mostra direto
-        const jobs = [R.compileAsync(S, this.camera, this.scene)], prev = R.getRenderTarget();
-        if (S.userData.mirrorRT) { R.setRenderTarget(S.userData.mirrorRT); jobs.push(R.compileAsync(S, this.camera, this.scene)); R.setRenderTarget(prev); }
-        Promise.all(jobs).then(show, show); setTimeout(() => this.schoolReady || show(), 2500); // garantia: nunca fica sem a escola
-      } catch (e) { show(); }
+    if (school && !this.school && !this.schoolBroken) { // monta a escola e compila os materiais em segundo plano antes de mostrar (sem travar a tela)
+      let S = null; try { S = makeSchool(); } catch (e) { console.warn('escola 3D indisponível neste aparelho', e); this.schoolBroken = true; } // se falhar, fica o fundo desenhado
+      if (S) {
+        const R = this.renderer, prev = R.getRenderTarget(); this.school = S; S.visible = false; this.scene.add(S);
+        const show = () => { this.schoolReady = true; S.visible = !this.schoolBroken && !!(this.host && this.host.closest && this.host.closest('[data-scene="school"]')); };
+        try {
+          if (!R.compileAsync || !R.extensions.has('KHR_parallel_shader_compile')) throw 0; // sem compilação paralela: mostra direto
+          const jobs = [R.compileAsync(S, this.camera, this.scene)];
+          if (S.userData.mirrorRT) { R.setRenderTarget(S.userData.mirrorRT); jobs.push(R.compileAsync(S, this.camera, this.scene)); }
+          Promise.all(jobs).then(show, show); setTimeout(() => this.schoolReady || show(), 2500); // garantia: nunca fica sem a escola
+        } catch (e) { show(); } finally { R.setRenderTarget(prev); }
+      }
     }
-    if (this.school) this.school.visible = school && !!this.schoolReady;
+    if (this.school) this.school.visible = school && !!this.schoolReady && !this.schoolBroken;
     if (!this.schoolLights) { // luzes coloridas da escola (ciano e lilás), ligadas só na escola
       this.schoolLights = [new THREE.PointLight(0x4fe3ff, 0, 9, 1.6), new THREE.PointLight(0xc28bff, 0, 9, 1.6)];
       this.schoolLights[0].userData.p = new THREE.Vector3(1.9, 1.7, -3.4); this.schoolLights[1].userData.p = new THREE.Vector3(-1.7, 2.6, -2.4); this.schoolLights.forEach((l) => { l.position.copy(l.userData.p); l.layers.enable(1); this.scene.add(l); });
@@ -1714,7 +1718,7 @@ export class Stage {
     this.lumi.root.rotation.x = -1.3 * this.lieK; this.lumi.root.position.set(0, 0.55 * this.lieK, -0.2 * this.lieK);
     this.lumi.update(this.t, dt);
     if (this.pad.visible) this.pad.userData.tick(this.t);
-    if (this.school && this.school.visible) {
+    if (this.school && this.school.visible) try {
       const s = (tg.dist || SCHOOL_REF.dist) / SCHOOL_REF.dist, ox = (tg.x || 0) - s * SCHOOL_REF.x, S = this.school;
       S.scale.setScalar(s); S.position.set(ox, 0, 0); S.userData.tick(this.t);
       if (!this.schoolLow) { // modo econômico automático: média de quadros lenta (abaixo de ~38 qps) depois do aquecimento
@@ -1723,7 +1727,7 @@ export class Stage {
       }
       this.scene.fog.near = 55 * s; this.scene.fog.far = 300 * s;
       for (const l of this.schoolLights) l.position.copy(l.userData.p).multiplyScalar(s).setX(l.userData.p.x * s + ox);
-    }
+    } catch (err) { console.warn('escola 3D desligada', err); this.schoolBroken = true; this.school.visible = false; } // nunca trava o Lumi
     this.eggTick(dt);
     this.renderer.render(this.scene, this.camera);
   }

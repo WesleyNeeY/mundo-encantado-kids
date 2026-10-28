@@ -48,7 +48,7 @@ if (!S.hatched) stage.setEgg(true);
 const PRESET = {
   splash: { fit: [0.2, 0.7], scene: 'room', above: '.splashui' },
   home: { fit: [0.2, 0.62], x: 0.55, scene: 'room', above: '.hcards' },
-  lesson: { fit: [0.075, 0.6], x: 0.95, scene: 'room', peek: ['.lbody', 0.17] },
+  lesson: { fit: [0.075, 0.52], x: 0.6, scene: 'room', above: '.lbody' },
   result: { fit: [0.26, 0.74], scene: 'room', above: '.rbox' },
   rest: { fit: [0.18, 0.6], night: true, tilt: 4, above: '.pbottom' },
   snack: { fit: [0.15, 0.55], scene: 'room', above: '.pbottom' },

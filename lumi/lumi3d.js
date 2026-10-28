@@ -204,88 +204,106 @@ export class Lumi3D {
     P.feet = this._feet;
   }
 
-  /* ---- robozinho: casco branco brilhante, visor escuro e olhos de LED (mesmos pontos de encaixe das roupas) ---- */
+  /* ---- robozinho: casco branco brilhante, visor-tela com olhos de LED (mesmos pontos de encaixe das roupas) ---- */
   buildRobot() {
     const R = this.root, P = (this.p = {});
-    const shellM = new THREE.MeshPhysicalMaterial({ color: 0xf4f7fb, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 0.9 });
-    const navy = mat.std(0x1d2f6b, { roughness: 0.3, clearcoat: 0.8 }), blue = mat.std(0x2f74e0, { roughness: 0.3, clearcoat: 0.8 });
-    const panel = mat.std(0xe2eaf6, { roughness: 0.35, clearcoat: 0.6 });
-    const visorM = new THREE.MeshPhysicalMaterial({ color: 0x060a18, roughness: 0.06, clearcoat: 1, clearcoatRoughness: 0.02, metalness: 0.25, envMapIntensity: 1.2 });
-    const glow = new THREE.MeshBasicMaterial({ color: 0x3fcfff, toneMapped: false });
-    const glowHi = new THREE.MeshBasicMaterial({ color: 0xbff4ff, toneMapped: false });
-    const halo = new THREE.MeshBasicMaterial({ color: 0x2fb8ff, transparent: true, opacity: 0.28, depthWrite: false, toneMapped: false });
+    const shellM = new THREE.MeshPhysicalMaterial({ color: 0xf7f9fd, roughness: 0.24, clearcoat: 1, clearcoatRoughness: 0.08, sheen: 0.25, sheenColor: new C(0xdfeaff), envMapIntensity: 0.95 });
+    const navy = mat.std(0x1b2a63, { roughness: 0.28, clearcoat: 0.9, clearcoatRoughness: 0.1 }), blue = mat.std(0x2a6fe0, { roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.08 });
+    const bezelM = mat.std(0xdbe8fb, { roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.06 });
+    const visorM = new THREE.MeshPhysicalMaterial({ map: visorTexture(), roughness: 0.05, clearcoat: 1, clearcoatRoughness: 0.02, metalness: 0.2, envMapIntensity: 1.35 });
+    const glow = new THREE.MeshBasicMaterial({ color: 0x45d4ff, toneMapped: false });
+    const glowSoft = (o) => new THREE.MeshBasicMaterial({ color: 0x2fb8ff, transparent: true, opacity: o, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
+    P.halos = []; const halo = (m, o) => { m.userData.o = o; m.userData.ph = Math.random() * 6; P.halos.push(m); return m; };
     P.bounce = new THREE.Group(); R.add(P.bounce);
-    // pés: botinhas com sola azul
+    // botinhas: casco branco, biqueira azul e sola azul-marinho
     this._feet = [];
-    for (const s of [-1, 1]) { const f = sph(0.31, shellM); f.scale.set(1.05, 0.7, 1.35); f.position.set(0.36 * s, 0.19, 0.12); P.bounce.add(f); this._feet.push(f);
-      const so = sph(0.31, navy); so.scale.set(1.08, 0.3, 1.38); so.position.set(0.36 * s, 0.07, 0.12); P.bounce.add(so); }
-    // corpo
+    for (const s of [-1, 1]) {
+      const f = sph(0.32, shellM, 40); f.scale.set(1.06, 0.72, 1.38); f.position.set(0.36 * s, 0.2, 0.12); P.bounce.add(f); this._feet.push(f);
+      const so = sph(0.32, navy, 32); so.scale.set(1.1, 0.3, 1.42); so.position.set(0.36 * s, 0.08, 0.12); P.bounce.add(so);
+      const toe = sph(0.2, blue, 28); toe.scale.set(1.18, 0.78, 0.9); toe.position.set(0.36 * s, 0.17, 0.44); P.bounce.add(toe);
+    }
+    // corpo: casco arredondado, painel no peito com "L" e luzinhas, cinto
     P.body = new THREE.Group(); P.body.position.y = 0.2; P.bounce.add(P.body);
-    const body = sph(0.8, shellM, 56); body.scale.set(0.98, 1.03, 0.9); body.position.y = 0.78; P.body.add(body); P.bodyMesh = body;
-    const belly = sph(0.55, panel, 40); belly.scale.set(0.86, 0.8, 0.36); belly.position.set(0, 0.8, 0.54); P.body.add(belly); P.belly = belly;
+    const body = new THREE.Mesh(roundBoxGeo(0.8, 2.3, 0.98, 1.02, 0.9), shellM); body.position.y = 0.78; P.body.add(body); P.bodyMesh = body;
+    P.belly = new THREE.Group(); P.body.add(P.belly);
+    const frame = new THREE.Mesh(roundRectGeo(0.7, 0.62, 0.17, 0.03), navy); frame.position.set(0, 0.82, 0.668); frame.rotation.x = -0.1; P.belly.add(frame);
+    const pane = new THREE.Mesh(roundRectGeo(0.62, 0.54, 0.14, 0.035), bezelM); pane.position.set(0, 0.82, 0.69); pane.rotation.x = -0.1; P.belly.add(pane);
+    for (const [x, c] of [[-0.13, 0x6bffb4], [0, 0xffd84a], [0.13, 0xff7ab6]]) { const l = sph(0.035, new THREE.MeshBasicMaterial({ color: c, toneMapped: false }), 14); l.position.set(x, 0.62, 0.745); P.belly.add(l); }
     const Ls = new THREE.Shape(); Ls.moveTo(-0.11, 0.17); Ls.lineTo(-0.03, 0.17); Ls.lineTo(-0.03, -0.09); Ls.lineTo(0.13, -0.09); Ls.lineTo(0.13, -0.17); Ls.lineTo(-0.11, -0.17); Ls.closePath();
     const Lg = new THREE.ExtrudeGeometry(Ls, { depth: 0.05, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 3 }); Lg.center();
-    const Lm = new THREE.Mesh(Lg, mat.std(0x2f86ff, { emissive: 0x0b3f9a, emissiveIntensity: 0.4, roughness: 0.2, clearcoat: 1 })); Lm.position.set(0, 0.84, 0.73); Lm.rotation.x = -0.12; P.body.add(Lm); P.bellyStar = Lm;
-    const belt = new THREE.Mesh(new THREE.TorusGeometry(0.76, 0.045, 10, 64), navy); belt.rotation.x = Math.PI / 2; belt.scale.set(1, 0.92, 1); belt.position.y = 0.36; P.body.add(belt); P.belt = belt;
-    // mochila azul com estrela
+    const Lm = new THREE.Mesh(Lg, mat.std(0x2f86ff, { emissive: 0x0b4fc0, emissiveIntensity: 0.45, roughness: 0.18, clearcoat: 1 })); Lm.position.set(0, 0.86, 0.74); Lm.rotation.x = -0.1; P.body.add(Lm); P.bellyStar = Lm;
+    const belt = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.05, 12, 72), navy); belt.rotation.x = Math.PI / 2; belt.scale.set(1, 0.92, 1); belt.position.y = 0.36; P.body.add(belt); P.belt = belt;
+    // mochila: corpo azul-marinho, tampa e bolso azuis, estrela dourada, alças
     P.pack = new THREE.Group(); P.body.add(P.pack);
-    const bag = sph(0.52, navy, 40); bag.scale.set(1, 1.08, 0.55); bag.position.set(0, 0.86, -0.72); P.pack.add(bag);
-    const pocket = sph(0.34, blue, 32); pocket.scale.set(1, 0.68, 0.42); pocket.position.set(0, 0.68, -0.95); P.pack.add(pocket);
-    const pst = starMesh(0.12, mat.gold()); pst.position.set(0, 0.7, -1.09); pst.rotation.y = Math.PI; P.pack.add(pst);
-    for (const s of [-1, 1]) P.pack.add(tube([[0.32 * s, 1.22, -0.6], [0.4 * s, 1.5, -0.1], [0.38 * s, 1.36, 0.42], [0.33 * s, 1.0, 0.62]], 0.055, navy));
+    const bag = new THREE.Mesh(roundBoxGeo(0.5, 2.8, 1, 1.12, 0.52), navy); bag.position.set(0, 0.88, -0.74); P.pack.add(bag);
+    const flap = new THREE.Mesh(roundBoxGeo(0.5, 2.8, 1.04, 0.42, 0.56), blue); flap.position.set(0, 1.2, -0.75); P.pack.add(flap);
+    const pocket = new THREE.Mesh(roundBoxGeo(0.3, 2.6, 1.05, 0.72, 0.45), blue); pocket.position.set(0, 0.64, -0.98); P.pack.add(pocket);
+    const pst = starMesh(0.11, mat.gold()); pst.position.set(0, 0.66, -1.115); pst.rotation.y = Math.PI; P.pack.add(pst);
+    for (const s of [-1, 1]) P.pack.add(tube([[0.3 * s, 1.24, -0.58], [0.38 * s, 1.5, -0.12], [0.37 * s, 1.38, 0.4], [0.32 * s, 1.02, 0.62]], 0.055, navy));
     P.tail = new THREE.Group(); P.bounce.add(P.tail); // robô não tem rabo
-    // braços
+    // braços articulados: ombro e cotovelo azuis, luva branca com punho
     for (const s of [-1, 1]) {
       const sh = new THREE.Group(); sh.position.set(0.66 * s, 1.36, 0.2); P.body.add(sh);
-      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.42, 8, 20), shellM); arm.position.y = -0.34; sh.add(arm);
-      const jt = sph(0.19, navy, 24); sh.add(jt);
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.035, 8, 28), navy); ring.rotation.x = Math.PI / 2; ring.position.y = -0.47; sh.add(ring);
-      const hand = sph(0.2, navy, 28); hand.position.y = -0.64; hand.scale.set(1, 0.9, 0.95); sh.add(hand);
-      const th = sph(0.08, navy, 14); th.position.set(-0.14 * s, -0.58, 0.08); sh.add(th);
+      const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.155, 0.13, 8, 20), shellM); upper.position.y = -0.17; sh.add(upper);
+      sh.add(sph(0.2, navy, 28));
+      const elbow = sph(0.14, navy, 24); elbow.position.y = -0.34; sh.add(elbow);
+      const fore = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.1, 8, 20), shellM); fore.position.y = -0.47; sh.add(fore);
+      const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.155, 0.045, 10, 32), navy); cuff.rotation.x = Math.PI / 2; cuff.position.y = -0.56; sh.add(cuff);
+      const hand = sph(0.19, shellM, 28); hand.position.y = -0.68; hand.scale.set(1, 0.92, 0.95); sh.add(hand);
+      const th = sph(0.075, shellM, 16); th.position.set(-0.14 * s, -0.62, 0.08); sh.add(th);
       sh.rotation.z = 0.45 * s; P[s < 0 ? 'armL' : 'armR'] = sh;
       const sl = new THREE.Group(); sh.add(sl); P[s < 0 ? 'sleeveL' : 'sleeveR'] = sl;
     }
-    // cabeça com visor
+    // cabeça: capacete branco, faixa azul no topo, moldura clara e visor-tela de cantos arredondados
     P.head = new THREE.Group(); P.head.position.y = 1.75; P.bounce.add(P.head);
     const H = new THREE.Group(); H.position.y = 0.88; P.head.add(H); P.H = H;
-    const head = sph(1.0, shellM, 64); head.scale.set(1.12, 0.98, 1.0); H.add(head); P.headMesh = head;
-    const visor = new THREE.Mesh(new THREE.SphereGeometry(1.0, 64, 40, Math.PI / 2 - 1.08, 2.16, 0.84, 1.26), visorM); visor.scale.set(1.13, 0.99, 1.025); H.add(visor);
-    const rimG = new THREE.Mesh(new THREE.SphereGeometry(1.0, 64, 40, Math.PI / 2 - 1.14, 2.28, 0.79, 1.36), navy); rimG.scale.set(1.125, 0.985, 1.018); H.add(rimG);
-    P.cheeks = []; P.tufts = [];
+    const head = sph(1.0, shellM, 72); head.scale.set(HEAD_R.x, HEAD_R.y, HEAD_R.z); H.add(head); P.headMesh = head;
+    H.add(new THREE.Mesh(squirclePatch(1.08, 0.6, -0.03, 0.012), bezelM));
+    H.add(new THREE.Mesh(squirclePatch(1.03, 0.555, -0.03, 0.018), navy));
+    H.add(new THREE.Mesh(squirclePatch(1.0, 0.53, -0.03, 0.024), visorM));
+    const glare = new THREE.Mesh(squirclePatch(1.0, 0.53, -0.03, 0.03), new THREE.MeshBasicMaterial({ map: glareTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, opacity: 0.55 })); H.add(glare);
+    const crestPts = []; for (let k = 0; k <= 16; k++) { const a = 0.62 + (k / 16) * 2.1; crestPts.push([0, Math.sin(a) * HEAD_R.y * 1.012, Math.cos(a) * HEAD_R.z * 1.012]); }
+    const crest = tube(crestPts, 0.07, blue); crest.scale.x = 1.9; H.add(crest);
+    P.cheeks = []; P.tufts = [crest];
     P.muzzle = new THREE.Group(); H.add(P.muzzle);
     // boca de LED
-    P.mouth = new THREE.Group(); P.mouth.position.set(0, -0.38, 0.955); P.mouth.rotation.x = -0.36; H.add(P.mouth);
-    P.lip = tube([[-0.17, 0.03, 0], [-0.09, -0.05, 0.004], [0, -0.07, 0.006], [0.09, -0.05, 0.004], [0.17, 0.03, 0]], 0.022, glow); P.mouth.add(P.lip);
-    P.mouthIn = new THREE.Mesh(new THREE.CircleGeometry(0.13, 36), glow); P.mouthIn.scale.set(1, 0.02, 1); P.mouthIn.position.set(0, -0.1, 0.004); P.mouth.add(P.mouthIn);
-    P.tongue = new THREE.Mesh(new THREE.CircleGeometry(0.07, 24), new THREE.MeshBasicMaterial({ color: 0xff8cc6, toneMapped: false })); P.tongue.scale.set(1.1, 0.02, 1); P.tongue.position.set(0, -0.15, 0.008); P.mouth.add(P.tongue);
-    // olhos de LED
+    P.mouth = placeOnHead(new THREE.Group(), 0, -0.33, 0.034); H.add(P.mouth);
+    P.lip = tube([[-0.16, 0.035, 0], [-0.085, -0.035, 0], [0, -0.055, 0], [0.085, -0.035, 0], [0.16, 0.035, 0]], 0.022, glow); P.mouth.add(P.lip);
+    P.lip.add(halo(tube([[-0.16, 0.035, -0.002], [-0.085, -0.035, -0.002], [0, -0.055, -0.002], [0.085, -0.035, -0.002], [0.16, 0.035, -0.002]], 0.05, glowSoft(0.35)), 0.35));
+    P.mouthIn = new THREE.Mesh(new THREE.CircleGeometry(0.13, 40), new THREE.MeshBasicMaterial({ map: ledTexture(), transparent: true, toneMapped: false })); P.mouthIn.scale.set(1, 0.02, 1); P.mouthIn.position.set(0, -0.1, 0.002); P.mouth.add(P.mouthIn);
+    P.tongue = new THREE.Mesh(new THREE.CircleGeometry(0.065, 24), new THREE.MeshBasicMaterial({ color: 0xff8cc6, toneMapped: false })); P.tongue.scale.set(1.1, 0.02, 1); P.tongue.position.set(0, -0.15, 0.004); P.mouth.add(P.tongue);
+    // olhos de LED grandes, com brilho, auréola e reflexos
     P.eyes = [];
+    const eyeTex = ledTexture(), haloTex = haloTexture();
     for (const s of [-1, 1]) {
-      const g = new THREE.Group(); g.position.set(0.37 * s, 0.1, 0.99); g.rotation.set(-0.06, 0.34 * s, 0); H.add(g);
+      const g = placeOnHead(new THREE.Group(), 0.36 * s, 0.08, 0.03); H.add(g);
       const open = new THREE.Group(); g.add(open);
-      const hl = new THREE.Mesh(new THREE.CircleGeometry(0.33, 40), halo); hl.scale.set(0.95, 1.12, 1); open.add(hl);
-      const e1 = new THREE.Mesh(new THREE.CircleGeometry(0.235, 48), glow); e1.scale.set(0.92, 1.12, 1); e1.position.z = 0.004; open.add(e1);
-      const pupil = new THREE.Group(); pupil.position.z = 0.008; open.add(pupil);
-      const e2 = new THREE.Mesh(new THREE.CircleGeometry(0.15, 40), glowHi); e2.scale.set(0.92, 1.12, 1); pupil.add(e2);
-      const h1 = new THREE.Mesh(new THREE.CircleGeometry(0.055, 20), mat.white()); h1.scale.set(1, 1.2, 1); h1.position.set(-0.07, 0.09, 0.004); pupil.add(h1);
-      const h2 = new THREE.Mesh(new THREE.CircleGeometry(0.025, 14), mat.white()); h2.position.set(0.07, -0.08, 0.004); pupil.add(h2);
-      const happy = tube([[-0.17, -0.05, 0.004], [-0.09, 0.07, 0.006], [0, 0.11, 0.008], [0.09, 0.07, 0.006], [0.17, -0.05, 0.004]], 0.04, glow); happy.visible = false; g.add(happy);
-      const sleep = tube([[-0.17, 0.03, 0.004], [-0.09, -0.06, 0.006], [0, -0.08, 0.008], [0.09, -0.06, 0.006], [0.17, 0.03, 0.004]], 0.035, glow); sleep.visible = false; g.add(sleep);
-      const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.16, 6, 12), glow); brow.rotation.z = Math.PI / 2 + 0.12 * s; brow.position.set(0, 0.42, 0.006); g.add(brow);
-      const blush = new THREE.Mesh(new THREE.CircleGeometry(0.13, 32), new THREE.MeshBasicMaterial({ color: 0xff8ccc, transparent: true, opacity: 0.8, depthWrite: false, toneMapped: false }));
-      blush.scale.set(1.3, 0.62, 1); blush.position.set(0.66 * s, -0.3, 0.8); blush.rotation.y = 0.62 * s; H.add(blush);
+      open.add(halo(new THREE.Mesh(new THREE.CircleGeometry(0.46, 40), new THREE.MeshBasicMaterial({ map: haloTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, opacity: 0.6 })), 0.6));
+      const pupil = new THREE.Group(); pupil.position.z = 0.003; open.add(pupil);
+      const e1 = new THREE.Mesh(new THREE.CircleGeometry(0.26, 56), new THREE.MeshBasicMaterial({ map: eyeTex, transparent: true, toneMapped: false })); e1.scale.set(0.93, 1.12, 1); pupil.add(e1);
+      const h1 = new THREE.Mesh(new THREE.CircleGeometry(0.06, 24), mat.white()); h1.scale.set(1, 1.25, 1); h1.position.set(-0.08, 0.11, 0.004); pupil.add(h1);
+      const h2 = new THREE.Mesh(new THREE.CircleGeometry(0.028, 16), mat.white()); h2.position.set(0.08, -0.1, 0.004); pupil.add(h2);
+      const h3 = new THREE.Mesh(new THREE.ShapeGeometry(starShape(0.035, 0.016)), mat.white()); h3.position.set(0.07, 0.12, 0.004); pupil.add(h3);
+      const arc = (pts) => { const m = tube(pts, 0.04, glow); m.add(halo(tube(pts.map(([x, y]) => [x, y, -0.003]), 0.085, glowSoft(0.3)), 0.3)); return m; };
+      const happy = arc([[-0.18, -0.06, 0.004], [-0.1, 0.07, 0.004], [0, 0.115, 0.004], [0.1, 0.07, 0.004], [0.18, -0.06, 0.004]]); happy.visible = false; g.add(happy);
+      const sleep = arc([[-0.18, 0.03, 0.004], [-0.1, -0.06, 0.004], [0, -0.085, 0.004], [0.1, -0.06, 0.004], [0.18, 0.03, 0.004]]); sleep.visible = false; g.add(sleep);
+      const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.16, 6, 12), glow); brow.rotation.z = Math.PI / 2 + 0.12 * s; brow.position.set(0, 0.42, 0.004); g.add(brow);
+      brow.add(halo(new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.18, 6, 12), glowSoft(0.25)), 0.25));
+      const blush = placeOnHead(new THREE.Mesh(new THREE.CircleGeometry(0.15, 32), new THREE.MeshBasicMaterial({ map: haloTexture('255,120,190'), transparent: true, opacity: 0.45, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false })), 0.64 * s, -0.2, 0.032);
+      H.add(blush);
       P.eyes.push({ g, open, pupil, happy, sleep, brow, blush, s });
     }
-    // fones de ouvido com luz azul (giram de leve como orelhas)
+    // fones de ouvido com anel de luz (giram em volta do próprio eixo, então ficam firmes)
     for (const s of [-1, 1]) {
-      const g = new THREE.Group(); g.position.set(1.08 * s, 0.02, -0.02); H.add(g);
-      const inner = new THREE.Group(); inner.rotation.z = 0.38 * s; g.add(inner);
-      const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.2, 40), navy); pod.rotation.z = Math.PI / 2; pod.position.x = 0.04 * s; inner.add(pod);
-      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.25, 0.08, 40), shellM); cap.rotation.z = Math.PI / 2; cap.position.x = 0.16 * s; inner.add(cap);
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.235, 0.028, 10, 40), glow); ring.rotation.y = Math.PI / 2; ring.position.x = 0.15 * s; inner.add(ring);
+      const g = new THREE.Group(); g.position.set(1.07 * s, 0.02, -0.02); g.rotation.set(0, (Math.PI / 2) * s, 0); H.add(g);
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.33, 0.16, 48), navy); base.rotation.x = Math.PI / 2; g.add(base);
+      const cap = lathe([[0, 0.1], [0.12, 0.097], [0.2, 0.084], [0.25, 0.06], [0.275, 0.03], [0.275, 0]], shellM, 48); cap.rotation.x = Math.PI / 2; cap.position.z = 0.07; g.add(cap);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.205, 0.026, 12, 48), glow); ring.position.z = 0.152; g.add(ring);
+      ring.add(halo(new THREE.Mesh(new THREE.TorusGeometry(0.205, 0.06, 12, 48), glowSoft(0.3)), 0.3));
+      const dot = new THREE.Mesh(new THREE.CircleGeometry(0.085, 32), new THREE.MeshBasicMaterial({ map: eyeTex, transparent: true, toneMapped: false })); dot.position.z = 0.172; g.add(dot);
       P[s < 0 ? 'earL' : 'earR'] = g;
     }
-    const hs = starMesh(0.13, mat.gold()); hs.position.set(0.48, 0.74, 0.6); hs.rotation.set(-0.35, 0.35, 0.2); H.add(hs); P.headStar = hs;
+    const hs = placeOnHead(starMesh(0.11, mat.gold()), 0.62, 0.6, 0.05); H.add(hs); P.headStar = hs;
     P.hat = new THREE.Group(); P.hat.position.set(0, 0.62, 0); H.add(P.hat);
     P.face = new THREE.Group(); P.face.position.z = 0.1; H.add(P.face);
     P.neck = new THREE.Group(); P.neck.position.y = 1.72; P.bounce.add(P.neck);
@@ -295,6 +313,22 @@ export class Lumi3D {
     P.extra = new THREE.Group(); P.bounce.add(P.extra);
     P.aura = makeAura(); P.aura.visible = false; R.add(P.aura);
     P.feet = this._feet;
+  }
+  /* expressões extras do robô: piscadinha, surpresa ao ser tocado, luzes pulsando */
+  robotFace(t, dt, m) {
+    const P = this.p;
+    for (const h of P.halos) h.material.opacity = h.userData.o * (0.82 + Math.sin(t * 2.4 + h.userData.ph) * 0.18);
+    const surp = this.surp > 0; if (surp) this.surp -= dt;
+    this.winkT = (this.winkT ?? 5) - dt;
+    if (this.winkT <= 0) { this.winkT = 6 + Math.random() * 6; if (m === 'idle' && !this.talking) this.wink = 0.6; }
+    if (this.wink > 0) this.wink -= dt;
+    P.eyes.forEach((e, i) => {
+      const k = surp ? 1.2 : 1; e.open.scale.x = k; if (e.open.scale.y > 0.5) e.open.scale.y = k * (m === 'sad' ? 0.85 : 1);
+      e.brow.position.y -= 0.08; // sobrancelhas de LED um pouco abaixo da borda da tela
+      if (surp) { e.open.visible = true; e.happy.visible = false; e.sleep.visible = false; e.brow.position.y = 0.44; }
+      else if (this.wink > 0 && i === 1) { e.open.visible = false; e.happy.visible = true; }
+    });
+    if (surp) { P.mouthIn.scale.set(0.62, 0.62, 1); P.mouthIn.position.y = -0.09; P.tongue.scale.set(0.01, 0.01, 1); P.lip.visible = false; } else P.lip.visible = true;
   }
   /* ---- pelo fofinho: camadas (shell fur) que seguem a forma de cada parte ---- */
   addFurAll() {
@@ -368,7 +402,7 @@ export class Lumi3D {
   doWave(sec = 1.6) { this.waveT = sec; }
   encourage() { this.mood = 'sad'; this.shake = 0.5; }
   eat(sec = 2.2) { this.chew = sec; this.mood = 'eat'; }
-  poke() { if (this.mood === 'sleep') return; this.hop(); this.excite = 0.8; this.earTw = { s: Math.random() < 0.5 ? -1 : 1, t: 0.25 }; }
+  poke() { if (this.mood === 'sleep') return; this.hop(); this.excite = 0.8; if (this.sp.robot) this.surp = 0.9; this.earTw = { s: Math.random() < 0.5 ? -1 : 1, t: 0.25 }; }
   update(t, dt) {
     const P = this.p, m = this.mood, sleeping = m === 'sleep';
     const br = Math.sin(t * (sleeping ? 1.3 : 2.2));
@@ -450,6 +484,7 @@ export class Lumi3D {
       P.head.scale.setScalar(g.h); P.earL.scale.setScalar(g.e); P.earR.scale.setScalar(g.e); P.tail.scale.setScalar(g.t);
     }
     if (P.aura.visible) { P.aura.userData.tick(t); }
+    if (this.sp.robot) this.robotFace(t, dt, m);
     if (this.anims) for (const a of this.anims) a.userData.anim(t, a);
     if (this.fx) this.fx.userData.tick(t, dt);
   }
@@ -491,6 +526,71 @@ export class Lumi3D {
       case 'no': P.head.rotation.y = Math.sin(A.t * 14) * 0.35 * ease; break;
     }
   }
+}
+
+/* ------------------------------------------------------------ peças do robô */
+const HEAD_R = new THREE.Vector3(1.12, 0.98, 1.0);
+function headPoint(lon, lat, off = 0) { // ponto na superfície da cabeça (elipsoide) + normal
+  const p = new THREE.Vector3(Math.sin(lon) * Math.cos(lat) * HEAD_R.x, Math.sin(lat) * HEAD_R.y, Math.cos(lon) * Math.cos(lat) * HEAD_R.z);
+  const n = new THREE.Vector3(p.x / (HEAD_R.x * HEAD_R.x), p.y / (HEAD_R.y * HEAD_R.y), p.z / (HEAD_R.z * HEAD_R.z)).normalize();
+  return { p: p.addScaledVector(n, off), n };
+}
+function placeOnHead(obj, lon, lat, off) { const { p, n } = headPoint(lon, lat, off); obj.position.copy(p); obj.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), n); return obj; }
+// "tela" de cantos arredondados (superelipse) colada na curva da cabeça
+function squirclePatch(hLon, hLat, latC, off, expo = 4.2, seg = 44) {
+  const pos = [], uv = [], idx = [];
+  for (let j = 0; j <= seg; j++) for (let i = 0; i <= seg; i++) {
+    const a = (i / seg) * 2 - 1, b = (j / seg) * 2 - 1, t = Math.max(Math.abs(a), Math.abs(b));
+    let X = 0, Y = 0;
+    if (t > 0) { const dx = a / t, dy = b / t, k = Math.pow(Math.pow(Math.abs(dx), expo) + Math.pow(Math.abs(dy), expo), -1 / expo); X = dx * k * t; Y = dy * k * t; }
+    const { p } = headPoint(X * hLon, latC + Y * hLat, off); pos.push(p.x, p.y, p.z); uv.push((X + 1) / 2, (Y + 1) / 2);
+  }
+  for (let j = 0; j < seg; j++) for (let i = 0; i < seg; i++) { const a = j * (seg + 1) + i, b = a + 1, c = a + seg + 1, d = c + 1; idx.push(a, b, c, b, d, c); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+// caixa arredondada (superelipsoide)
+function roundBoxGeo(r, e, sx, sy, sz, seg = 48) {
+  const g = new THREE.SphereGeometry(1, seg, Math.round(seg * 0.75)), p = g.attributes.position, f = (v) => Math.sign(v) * Math.pow(Math.abs(v), 2 / e);
+  for (let i = 0; i < p.count; i++) p.setXYZ(i, f(p.getX(i)) * r * sx, f(p.getY(i)) * r * sy, f(p.getZ(i)) * r * sz);
+  g.computeVertexNormals(); return g;
+}
+function roundRectGeo(w, h, r, depth) {
+  const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r); s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h); s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r); s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+  const g = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, bevelSegments: 3, curveSegments: 10 }); g.center(); return g;
+}
+const TEX = {};
+function ledTexture() { // olho de LED: miolo branco, azul-claro e borda azul
+  if (TEX.led) return TEX.led;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256; const x = cv.getContext('2d'), c = 128;
+  const g = x.createRadialGradient(c, c - 10, 0, c, c, 128); g.addColorStop(0, '#ffffff'); g.addColorStop(0.16, '#e9fdff'); g.addColorStop(0.36, '#9df2ff'); g.addColorStop(0.6, '#38cdff'); g.addColorStop(0.82, '#1696f2'); g.addColorStop(0.94, '#0c66d4'); g.addColorStop(1, 'rgba(12,102,212,0)');
+  x.fillStyle = g; x.beginPath(); x.arc(c, c, 128, 0, Math.PI * 2); x.fill();
+  x.strokeStyle = 'rgba(210,250,255,.55)'; x.lineWidth = 5; x.beginPath(); x.arc(c, c, 92, 0, Math.PI * 2); x.stroke();
+  const b = x.createRadialGradient(c, c + 70, 0, c, c + 70, 60); b.addColorStop(0, 'rgba(220,255,255,.75)'); b.addColorStop(1, 'rgba(220,255,255,0)'); x.fillStyle = b; x.beginPath(); x.arc(c, c, 120, 0, Math.PI * 2); x.fill();
+  TEX.led = new THREE.CanvasTexture(cv); TEX.led.colorSpace = THREE.SRGBColorSpace; return TEX.led;
+}
+function haloTexture(rgb = '60,200,255') { // brilho suave em volta
+  const k = 'h' + rgb; if (TEX[k]) return TEX[k];
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d');
+  const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, `rgba(${rgb},.9)`); g.addColorStop(0.45, `rgba(${rgb},.45)`); g.addColorStop(1, `rgba(${rgb},0)`);
+  x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+  TEX[k] = new THREE.CanvasTexture(cv); TEX[k].colorSpace = THREE.SRGBColorSpace; return TEX[k];
+}
+function visorTexture() { // fundo da tela: azul bem escuro no meio, preto nas bordas
+  if (TEX.visor) return TEX.visor;
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128; const x = cv.getContext('2d');
+  const g = x.createRadialGradient(128, 70, 10, 128, 64, 150); g.addColorStop(0, '#13204a'); g.addColorStop(0.55, '#080d22'); g.addColorStop(1, '#020309');
+  x.fillStyle = g; x.fillRect(0, 0, 256, 128);
+  x.globalAlpha = 0.06; x.fillStyle = '#7fd8ff'; for (let y = 0; y < 128; y += 4) x.fillRect(0, y, 256, 1); // linhas de tela bem sutis
+  TEX.visor = new THREE.CanvasTexture(cv); TEX.visor.colorSpace = THREE.SRGBColorSpace; return TEX.visor;
+}
+function glareTexture() { // reflexo curvo no canto de cima do visor
+  if (TEX.glare) return TEX.glare;
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128; const x = cv.getContext('2d');
+  x.filter = 'blur(6px)';
+  x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 9; x.lineCap = 'round'; x.beginPath(); x.moveTo(34, 50); x.quadraticCurveTo(52, 20, 100, 14); x.stroke();
+  x.strokeStyle = 'rgba(255,255,255,.35)'; x.lineWidth = 6; x.beginPath(); x.moveTo(118, 12); x.lineTo(140, 11); x.stroke();
+  TEX.glare = new THREE.CanvasTexture(cv); TEX.glare.colorSpace = THREE.SRGBColorSpace; return TEX.glare;
 }
 
 /* ------------------------------------------------------------ olhos */

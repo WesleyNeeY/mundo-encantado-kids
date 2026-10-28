@@ -30,9 +30,24 @@ function starMesh(size, m) {
 }
 function lathe(pts, m, seg = 40) { return new THREE.Mesh(new THREE.LatheGeometry(pts.map(([x, y]) => new THREE.Vector2(x, y)), seg), m); }
 
+
+/* ------------------------------------------------------------------ espécies (mesmo esqueleto, visual diferente) */
+export const SPECIES = {
+  lumi:   { fur: 0x3a92ef, furD: 0x1f6fdc, sheen: 0x9fd4ff, shell: [0x3a86dc, 0x8cc6ff], arm: null, hand: 'cream', cream: 0xfff6e8, creamShell: [0xf0e6d8, 0xffffff], earIn: 0xff7fb8, brow: 0x2a5fb8, nose: 0x0c1f4d, ears: 'cat', tail: 'curl', head: 'tufts', iris: ['#0d2a86', '#1d5fd8', '#3fb5ff', '#8ff0ff'], blush: 0xff8cc6 },
+  fox:    { fur: 0xf28a2e, furD: 0x4a2414, sheen: 0xffd2a6, shell: [0xe8761c, 0xffb46a], arm: 0xf28a2e, hand: 0x4a2414, cream: 0xfffaf2, creamShell: [0xf4ead9, 0xffffff], earIn: 0xfff3e6, earTip: 0x3a1c10, brow: 0x7a3a12, nose: 0x1f120c, ears: 'fox', tail: 'fox', head: 'tufts', cheekCream: true, iris: ['#3a1d04', '#a85a0c', '#f0a422', '#ffe58a'], blush: 0xff9a7a },
+  bunny:  { fur: 0xf7e9f2, furD: 0xe9c6dc, sheen: 0xffffff, shell: [0xf3dfec, 0xffffff], arm: null, hand: 'cream', cream: 0xffffff, creamShell: [0xf6f0f4, 0xffffff], earIn: 0xffa6cf, brow: 0xc98fb4, nose: 0xff6fa8, ears: 'bunny', tail: 'puff', head: 'tufts', teeth: true, iris: ['#3b0f6b', '#7a3fd0', '#c58cff', '#f3d6ff'], blush: 0xff7fb8 },
+  dragon: { fur: 0x3fc48d, furD: 0x239a68, sheen: 0xb6ffe0, shell: null, arm: null, hand: 'fur', cream: 0xffe7a8, creamShell: null, earIn: 0xffd36b, brow: 0x1d7a50, nose: 0x14523a, ears: 'dragon', tail: 'dragon', head: 'spikes', smooth: true, wings: true, plates: true, iris: ['#3a2a00', '#c98a00', '#ffd23f', '#fff6b0'], blush: 0xff9ab0 },
+  panda:  { fur: 0xfbfbfb, furD: 0x24242c, sheen: 0xffffff, shell: [0xf2f2f2, 0xffffff], arm: 0x24242c, armShell: [0x1a1a20, 0x4a4a55], hand: 0x24242c, cream: 0xffffff, creamShell: [0xf2f2f2, 0xffffff], earIn: 0x3a3a46, earCol: 0x24242c, earShell: [0x1a1a20, 0x4a4a55], brow: 0x24242c, nose: 0x15151b, ears: 'panda', tail: 'panda', head: 'none', patches: true, iris: ['#1e0c03', '#6b3a17', '#b87a42', '#f0cfa0'], blush: 0xff9ac6 },
+};
+function furMat(c, sheen, smooth) {
+  return smooth ? new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.32, clearcoat: 0.8, clearcoatRoughness: 0.25, sheen: 0.4, sheenColor: new C(sheen), envMapIntensity: 0.8 })
+    : new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.7, sheen: 1, sheenRoughness: 0.5, sheenColor: new C(sheen), envMapIntensity: 0.55 });
+}
+
 /* ------------------------------------------------------------------ Lumi */
 export class Lumi3D {
-  constructor() {
+  constructor(species) {
+    this.species = SPECIES[species] ? species : 'lumi'; this.sp = SPECIES[this.species];
     this.root = new THREE.Group();
     this.mood = 'idle'; this.talking = false; this.mouthLevel = null; this.mouthOpen = 0;
     this.jump = null; this.excite = 0; this.waveT = 0; this.chew = 0; this.shake = 0;
@@ -44,7 +59,11 @@ export class Lumi3D {
   }
   build() {
     const R = this.root, P = (this.p = {});
-    const fur = mat.fur(), furD = mat.furDark(), cream = mat.cream(), navy = mat.navy();
+    const sp = this.sp, fur = furMat(sp.fur, sp.sheen, sp.smooth), furD = furMat(sp.furD, sp.sheen, sp.smooth), navy = mat.navy();
+    const cream = sp.smooth ? mat.std(sp.cream, { roughness: 0.4, clearcoat: 0.6 }) : furMat(sp.cream, 0xffffff);
+    const armM = sp.arm ? furMat(sp.arm, sp.arm === sp.fur ? sp.sheen : 0x8a8aa0, sp.smooth) : fur;
+    const handM = sp.hand === 'cream' ? cream : sp.hand === 'fur' ? fur : furMat(sp.hand, 0x8a6a5a);
+    const noseM = mat.std(sp.nose, { roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.05 });
     P.bounce = new THREE.Group(); R.add(P.bounce);
     // pés
     for (const s of [-1, 1]) { const f = sph(0.3, furD); f.scale.set(1.05, 0.62, 1.35); f.position.set(0.36 * s, 0.17, 0.12); P.bounce.add(f); (this._feet = this._feet || []).push(f);
@@ -53,17 +72,32 @@ export class Lumi3D {
     P.body = new THREE.Group(); P.body.position.y = 0.2; P.bounce.add(P.body);
     const body = sph(0.82, fur, 48); body.scale.set(1, 1.04, 0.92); body.position.y = 0.78; P.body.add(body); P.bodyMesh = body;
     const belly = sph(0.8, cream, 48); belly.scale.set(0.74, 0.8, 0.88); belly.position.set(0, 0.7, 0.13); P.body.add(belly); P.belly = belly;
+    if (sp.plates) for (let k = 0; k < 5; k++) { // placas na barriga do dragão
+      const y = 0.36 + k * 0.17, q = Math.sqrt(Math.max(0.05, 1 - ((y - 0.7) / 0.64) ** 2)), rx = 0.59 * q, rz = 0.704 * q;
+      const g = new THREE.TorusGeometry(rx, 0.016, 8, 48, Math.PI * 0.76); g.rotateZ(Math.PI * 0.12);
+      const pl = new THREE.Mesh(g, mat.std(0xe0a94a, { roughness: 0.5 })); pl.rotation.x = Math.PI / 2; pl.scale.set(1, rz / rx, 1); pl.position.set(0, y, 0.13); P.body.add(pl); (P.plates = P.plates || []).push(pl); }
     const bst = starMesh(0.17, mat.gold()); bst.position.set(0, 0.86, 0.84); bst.rotation.x = -0.15; P.body.add(bst); P.bellyStar = bst;
     P.feet = [];
     // rabo
     P.tail = new THREE.Group(); P.tail.position.set(0.3, 0.5, -0.62); P.bounce.add(P.tail);
-    for (let i = 0; i <= 12; i++) { const k = i / 12, a = k * 2.1; const r = 0.2 + Math.sin(k * Math.PI * 0.9) * 0.16;
-      const s = sph(r, k > 0.85 ? cream : fur, 24); s.position.set(Math.sin(a) * 0.55, (1 - Math.cos(a)) * 0.55 + k * 0.5, -k * 0.25); s.userData.b = s.position.clone(); s.userData.k = k; P.tail.add(s); }
+    const tailSeg = (s, k) => { s.userData.b = s.position.clone(); s.userData.k = k; P.tail.add(s); };
+    if (sp.tail === 'fox') { // cauda grande e fofa com ponta branca
+      P.tail.position.set(0.25, 0.42, -0.6);
+      for (let i = 0; i <= 14; i++) { const k = i / 14, a = k * 1.7; const r = 0.22 + Math.sin(k * Math.PI * 0.85) * 0.3; const s = sph(r, k > 0.72 ? cream : fur, 24); s.position.set(Math.sin(a) * 0.75, (1 - Math.cos(a)) * 0.6 + k * 0.75, -k * 0.35); tailSeg(s, k); }
+    } else if (sp.tail === 'puff' || sp.tail === 'panda') { // pompom
+      P.tail.position.set(0, 0.62, -0.78); const s = sph(sp.tail === 'puff' ? 0.3 : 0.24, sp.tail === 'puff' ? cream : furD, 28); tailSeg(s, 0.15);
+    } else if (sp.tail === 'dragon') { // cauda que afina, com espinhos e ponta de flecha
+      P.tail.position.set(0.15, 0.32, -0.6);
+      for (let i = 0; i <= 14; i++) { const k = i / 14, a = k * 1.5; const r = 0.3 * (1 - k * 0.8); const s = sph(r, fur, 24); s.position.set(Math.sin(a) * 0.95, (1 - Math.cos(a)) * 0.35 + k * 0.45, -k * 0.55); tailSeg(s, k);
+        if (i % 3 === 1 && i < 13) { const sp1 = new THREE.Mesh(new THREE.ConeGeometry(r * 0.45, r * 0.9, 10), mat.std(0xffc94a, { roughness: 0.4 })); sp1.position.set(0, r * 0.95, 0); s.add(sp1); } }
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.3, 4), mat.std(0xffc94a, { roughness: 0.4 })); tip.scale.z = 0.4; const last = P.tail.children[P.tail.children.length - 1]; tip.position.set(0.12, 0.08, 0); tip.rotation.z = -1.2; last.add(tip);
+    } else for (let i = 0; i <= 12; i++) { const k = i / 12, a = k * 2.1; const r = 0.2 + Math.sin(k * Math.PI * 0.9) * 0.16;
+      const s = sph(r, k > 0.85 ? cream : fur, 24); s.position.set(Math.sin(a) * 0.55, (1 - Math.cos(a)) * 0.55 + k * 0.5, -k * 0.25); tailSeg(s, k); }
     // braços
     for (const s of [-1, 1]) {
       const sh = new THREE.Group(); sh.position.set(0.66 * s, 1.36, 0.2); P.body.add(sh);
-      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.42, 8, 20), fur); arm.position.y = -0.34; sh.add(arm);
-      const hand = sph(0.2, cream, 28); hand.position.y = -0.62; hand.scale.set(1, 0.9, 0.95); sh.add(hand);
+      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.42, 8, 20), armM); arm.position.y = -0.34; sh.add(arm);
+      const hand = sph(0.2, handM, 28); hand.position.y = -0.62; hand.scale.set(1, 0.9, 0.95); sh.add(hand);
       const pad = sph(0.08, mat.pink(), 14); pad.scale.set(1, 0.8, 0.35); pad.position.set(0, -0.64, 0.17); sh.add(pad);
       for (const dx of [-0.08, 0, 0.08]) { const tp = sph(0.035, mat.pink(), 10); tp.scale.z = 0.35; tp.position.set(dx, -0.53, 0.17); sh.add(tp); }
       sh.rotation.z = 0.45 * s; P[s < 0 ? 'armL' : 'armR'] = sh;
@@ -74,15 +108,22 @@ export class Lumi3D {
     const H = new THREE.Group(); H.position.y = 0.88; P.head.add(H); P.H = H;
     const head = sph(1.0, fur, 56); head.scale.set(1.13, 0.96, 0.98); H.add(head); P.headMesh = head;
     for (const s of [-1, 1]) { // bochechas fofas
-      const ch = sph(0.36, fur, 28); ch.scale.set(1, 0.8, 0.85); ch.position.set(0.98 * s, -0.32, 0.2); H.add(ch);
-      const ch2 = sph(0.24, fur, 24); ch2.position.set(1.08 * s, -0.12, 0.05); H.add(ch2); (P.cheeks = P.cheeks || []).push(ch, ch2);
+      const chM = sp.cheekCream ? cream : fur;
+      const ch = sph(0.36, chM, 28); ch.scale.set(1, 0.8, 0.85); ch.position.set(0.98 * s, -0.32, 0.2); H.add(ch);
+      const ch2 = sph(0.24, chM, 24); ch2.position.set(1.08 * s, -0.12, 0.05); H.add(ch2); (P.cheeks = P.cheeks || []).push(ch, ch2);
     }
-    for (const [x, y, z, r, rz] of [[-0.18, 0.92, 0.1, 0.22, 0.4], [0.06, 1.0, 0.05, 0.25, -0.1], [0.28, 0.9, 0.08, 0.2, -0.5]]) { // topete
-      const c = new THREE.Mesh(new THREE.ConeGeometry(r, r * 2.2, 20), fur); c.position.set(x, y, z); c.rotation.z = rz; H.add(c); (P.tufts = P.tufts || []).push(c);
+    P.tufts = [];
+    if (sp.head === 'tufts') for (const [x, y, z, r, rz] of [[-0.18, 0.92, 0.1, 0.22, 0.4], [0.06, 1.0, 0.05, 0.25, -0.1], [0.28, 0.9, 0.08, 0.2, -0.5]]) { // topete
+      const c = new THREE.Mesh(new THREE.ConeGeometry(r, r * 2.2, 20), fur); c.position.set(x, y, z); c.rotation.z = rz; H.add(c); P.tufts.push(c);
+    }
+    if (sp.head === 'spikes') for (const [y, z, r, rx] of [[0.93, 0.3, 0.13, 0.25], [1.0, -0.08, 0.17, -0.1], [0.86, -0.48, 0.15, -0.6], [0.55, -0.82, 0.13, -1.0], [0.15, -0.98, 0.11, -1.4]]) { // cristas do dragão
+      const c = new THREE.Mesh(new THREE.ConeGeometry(r, r * 2.1, 12), mat.std(0xffc94a, { roughness: 0.4 })); c.position.set(0, y, z); c.rotation.x = rx; H.add(c); P.tufts.push(c);
     }
     const muz = sph(0.52, cream); muz.scale.set(1.18, 0.74, 0.62); muz.position.set(0, -0.36, 0.7); H.add(muz); P.muzzle = muz;
-    const nose = sph(0.1, navy, 24); nose.scale.set(1.35, 0.9, 0.8); nose.position.set(0, -0.2, 1.02); H.add(nose);
+    const nose = sph(0.1, noseM, 24); nose.scale.set(1.35, 0.9, 0.8); nose.position.set(0, -0.2, 1.02); H.add(nose);
     const nh = sph(0.03, mat.white(), 10); nh.scale.set(1.4, 0.7, 0.4); nh.position.set(-0.035, -0.165, 1.09); H.add(nh);
+    if (sp.teeth) for (const dx of [-0.055, 0.055]) { const tt = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 0.04), mat.std(0xffffff, { roughness: 0.3 })); tt.position.set(dx, -0.53, 0.99); tt.rotation.x = -0.25; H.add(tt); }
+    if (sp.patches) for (const s of [-1, 1]) { const pt = sph(0.4, furD, 32); pt.scale.set(0.8, 1.05, 0.32); pt.position.set(0.42 * s, 0.05, 0.86); pt.rotation.set(0, 0.42 * s, -0.55 * s); H.add(pt); }
     // boca
     P.mouth = new THREE.Group(); P.mouth.position.set(0, -0.42, 1.0); P.mouth.scale.setScalar(1.35); H.add(P.mouth);
     P.lip = tube([[-0.2, 0.02, -0.03], [-0.1, -0.07, 0.01], [0, 0.0, 0.02], [0.1, -0.07, 0.01], [0.2, 0.02, -0.03]], 0.022, navy); P.mouth.add(P.lip);
@@ -95,7 +136,7 @@ export class Lumi3D {
       const open = new THREE.Group(); g.add(open);
       const eb = sph(0.27, mat.std(0x0a1640, { roughness: 0.25, clearcoat: 1 }), 36); eb.scale.set(1.04, 1.22, 0.55); open.add(eb);
       const pupil = new THREE.Group(); open.add(pupil);
-      const it = irisTexture();
+      const it = irisTexture(sp.iris);
       const ir = new THREE.Mesh(new THREE.CircleGeometry(0.215, 56), new THREE.MeshStandardMaterial({ map: it, emissiveMap: it, emissive: 0xffffff, emissiveIntensity: 0.3, roughness: 0.15, transparent: true }));
       ir.scale.set(1, 1.2, 1); ir.position.z = 0.152; pupil.add(ir);
       const h1 = sph(0.075, mat.white(), 20); h1.scale.set(1, 1.25, 0.3); h1.position.set(-0.075, 0.1, 0.17); pupil.add(h1);
@@ -104,19 +145,49 @@ export class Lumi3D {
       for (let k = 0; k < 3; k++) { const lash = tube([[0.12 + k * 0.04, 0.27 - k * 0.04, 0.1], [0.19 + k * 0.05, 0.33 - k * 0.05, 0.08], [0.25 + k * 0.05, 0.35 - k * 0.07, 0.05]].map(([x, y, z]) => [x * s, y, z]), 0.014, navy); open.add(lash); }
       const happy = tube([[-0.18, -0.03, 0.12], [-0.09, 0.08, 0.15], [0, 0.11, 0.16], [0.09, 0.08, 0.15], [0.18, -0.03, 0.12]], 0.035, navy); happy.visible = false; g.add(happy);
       const sleep = tube([[-0.18, 0.04, 0.12], [-0.09, -0.06, 0.15], [0, -0.08, 0.16], [0.09, -0.06, 0.15], [0.18, 0.04, 0.12]], 0.035, navy); sleep.visible = false; g.add(sleep);
-      const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.18, 6, 12), mat.std(0x2a5fb8)); brow.rotation.z = Math.PI / 2 + 0.12 * s; brow.position.set(0, 0.42, 0.06); g.add(brow);
-      const blush = new THREE.Mesh(new THREE.CircleGeometry(0.17, 32), new THREE.MeshBasicMaterial({ color: 0xff8cc6, transparent: true, opacity: 0.45, depthWrite: false }));
+      const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.18, 6, 12), mat.std(sp.brow)); brow.rotation.z = Math.PI / 2 + 0.12 * s; brow.position.set(0, 0.42, 0.06); g.add(brow);
+      const blush = new THREE.Mesh(new THREE.CircleGeometry(0.17, 32), new THREE.MeshBasicMaterial({ color: sp.blush, transparent: true, opacity: 0.45, depthWrite: false }));
       blush.scale.set(1.3, 0.75, 1); blush.position.set(0.66 * s, -0.36, 0.77); blush.rotation.y = 0.55 * s; H.add(blush);
       P.eyes.push({ g, open, pupil, happy, sleep, brow, blush, s });
     }
     // orelhas
-    const earPts = [[0, 0], [0.34, 0.04], [0.33, 0.3], [0.24, 0.6], [0.1, 0.86], [0, 0.95]];
+    const earIn = mat.std(sp.earIn, { roughness: 0.6, clearcoat: 0 });
     for (const s of [-1, 1]) {
       const g = new THREE.Group(); g.position.set(0.62 * s, 0.62, -0.05); g.rotation.z = -0.38 * s; H.add(g);
-      const o = lathe(earPts, fur); o.scale.set(1, 1, 0.55); g.add(o);
-      const i = lathe(earPts.map(([x, y]) => [x * 0.62, y * 0.82 + 0.05]), mat.pink()); i.scale.set(1, 1, 0.4); i.position.z = 0.09; g.add(i);
-      const tip = sph(0.07, cream, 16); tip.position.y = 0.93; g.add(tip);
+      if (sp.ears === 'bunny') { // orelhas compridas de coelho
+        const pts = [[0, 0], [0.2, 0.05], [0.26, 0.45], [0.25, 1.0], [0.17, 1.45], [0, 1.6]];
+        g.position.set(0.4 * s, 0.78, -0.08); const o = lathe(pts, fur); o.scale.set(1, 1, 0.5); g.add(o);
+        const i = lathe(pts.map(([x, y]) => [x * 0.6, y * 0.86 + 0.08]), earIn); i.scale.set(1, 1, 0.35); i.position.z = 0.07; g.add(i);
+      } else if (sp.ears === 'panda') { // orelhas redondas
+        g.position.set(0.74 * s, 0.7, -0.1); const o = sph(0.32, furMat(sp.earCol, 0x8a8aa0), 28); o.scale.set(1, 1, 0.55); o.position.y = 0.12; g.add(o);
+        const i = sph(0.19, earIn, 20); i.scale.set(1, 1, 0.3); i.position.set(0, 0.1, 0.12); g.add(i);
+      } else if (sp.ears === 'dragon') { // chifrinhos + barbatanas
+        g.position.set(0.5 * s, 0.75, -0.2);
+        const hornM = mat.std(0xffd65a, { roughness: 0.3, clearcoat: 0.8, emissive: 0x6a4a00, emissiveIntensity: 0.15 });
+        const horn = tube([[0, -0.05, 0], [0.08 * s, 0.25, -0.02], [0.2 * s, 0.5, -0.1], [0.36 * s, 0.68, -0.22]], 0.11, hornM); g.add(horn);
+        const tipc = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.3, 14), hornM); tipc.position.set(0.44 * s, 0.8, -0.3); tipc.rotation.set(-0.5, 0, -0.75 * s); g.add(tipc);
+        const fin = new THREE.Shape(); fin.moveTo(0, 0); fin.quadraticCurveTo(0.45, 0.15, 0.6, 0.5); fin.quadraticCurveTo(0.3, 0.3, 0, 0.35); fin.closePath();
+        const fm = new THREE.Mesh(new THREE.ExtrudeGeometry(fin, { depth: 0.03, bevelEnabled: true, bevelSize: 0.02, bevelThickness: 0.02, bevelSegments: 2 }), mat.std(sp.earIn, { roughness: 0.45 }));
+        fm.scale.setScalar(0.85); fm.position.set(0.42 * s, -0.42, 0.1); fm.rotation.set(0, s < 0 ? Math.PI + 0.2 : -0.2, -0.35 * s); g.add(fm);
+      } else { // gato (Lumi) ou raposa (maior, ponta escura)
+        const fox = sp.ears === 'fox', earPts = fox ? [[0, 0], [0.42, 0.04], [0.4, 0.34], [0.28, 0.72], [0.12, 1.05], [0, 1.18]] : [[0, 0], [0.34, 0.04], [0.33, 0.3], [0.24, 0.6], [0.1, 0.86], [0, 0.95]];
+        const o = lathe(earPts, fur); o.scale.set(1, 1, 0.55); g.add(o);
+        const i = lathe(earPts.map(([x, y]) => [x * 0.62, y * 0.82 + 0.05]), fox ? cream : mat.pink()); i.scale.set(1, 1, 0.4); i.position.z = 0.09; g.add(i);
+        if (fox) { const tipM = lathe(earPts.filter(([, y]) => y >= 0.7).map(([x, y]) => [x * 1.06, y + 0.01]).concat([[0, 1.2]]), furMat(sp.earTip, 0x8a6a5a)); tipM.scale.set(1, 1, 0.58); g.add(tipM); }
+        else { const tip = sph(0.07, cream, 16); tip.position.y = 0.93; g.add(tip); }
+      }
       P[s < 0 ? 'earL' : 'earR'] = g;
+    }
+    if (sp.wings) { // asinhas de dragão nas costas
+      P.dwings = new THREE.Group(); P.dwings.position.set(0, 1.35, -0.6); P.body.add(P.dwings);
+      for (const s of [-1, 1]) {
+        const w = new THREE.Group(); w.position.x = 0.3 * s; w.rotation.set(0.15, -0.5 * s, 0.45 * s); w.scale.setScalar(1.5); P.dwings.add(w);
+        const sh = new THREE.Shape(); sh.moveTo(0, 0); sh.quadraticCurveTo(0.35, 0.55, 0.95, 0.75); sh.quadraticCurveTo(0.8, 0.45, 0.88, 0.2); sh.quadraticCurveTo(0.65, 0.2, 0.62, -0.05); sh.quadraticCurveTo(0.42, 0.05, 0.36, -0.22); sh.quadraticCurveTo(0.2, -0.05, 0, 0);
+        const m = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.03, bevelEnabled: true, bevelSize: 0.015, bevelThickness: 0.015, bevelSegments: 2 }), mat.std(0x9b7bff, { roughness: 0.35, clearcoat: 0.6, sheen: 0.5, sheenColor: new C(0xe0d4ff) }));
+        m.scale.set(s, 1, 1); w.add(m);
+        const bone = tube([[0, 0, 0.04], [0.35 * s, 0.5, 0.04], [0.95 * s, 0.75, 0.04]], 0.045, mat.std(0x5b3fd0)); w.add(bone);
+        w.userData.s = s; (P.wingL = s < 0 ? w : P.wingL), (P.wingR = s > 0 ? w : P.wingR);
+      }
     }
     const hs = starMesh(0.13, mat.gold()); hs.position.set(0.42, 0.66, 0.66); hs.rotation.set(-0.3, 0.3, 0.2); H.add(hs); P.headStar = hs;
     // acessórios
@@ -132,20 +203,23 @@ export class Lumi3D {
   }
   /* ---- pelo fofinho: camadas (shell fur) que seguem a forma de cada parte ---- */
   addFurAll() {
-    const P = this.p, blue = [0x3a86dc, 0x8cc6ff], cream = [0xf0e6d8, 0xffffff];
-    const add = (m, col, n, len, rep, mask) => { if (m) furShells(m, col, n, len, rep, mask); };
-    const lite = (navigator.deviceMemory || 4) < 4 ? 0.6 : 1, N = (x) => Math.max(4, Math.round(x * lite));
+    const P = this.p, sp = this.sp;
     // no rosto o pelo é bem curtinho para não cobrir olhos, focinho e bochechas
     const face = new THREE.Vector3(0, -0.12, 1).normalize(), v = new THREE.Vector3();
     const faceMask = (x, y, z) => { const d = v.set(x, y, z).normalize().dot(face); return Math.min(1, Math.max(0.06, (0.72 - d) / 0.3)); };
-    add(P.headMesh, blue, N(12), 0.12, [5, 3], faceMask); add(P.bodyMesh, blue, N(10), 0.105, [4, 3]);
-    add(P.belly, cream, N(6), 0.07, [3, 2]);
     this.fur = { face: faceMask };
-    P.cheeks.forEach((c) => add(c, blue, N(8), 0.12, [2, 1]));
-    for (const a of [P.armL, P.armR]) add(a.children[0], blue, N(7), 0.08, [2, 2]);
-    P.tail.children.forEach((t, i) => add(t, i > 10 ? cream : blue, N(6), 0.1, [1, 1]));
-    for (const e of [P.earL, P.earR]) add(e.children[0], blue, N(6), 0.05, [2, 2]);
-    P.tufts.forEach((t) => add(t, blue, N(5), 0.06, [1, 1]));
+    if (!sp.shell) return; // dragão: pele lisinha, sem pelo
+    const main = sp.shell, cream = sp.creamShell, dark = sp.armShell || main;
+    const add = (m, col, n, len, rep, mask) => { if (m) furShells(m, col, n, len, rep, mask); };
+    const lite = (navigator.deviceMemory || 4) < 4 ? 0.6 : 1, N = (x) => Math.max(4, Math.round(x * lite));
+    const isCream = (m) => m.material && m.material.color && m.material.color.getHex() === new C(sp.cream).getHex();
+    add(P.headMesh, main, N(12), 0.12, [5, 3], faceMask); add(P.bodyMesh, main, N(10), 0.105, [4, 3]);
+    add(P.belly, cream, N(6), 0.07, [3, 2]);
+    P.cheeks.forEach((c) => add(c, sp.cheekCream ? cream : main, N(8), 0.12, [2, 1]));
+    for (const a of [P.armL, P.armR]) add(a.children[0], sp.arm && sp.arm !== sp.fur ? dark : main, N(7), 0.08, [2, 2]);
+    P.tail.children.forEach((t) => add(t, isCream(t) ? cream : sp.tail === 'panda' ? dark : main, N(6), sp.tail === 'fox' ? 0.13 : 0.1, [1, 1]));
+    for (const e of [P.earL, P.earR]) add(e.children[0], sp.ears === 'panda' ? (sp.earShell || dark) : main, N(6), 0.05, [2, 2]);
+    P.tufts.forEach((t) => add(t, main, N(5), 0.06, [1, 1]));
   }
   setFur(mesh, on) { if (mesh) mesh.children.forEach((c) => c.userData.fur && (c.visible = on)); }
   /* ---- acessórios em 3D ---- */
@@ -169,6 +243,8 @@ export class Lumi3D {
     const top = costume || (o.body && o.body !== 'none');
     P.headStar.visible = !costume && (!hatOn || o.head === 'bow' || o.head === 'flowers');
     P.belly.visible = P.bellyStar.visible = !top;
+    if (P.plates) P.plates.forEach((pl) => (pl.visible = !top));
+    if (P.dwings) P.dwings.visible = !costume && (!o.back || o.back === 'none');
     P.earL.visible = P.earR.visible = !costume && o.head !== 'astronaut';
     P.tufts.forEach((t) => (t.visible = !costume && !hatOn));
     P.cheeks.forEach((c) => (c.visible = !costume));
@@ -230,6 +306,7 @@ export class Lumi3D {
     const ts = sleeping ? 0.7 : m === 'happy' ? 5 : 1.7;
     P.tail.rotation.set(0, Math.sin(t * ts * 0.7) * 0.2, Math.sin(t * ts) * (m === 'happy' ? 0.3 : 0.12));
     for (const c of P.tail.children) { const k = c.userData.k, b = c.userData.b; if (!b) continue; c.position.set(b.x + Math.sin(t * ts * 1.3 - k * 3) * 0.12 * k, b.y + Math.sin(t * ts * 1.1 - k * 2.5) * 0.05 * k, b.z); }
+    if (P.wingL) { const f = Math.sin(t * (m === 'happy' ? 9 : 2.4)) * (m === 'happy' ? 0.35 : 0.12); P.wingL.rotation.y = 0.2 + f; P.wingR.rotation.y = -0.2 - f; }
     // braços
     let aL = -0.45 - Math.sin(t * 2.2) * 0.04, aR = 0.45 + Math.sin(t * 2.2) * 0.04, fL = 0, fR = 0;
     if (this.waveT > 0) { this.waveT -= dt; aR = 2.5 + Math.sin(t * 12) * 0.3; }
@@ -320,11 +397,11 @@ export class Lumi3D {
 }
 
 /* ------------------------------------------------------------ olhos */
-let IRIS_TEX = null;
-function irisTexture() {
-  if (IRIS_TEX) return IRIS_TEX;
+const IRIS_TEX = {};
+function irisTexture(cols = ['#0d2a86', '#1d5fd8', '#3fb5ff', '#8ff0ff']) {
+  const key = cols.join(); if (IRIS_TEX[key]) return IRIS_TEX[key];
   const cv = document.createElement('canvas'); cv.width = cv.height = 256; const x = cv.getContext('2d'), c = 128;
-  const g = x.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, '#0d2a86'); g.addColorStop(0.45, '#1d5fd8'); g.addColorStop(0.8, '#3fb5ff'); g.addColorStop(1, '#8ff0ff');
+  const g = x.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, cols[0]); g.addColorStop(0.45, cols[1]); g.addColorStop(0.8, cols[2]); g.addColorStop(1, cols[3]);
   x.fillStyle = g; x.beginPath(); x.arc(c, c, 126, 0, Math.PI * 2); x.fill();
   x.globalAlpha = 0.28; x.strokeStyle = '#d8fbff'; x.lineWidth = 2;
   for (let i = 0; i < 64; i++) { const a = (i / 64) * Math.PI * 2, r0 = 52 + Math.random() * 10, r1 = 96 + Math.random() * 24; x.beginPath(); x.moveTo(c + Math.cos(a) * r0, c + Math.sin(a) * r0); x.lineTo(c + Math.cos(a) * r1, c + Math.sin(a) * r1); x.stroke(); }
@@ -332,7 +409,7 @@ function irisTexture() {
   const pg = x.createRadialGradient(c, c - 6, 0, c, c - 6, 74); pg.addColorStop(0, '#020717'); pg.addColorStop(0.7, '#050f36'); pg.addColorStop(0.9, '#08164a'); pg.addColorStop(1, 'rgba(6,18,61,0)'); x.fillStyle = pg; x.beginPath(); x.arc(c, c - 6, 74, 0, Math.PI * 2); x.fill();
   x.strokeStyle = '#061444'; x.lineWidth = 12; x.beginPath(); x.arc(c, c, 120, 0, Math.PI * 2); x.stroke();
   const bg = x.createRadialGradient(c, c + 90, 0, c, c + 90, 70); bg.addColorStop(0, 'rgba(200,255,255,.7)'); bg.addColorStop(1, 'rgba(200,255,255,0)'); x.fillStyle = bg; x.beginPath(); x.arc(c, c, 118, 0, Math.PI * 2); x.fill();
-  IRIS_TEX = new THREE.CanvasTexture(cv); IRIS_TEX.colorSpace = THREE.SRGBColorSpace; return IRIS_TEX;
+  const tx = (IRIS_TEX[key] = new THREE.CanvasTexture(cv)); tx.colorSpace = THREE.SRGBColorSpace; return tx;
 }
 
 /* ------------------------------------------------------------ pelo */
@@ -933,7 +1010,7 @@ export class Stage {
     const rim2 = new THREE.DirectionalLight(0xfff0d8, 1.2); rim2.position.set(6, 3, -5); scene.add(rim2);
     const fill = (this.fill = new THREE.DirectionalLight(0xffe6cc, 0.55)); fill.position.set(-4, 2, 6); scene.add(fill);
     this.camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
-    this.lumi = new Lumi3D(); scene.add(this.lumi.root);
+    this.lumi = new Lumi3D(window.LUMI_SPECIES); scene.add(this.lumi.root);
     this.island = makeIsland(); scene.add(this.island);
     this.props = new THREE.Group(); scene.add(this.props);
     const tree = makeTree(); tree.position.set(-2.3, 0, -1.2); tree.scale.setScalar(1.15); this.props.add(tree);

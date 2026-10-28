@@ -206,48 +206,421 @@
     return s;
   }
 
-  /* mapa: floresta com cachoeiras e trilha de madeira passando pelos pontos */
-  function map(H, pts) {
-    seed = 99;
-    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 ${H}" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd8ff"/><stop offset="${Math.min(0.12, 900 / H)}" stop-color="#bde8c0"/><stop offset="${Math.min(0.2, 1500 / H)}" stop-color="#4fae5c"/><stop offset="1" stop-color="#2f8a46"/></linearGradient>
-        <linearGradient id="fall" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8fd3ff"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="#7cc8ff"/></linearGradient>
-        <radialGradient id="pool"><stop offset="0" stop-color="#bfeaff"/><stop offset="1" stop-color="#3fa7e8"/></radialGradient>
-      </defs><rect width="400" height="${H}" fill="url(#bg)"/>`;
-    // montanhas no topo
-    s += `<path d="M0 260 L60 150 L120 210 L190 110 L260 200 L330 130 L400 210 L400 420 L0 420 Z" fill="#9cc7e8"/><path d="M0 330 L80 240 L150 300 L230 220 L310 290 L400 250 L400 460 L0 460 Z" fill="#7fb3dc"/>`;
-    for (let y0 = 380; y0 < H; y0 += 820) {
-      const side = (Math.floor(y0 / 820) % 2) ? 1 : -1, fx = side > 0 ? 300 : 60;
-      // penhascos
-      for (const cx of [side > 0 ? 330 : 20, side > 0 ? 40 : 360]) { s += `<path d="M${cx - 90} ${y0 + 520} Q ${cx - 70} ${y0 + 80} ${cx} ${y0 + 40} Q ${cx + 80} ${y0 + 70} ${cx + 100} ${y0 + 520} Z" fill="#8b6a52"/><path d="M${cx - 70} ${y0 + 520} Q ${cx - 50} ${y0 + 140} ${cx + 4} ${y0 + 110} Q ${cx + 60} ${y0 + 140} ${cx + 76} ${y0 + 520} Z" fill="#6f523f"/><ellipse cx="${cx}" cy="${y0 + 48}" rx="96" ry="26" fill="#5cbf5c"/>`; }
-      // cachoeira
-      s += `<rect x="${fx - 26}" y="${y0 + 60}" width="52" height="420" fill="url(#fall)" opacity=".95"/>`;
-      for (let k = 0; k < 7; k++) s += `<path d="M${fx - 20 + k * 7} ${y0 + 70} l0 400" stroke="#ffffff" stroke-width="2" opacity=".6" stroke-dasharray="18 12"/>`;
-      s += `<ellipse cx="${fx}" cy="${y0 + 500}" rx="80" ry="26" fill="url(#pool)"/>`;
-      for (let k = 0; k < 9; k++) s += `<circle cx="${fx - 40 + rnd() * 80}" cy="${y0 + 485 + rnd() * 20}" r="${6 + rnd() * 9}" fill="#fff" opacity=".9"/>`;
-      // árvores
-      for (let k = 0; k < 9; k++) {
-        const x = rnd() < 0.5 ? rnd() * 90 : 310 + rnd() * 90, y = y0 + 150 + rnd() * 640, r = 22 + rnd() * 18;
-        s += `<rect x="${x - 4}" y="${y}" width="8" height="${r * 1.4}" fill="#6d4c33"/><circle cx="${x}" cy="${y}" r="${r}" fill="#2e7d32"/><circle cx="${x - r * 0.45}" cy="${y + 4}" r="${r * 0.7}" fill="#43a047"/><circle cx="${x + r * 0.35}" cy="${y - r * 0.35}" r="${r * 0.6}" fill="#66bb6a"/>`;
-        if (k === 3) s += `<g transform="translate(${x - 22},${y - r - 36})"><rect x="0" y="14" width="44" height="30" rx="4" fill="#c27c3e"/><path d="M-6 16 L22 -6 L50 16 Z" fill="#e2564a"/><rect x="15" y="22" width="14" height="12" rx="2" fill="#ffe28a"/></g>`;
+  /* ================= MAPA: floresta encantada cinematográfica =================
+     O mapa é desenhado em pedaços (chunks) com coordenadas do mundo (400 × H).
+     Só os pedaços perto da tela recebem imagem — leve no celular. */
+  const WP = [ // de baixo (Mundo 1) para cima (Mundo 6)
+    { g: ['#5dbb5c', '#3f9c4c'], leaf: ['#1d6a34', '#2d8a44', '#4bb04f', '#8fd86c'], flw: ['#ff7aa8', '#ffe36b', '#ffffff', '#c792ea'], water: ['#8fe6ff', '#2fa6e8', '#1a6fc0'] },
+    { g: ['#86c95a', '#62ad48'], leaf: ['#2b7a2e', '#3f9a3a', '#6cbf45', '#b9e36c'], flw: ['#ffe36b', '#ffffff', '#ffb347', '#ff8ab3'], water: ['#8fe6ff', '#2fa6e8', '#1a6fc0'] },
+    { g: ['#9bbb52', '#76a03e'], leaf: ['#a8461c', '#d8661f', '#f29b2b', '#ffd36b'], flw: ['#ff8a3d', '#ffe36b', '#ffffff', '#e5533b'], water: ['#9ae8ff', '#38a8e0', '#1d72b8'] },
+    { g: ['#78c470', '#55a65c'], leaf: ['#c2588f', '#e57fb5', '#ffb3d6', '#ffe2f0'], flw: ['#ff9ccc', '#ffffff', '#c792ea', '#ffe36b'], water: ['#9be9ff', '#36a9e6', '#1d70bd'] },
+    { g: ['#36b48e', '#1f8f70'], leaf: ['#0e5a48', '#178a63', '#2fbf7f', '#86e6ad'], flw: ['#ff6b8a', '#ffd23f', '#ffffff', '#ff9a3d'], water: ['#7ff0ff', '#1fb3d6', '#0f78a8'] },
+    { g: ['#3f7a8f', '#2c5c74'], leaf: ['#173f5e', '#245c84', '#3d82b8', '#8fc7ff'], flw: ['#9ff3ff', '#d6a8ff', '#ffffff', '#7fffd4'], water: ['#a9f2ff', '#4fb8f0', '#2c6fc0'] },
+  ];
+  const GREEN = ['#1d6a34', '#2d8a44', '#4bb04f', '#8fd86c'];
+  const SKY = 760; // acima disso: céu, montanhas e nuvens
+
+  // trilha: curva igual à do app (cúbica vertical)
+  function trail(pts) {
+    let d = `M${f(pts[0].x * 400)},${f(pts[0].y)}`; const sm = [];
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i], m = (a.y - b.y) / 2, ax = a.x * 400, bx = b.x * 400;
+      d += ` C${f(ax)},${f(a.y - m)} ${f(bx)},${f(b.y + m)} ${f(bx)},${f(b.y)}`;
+      for (let k = 0; k < 16; k++) {
+        const t = k / 16, u = 1 - t;
+        sm.push({ x: u * u * u * ax + 3 * u * u * t * ax + 3 * u * t * t * bx + t * t * t * bx, y: u * u * u * a.y + 3 * u * u * t * (a.y - m) + 3 * u * t * t * (b.y + m) + t * t * t * b.y });
       }
-      for (let k = 0; k < 18; k++) s += `<circle cx="${rnd() * 400}" cy="${y0 + rnd() * 820}" r="${2 + rnd() * 3}" fill="${pick(['#ff8ab3', '#ffe36b', '#ffffff', '#c792ea'])}"/>`;
-      s += `<ellipse cx="${200}" cy="${y0 + 470}" rx="160" ry="30" fill="#ffffff" opacity=".18"/>`;
     }
-    // trilha de madeira
-    if (pts.length > 1) {
-      let d = `M${pts[0].x * 400},${pts[0].y}`;
-      for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i], m = (a.y - b.y) / 2; d += ` C${a.x * 400},${a.y - m} ${b.x * 400},${b.y + m} ${b.x * 400},${b.y}`; }
-      s += `<path d="${d}" stroke="#5a3417" stroke-width="44" fill="none" stroke-linecap="round" opacity=".45" transform="translate(3,6)"/>
-        <path d="${d}" stroke="#7a4a24" stroke-width="42" fill="none" stroke-linecap="round"/>
-        <path d="${d}" stroke="#d29355" stroke-width="34" fill="none" stroke-linecap="round"/>
-        <path d="${d}" stroke="#a86a33" stroke-width="34" fill="none" stroke-dasharray="3 15"/>
-        <path d="${d}" stroke="#f0bb7a" stroke-width="8" fill="none" opacity=".45"/>`;
-    }
-    return s + '</svg>';
+    sm.push({ x: pts[pts.length - 1].x * 400, y: pts[pts.length - 1].y });
+    return { d, sm };
   }
 
+  /* ----- peças do mapa (desenhadas na origem; base no chão) ----- */
+  const shadow = (x, y, rx, ry, o) => `<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(rx)}" ry="${f(ry)}" fill="#0b2a12" opacity="${o || 0.22}"/>`;
+  function canopy(x, y, r, L) { // copa volumosa com luz vindo do alto à esquerda
+    let s = `<circle cx="${f(x + r * 0.12)}" cy="${f(y + r * 0.16)}" r="${f(r)}" fill="${L[0]}"/>`;
+    s += `<circle cx="${f(x - r * 0.42)}" cy="${f(y + r * 0.12)}" r="${f(r * 0.66)}" fill="${L[1]}"/><circle cx="${f(x + r * 0.42)}" cy="${f(y + r * 0.02)}" r="${f(r * 0.62)}" fill="${L[1]}"/><circle cx="${f(x - r * 0.05)}" cy="${f(y - r * 0.3)}" r="${f(r * 0.7)}" fill="${L[1]}"/>`;
+    s += `<circle cx="${f(x - r * 0.3)}" cy="${f(y - r * 0.38)}" r="${f(r * 0.44)}" fill="${L[2]}"/><circle cx="${f(x - r * 0.62)}" cy="${f(y - r * 0.02)}" r="${f(r * 0.3)}" fill="${L[2]}"/><circle cx="${f(x + r * 0.18)}" cy="${f(y - r * 0.55)}" r="${f(r * 0.3)}" fill="${L[2]}"/>`;
+    s += `<circle cx="${f(x - r * 0.38)}" cy="${f(y - r * 0.5)}" r="${f(r * 0.17)}" fill="${L[3]}" opacity=".8"/><circle cx="${f(x + r * 0.08)}" cy="${f(y - r * 0.72)}" r="${f(r * 0.11)}" fill="${L[3]}" opacity=".7"/><circle cx="${f(x - r * 0.72)}" cy="${f(y - r * 0.12)}" r="${f(r * 0.1)}" fill="${L[3]}" opacity=".7"/>`;
+    return s;
+  }
+  function tree(x, y, r, L, trunk) {
+    const h = r * 1.15;
+    return shadow(x + r * 0.35, y + 2, r * 0.95, r * 0.24) + `<path d="M${f(x - 7)} ${f(y)} Q ${f(x - 4)} ${f(y - h * 0.6)} ${f(x - 3)} ${f(y - h)} L ${f(x + 4)} ${f(y - h)} Q ${f(x + 5)} ${f(y - h * 0.6)} ${f(x + 8)} ${f(y)} Z" fill="${trunk || '#6b4128'}"/><path d="M${f(x - 1)} ${f(y - 4)} Q ${f(x)} ${f(y - h * 0.5)} ${f(x - 1)} ${f(y - h + 4)}" stroke="#3d2414" stroke-width="1.4" fill="none" opacity=".6"/>` + canopy(x, y - h - r * 0.5, r, L);
+  }
+  function pine(x, y, h, L) {
+    let s = shadow(x + h * 0.2, y + 2, h * 0.32, h * 0.08) + `<rect x="${f(x - 3)}" y="${f(y - h * 0.22)}" width="6" height="${f(h * 0.22)}" fill="#5a3620"/>`;
+    for (let k = 0; k < 4; k++) {
+      const ty = y - h * 0.16 - k * h * 0.2, w = h * (0.36 - k * 0.07), th = h * 0.34;
+      s += `<path d="M${f(x)} ${f(ty - th)} L${f(x + w)} ${f(ty)} L${f(x - w)} ${f(ty)} Z" fill="${L[0]}"/><path d="M${f(x)} ${f(ty - th)} L${f(x - w)} ${f(ty)} L${f(x - w * 0.15)} ${f(ty - 2)} Z" fill="${L[2]}"/><path d="M${f(x)} ${f(ty - th)} L${f(x - w * 0.35)} ${f(ty - th * 0.4)} L${f(x)} ${f(ty - th * 0.45)} Z" fill="${L[3]}" opacity=".6"/>`;
+    }
+    return s;
+  }
+  function bush(x, y, r, L) { return shadow(x + r * 0.3, y, r * 1.1, r * 0.25, 0.18) + `<circle cx="${f(x - r * 0.5)}" cy="${f(y - r * 0.4)}" r="${f(r * 0.6)}" fill="${L[0]}"/><circle cx="${f(x + r * 0.45)}" cy="${f(y - r * 0.4)}" r="${f(r * 0.62)}" fill="${L[0]}"/><circle cx="${f(x)}" cy="${f(y - r * 0.7)}" r="${f(r * 0.66)}" fill="${L[1]}"/><circle cx="${f(x - r * 0.25)}" cy="${f(y - r * 0.95)}" r="${f(r * 0.3)}" fill="${L[2]}"/><circle cx="${f(x - r * 0.55)}" cy="${f(y - r * 0.6)}" r="${f(r * 0.2)}" fill="${L[2]}"/>`; }
+  function fern(x, y, s, c1, c2, flip) {
+    let o = `<g transform="translate(${f(x)},${f(y)}) scale(${flip ? -s : s},${s})">`;
+    for (const [a, l] of [[-60, 26], [-35, 32], [-10, 34], [15, 30], [40, 24]]) {
+      o += `<g transform="rotate(${a})"><path d="M0 0 Q 4 ${-l / 2} 0 ${-l}" stroke="${c1}" stroke-width="1.6" fill="none"/>`;
+      for (let k = 1; k < 6; k++) o += `<path d="M0 ${f(-l * k / 6)} l${f(6 - k * 0.6)} ${-3} M0 ${f(-l * k / 6)} l${f(-6 + k * 0.6)} ${-3}" stroke="${k % 2 ? c1 : c2}" stroke-width="2.4" stroke-linecap="round"/>`;
+      o += '</g>';
+    }
+    return o + '</g>';
+  }
+  const tuft = (x, y, c) => `<path d="M${f(x - 5)} ${f(y)} Q ${f(x - 6)} ${f(y - 8)} ${f(x - 9)} ${f(y - 12)} M${f(x)} ${f(y)} Q ${f(x)} ${f(y - 10)} ${f(x + 1)} ${f(y - 15)} M${f(x + 5)} ${f(y)} Q ${f(x + 6)} ${f(y - 7)} ${f(x + 10)} ${f(y - 10)}" stroke="${c}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  const flower = (x, y, c) => `<path d="M${f(x)} ${f(y)} l0 -8" stroke="#2f7d36" stroke-width="1.6"/>${[0, 72, 144, 216, 288].map((a) => `<circle cx="${f(x + Math.cos(a * Math.PI / 180) * 3.2)}" cy="${f(y - 10 + Math.sin(a * Math.PI / 180) * 3.2)}" r="2.6" fill="${c}"/>`).join('')}<circle cx="${f(x)}" cy="${f(y - 10)}" r="1.8" fill="#ffcf3a"/>`;
+  const stone = (x, y, r, c) => shadow(x + r * 0.3, y + r * 0.3, r * 1.1, r * 0.4, 0.2) + `<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(r)}" ry="${f(r * 0.72)}" fill="${c || '#8e8a86'}"/><ellipse cx="${f(x - r * 0.25)}" cy="${f(y - r * 0.3)}" rx="${f(r * 0.55)}" ry="${f(r * 0.32)}" fill="#c9c4bd" opacity=".7"/><path d="M${f(x - r * 0.8)} ${f(y - r * 0.3)} Q ${f(x - r * 0.2)} ${f(y - r * 0.9)} ${f(x + r * 0.6)} ${f(y - r * 0.5)}" stroke="#6fbf4f" stroke-width="${f(r * 0.3)}" fill="none" stroke-linecap="round" opacity=".85"/>`;
+  function mushroom(x, y, s, cap, dots, glow) {
+    let o = `<g transform="translate(${f(x)},${f(y)}) scale(${f(s)})">`;
+    if (glow) o += `<circle cx="0" cy="-16" r="26" fill="url(#mglow)"/>`;
+    o += `<ellipse cx="4" cy="1" rx="13" ry="3.5" fill="#0b2a12" opacity=".22"/><path d="M-5 0 Q -6 -10 -4 -16 L 4 -16 Q 6 -10 5 0 Z" fill="#fff4dc"/><path d="M1 -2 Q 2 -9 1 -15" stroke="#e2cfa6" stroke-width="2" fill="none"/>`;
+    o += `<path d="M-15 -14 Q -14 -30 0 -31 Q 14 -30 15 -14 Q 0 -10 -15 -14 Z" fill="${cap}"/><path d="M-11 -19 Q -9 -27 -2 -28" stroke="#fff" stroke-width="2.4" fill="none" opacity=".45" stroke-linecap="round"/>`;
+    o += `<circle cx="-6" cy="-22" r="2.6" fill="${dots}"/><circle cx="4" cy="-25" r="2.2" fill="${dots}"/><circle cx="9" cy="-18" r="1.8" fill="${dots}"/><circle cx="-1" cy="-17" r="1.5" fill="${dots}"/>`;
+    return o + '</g>';
+  }
+  function cloud(x, y, s, o) {
+    return `<g transform="translate(${f(x)},${f(y)}) scale(${f(s)})" opacity="${o || 1}"><ellipse cx="0" cy="10" rx="62" ry="14" fill="#c9b9ef" opacity=".6"/><circle cx="-34" cy="0" r="20" fill="#f4eeff"/><circle cx="-8" cy="-12" r="28" fill="#fff"/><circle cx="24" cy="-4" r="22" fill="#fbf8ff"/><circle cx="44" cy="4" r="14" fill="#f1eaff"/><ellipse cx="2" cy="8" rx="56" ry="11" fill="#fff"/><circle cx="-14" cy="-22" r="10" fill="#fff" opacity=".9"/></g>`;
+  }
+
+  // casa na árvore detalhada (base do tronco em 0,0)
+  function treehouse(L, wi) {
+    const roof = ['#e2564a', '#3a8fd8', '#d9542b', '#9a55ff', '#1fa37a', '#5b4fc4'][wi], roofD = ['#b23a30', '#2468a8', '#a83a1a', '#6c34c4', '#137a5a', '#3b308f'][wi];
+    let s = shadow(16, 4, 80, 15, 0.25);
+    s += canopy(-6, -196, 64, L) + canopy(52, -170, 40, L) + canopy(-58, -160, 36, L);
+    // tronco com raízes e casca
+    s += `<path d="M-30 4 Q -22 -6 -18 -30 Q -14 -90 -12 -150 L 12 -150 Q 14 -90 18 -30 Q 22 -6 32 4 Q 12 -2 0 2 Q -12 -2 -30 4 Z" fill="url(#bark)"/>`;
+    s += `<path d="M-30 4 Q -40 2 -46 8 M30 4 Q 42 2 48 9 M-8 2 Q -12 8 -18 10" stroke="#5b3720" stroke-width="5" stroke-linecap="round" fill="none"/>`;
+    s += `<path d="M-8 -10 Q -10 -60 -6 -140 M4 -20 Q 7 -70 5 -140 M-14 -40 Q -12 -60 -14 -80" stroke="#4a2c18" stroke-width="1.6" fill="none" opacity=".55"/><ellipse cx="-2" cy="-70" rx="4" ry="6" fill="#3d2414" opacity=".6"/>`;
+    // vigas de apoio
+    s += `<path d="M-14 -100 L -56 -128 M14 -100 L 56 -128" stroke="#6b4128" stroke-width="6" stroke-linecap="round"/>`;
+    // plataforma de tábuas
+    s += `<rect x="-68" y="-134" width="136" height="12" rx="3" fill="#8a5530"/>`;
+    for (let k = 0; k < 9; k++) s += `<rect x="${-68 + k * 15.2}" y="-136" width="14" height="10" rx="2" fill="${k % 2 ? '#c98a4b' : '#d99a58'}"/>`;
+    s += `<rect x="-68" y="-127" width="136" height="3" fill="#6e4220" opacity=".7"/>`;
+    // casinha
+    s += `<rect x="-40" y="-190" width="80" height="56" rx="4" fill="#d79a5c"/>`;
+    for (let k = 1; k < 6; k++) s += `<path d="M-40 ${-190 + k * 9.4} L40 ${-190 + k * 9.4}" stroke="#a8682f" stroke-width="1.4" opacity=".7"/>`;
+    s += `<rect x="-40" y="-190" width="80" height="56" rx="4" fill="url(#cabinShade)"/>`;
+    // telhado com telhas
+    s += `<path d="M-52 -184 L 0 -228 L 52 -184 Z" fill="${roof}"/>`;
+    for (let r = 0; r < 4; r++) { const yy = -218 + r * 10, half = 12 + r * 11.5; for (let x = -half; x < half; x += 9) s += `<path d="M${f(x)} ${yy} q 4.5 7 9 0" fill="${roofD}" opacity=".55"/>`; }
+    s += `<path d="M-54 -183 L 0 -229 L 54 -183" stroke="${roofD}" stroke-width="5" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="M-30 -202 L 0 -226" stroke="#fff" stroke-width="2.4" opacity=".35" stroke-linecap="round"/>`;
+    // janela redonda iluminada + porta
+    s += `<circle cx="-16" cy="-164" r="13" fill="#7a3f1a"/><circle cx="-16" cy="-164" r="10" fill="url(#winGlow)"/><path d="M-16 -174 L -16 -154 M-26 -164 L -6 -164" stroke="#7a3f1a" stroke-width="2"/>`;
+    s += `<path d="M10 -134 L 10 -168 Q 10 -178 20 -178 Q 30 -178 30 -168 L 30 -134 Z" fill="#7a3f1a"/><path d="M13 -134 L 13 -166 Q 13 -175 20 -175 Q 27 -175 27 -166 L 27 -134 Z" fill="#a8622a"/><circle cx="24" cy="-152" r="1.8" fill="#ffd36b"/>`;
+    // corrimão de corda
+    for (const px of [-64, -38, 38, 64]) s += `<rect x="${px - 2}" y="-152" width="4" height="18" rx="1" fill="#6b4128"/>`;
+    s += `<path d="M-64 -150 Q -51 -144 -38 -150 M38 -150 Q 51 -144 64 -150" stroke="#e8c48a" stroke-width="2" fill="none"/>`;
+    // escada
+    s += `<path d="M44 -124 L 52 2 M60 -124 L 68 2" stroke="#7a4a24" stroke-width="3.4"/>`;
+    for (let k = 0; k < 8; k++) { const yy = -112 + k * 15; s += `<path d="M${f(44.6 + (yy + 124) * 0.063)} ${yy} L${f(60.6 + (yy + 124) * 0.063)} ${yy}" stroke="#c98a4b" stroke-width="3" stroke-linecap="round"/>`; }
+    // varal de luzinhas
+    s += `<path d="M-60 -186 Q -30 -168 0 -184 Q 30 -168 60 -186" stroke="#5b3720" stroke-width="1" fill="none"/>`;
+    [['#ffd36b', -48, -179], ['#ff8ab3', -30, -174], ['#8fe6ff', -14, -178], ['#ffd36b', 14, -178], ['#b388ff', 30, -174], ['#ffd36b', 48, -179]].forEach(([c, x, y]) => { s += `<circle cx="${x}" cy="${y}" r="5" fill="${c}" opacity=".35"/><circle cx="${x}" cy="${y}" r="2.4" fill="${c}"/>`; });
+    // lanterna pendurada
+    s += `<path d="M-60 -128 L -60 -112" stroke="#5b3720" stroke-width="1.2"/><circle cx="-60" cy="-102" r="12" fill="url(#lampGlow)"/><rect x="-65" y="-110" width="10" height="13" rx="3" fill="#ffd36b" stroke="#7a3f1a" stroke-width="1.4"/>`;
+    // balanço de corda
+    s += `<path d="M-30 -122 L -34 -40 M-10 -122 L -12 -40" stroke="#e8c48a" stroke-width="1.6"/><rect x="-38" y="-42" width="30" height="5" rx="2" fill="#a8622a"/>`;
+    // folhas na frente
+    s += canopy(-70, -118, 20, L) + canopy(74, -196, 18, L);
+    return s;
+  }
+
+  // penhasco com cachoeira (desenhado para o lado esquerdo; o direito é espelhado)
+  function falls(W) {
+    let s = `<path d="M-20 110 L -20 -170 Q 30 -186 70 -168 Q 112 -150 126 -110 Q 140 -40 132 30 Q 128 80 140 110 Z" fill="url(#rock)"/>`;
+    s += `<path d="M-20 -60 Q 40 -70 96 -46 L 112 -8 Q 60 -26 -20 -16 Z" fill="#6b6058" opacity=".55"/><path d="M-20 20 Q 50 10 120 30 L 126 60 Q 60 46 -20 56 Z" fill="#5b5048" opacity=".5"/>`;
+    s += `<path d="M10 -120 l18 30 M40 -30 l-10 26 M88 -100 l10 22 M20 40 l16 20 M100 4 l-6 22" stroke="#4a403a" stroke-width="2" stroke-linecap="round" opacity=".6"/>`;
+    s += `<path d="M-20 -150 Q 20 -134 40 -140 Q 60 -146 78 -134 M-20 -66 Q 30 -58 74 -48 M-20 12 Q 40 22 100 18" stroke="#b0a597" stroke-width="3" fill="none" opacity=".55" stroke-linecap="round"/>`;
+    // musgo no topo
+    s += `<path d="M-24 -170 Q 30 -196 74 -172 Q 110 -158 128 -112 Q 100 -140 70 -150 Q 30 -166 -24 -150 Z" fill="${W.leaf[1]}"/><path d="M-20 -176 Q 20 -192 60 -178" stroke="${W.leaf[3]}" stroke-width="5" fill="none" stroke-linecap="round" opacity=".8"/>`;
+    s += canopy(10, -196, 34, W.leaf) + canopy(-20, -150, 26, W.leaf);
+    // cachoeira em degraus
+    s += `<path d="M58 -150 Q 70 -152 84 -148 L 92 -40 Q 96 30 104 80 L 54 80 Q 58 20 56 -40 Z" fill="url(#fall)"/>`;
+    for (let k = 0; k < 6; k++) { const x = 60 + k * 6; s += `<path d="M${x} -144 Q ${x + 2} -40 ${x + 4 + k} 76" stroke="#fff" stroke-width="${k % 2 ? 1.6 : 2.6}" fill="none" opacity="${k % 2 ? 0.5 : 0.75}"/>`; }
+    s += `<path d="M52 -150 Q 70 -158 88 -150" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" opacity=".9"/>`;
+    // lago com espuma
+    s += `<ellipse cx="86" cy="96" rx="92" ry="26" fill="#2b6f4a" opacity=".5"/><ellipse cx="84" cy="92" rx="86" ry="22" fill="url(#pond)"/>`;
+    s += `<ellipse cx="84" cy="92" rx="70" ry="15" fill="none" stroke="#fff" stroke-width="1.4" opacity=".45"/><ellipse cx="96" cy="96" rx="44" ry="8" fill="none" stroke="#fff" stroke-width="1.2" opacity=".35"/>`;
+    for (let k = 0; k < 10; k++) s += `<circle cx="${f(58 + rnd() * 52)}" cy="${f(76 + rnd() * 12)}" r="${f(5 + rnd() * 7)}" fill="#fff" opacity="${f(0.7 + rnd() * 0.3)}"/>`;
+    // arco-íris na névoa
+    ['#ff6b6b', '#ffb347', '#ffe36b', '#7be07b', '#6fc3ff', '#b388ff'].forEach((c, k) => { s += `<path d="M${18 + k * 4} 70 A ${66 - k * 4} ${60 - k * 4} 0 0 1 ${150 - k * 4} 70" stroke="${c}" stroke-width="3.4" fill="none" opacity=".26"/>`; });
+    // pedras e plantas
+    s += stone(24, 104, 12) + stone(148, 98, 10) + stone(126, 112, 7);
+    s += fern(2, 116, 1.1, W.leaf[1], W.leaf[2]) + fern(160, 118, 0.9, W.leaf[1], W.leaf[2], true);
+    return s;
+  }
+  function pond(W) {
+    let s = `<ellipse cx="0" cy="6" rx="78" ry="30" fill="#2b5a2a" opacity=".45"/><ellipse cx="0" cy="2" rx="72" ry="26" fill="url(#pond)"/><ellipse cx="-14" cy="-4" rx="40" ry="8" fill="#fff" opacity=".18"/>`;
+    for (const [x, y] of [[-30, 8], [18, 12], [34, -2], [-6, -8]]) s += `<path d="M${x} ${y} m-10 0 a10 6 0 1 0 20 0 l-10 0 z" fill="#3fae4f"/><path d="M${x - 8} ${y - 1} q 8 -4 16 0" stroke="#7fd36a" stroke-width="1.4" fill="none"/>`;
+    s += `<g transform="translate(18,6)"><path d="M0 0 l-5 -8 l5 3 l5 -3 z M-6 -2 l-4 -5 l6 1 z M6 -2 l4 -5 l-6 1 z" fill="#ff9ccc"/><circle cx="0" cy="-3" r="2" fill="#ffe36b"/></g>`;
+    for (let k = 0; k < 5; k++) { const x = -70 + k * 7; s += `<path d="M${x} 0 Q ${x - 2} -26 ${x + 2} -44" stroke="#3b7a2f" stroke-width="2" fill="none"/><rect x="${x}" y="-46" width="4.4" height="12" rx="2.2" fill="#8a5530"/>`; }
+    s += stone(62, 14, 10) + stone(-60, 20, 8) + fern(70, 8, 0.9, W.leaf[1], W.leaf[2], true);
+    return s;
+  }
+  function grove(W, wi) {
+    const glow = wi === 5;
+    const cap = glow ? ['#57d9ff', '#b388ff', '#7fffd4'] : ['#e8443a', '#ff7a3d', '#e8443a'];
+    let s = tree(-30, -6, 34, W.leaf) + bush(40, 0, 22, W.leaf);
+    s += mushroom(-4, 26, 1.6, cap[0], '#fff', glow) + mushroom(36, 30, 1.1, cap[1], '#fff', glow) + mushroom(-50, 34, 0.9, cap[2], '#fff', glow) + mushroom(14, 40, 0.7, cap[1], '#fff', glow);
+    s += fern(64, 34, 0.8, W.leaf[1], W.leaf[2], true) + tuft(-20, 44, W.leaf[1]);
+    return s;
+  }
+  function rocks(W, wi) {
+    const cr = wi === 5 ? ['#9ff3ff', '#57c8ff'] : wi === 3 ? ['#ffc2e6', '#e57fb5'] : ['#b9f0ff', '#6fc3ff'];
+    let s = stone(-20, 20, 30, '#8a8580') + stone(26, 24, 22, '#7d7873') + stone(-50, 30, 14);
+    s += `<g transform="translate(6,6)"><circle cx="0" cy="-14" r="30" fill="url(#mglow)"/><path d="M-12 0 L -16 -24 L -8 -40 L -2 -22 Z" fill="${cr[1]}"/><path d="M-12 0 L -16 -24 L -8 -40 Z" fill="${cr[0]}"/><path d="M0 0 L 2 -34 L 10 -52 L 16 -30 L 12 0 Z" fill="${cr[1]}"/><path d="M0 0 L 2 -34 L 10 -52 Z" fill="${cr[0]}"/><path d="M14 2 L 22 -16 L 28 -8 Z" fill="${cr[0]}"/><path d="M6 -40 L 9 -48" stroke="#fff" stroke-width="2" stroke-linecap="round"/></g>`;
+    s += bush(-60, 10, 18, W.leaf) + fern(54, 30, 0.8, W.leaf[1], W.leaf[2], true);
+    return s;
+  }
+  function palms(W) {
+    let s = '';
+    for (const [x, y, sc, fl] of [[-20, 30, 1, 1], [34, 40, 0.8, -1]]) {
+      s += shadow(x + 26 * sc, y + 2, 44 * sc, 8 * sc);
+      s += `<g transform="translate(${x},${y}) scale(${sc * fl},${sc})"><path d="M-6 0 Q 4 -60 22 -120 L 30 -118 Q 14 -60 6 0 Z" fill="#a8743e"/>`;
+      for (let k = 0; k < 9; k++) s += `<path d="M${f(-5 + k * 1.5)} ${-k * 13} l11 -2" stroke="#7a4f25" stroke-width="2"/>`;
+      for (const a of [-160, -120, -70, -25, 15]) s += `<g transform="translate(26,-120) rotate(${a})"><path d="M0 0 Q 30 -16 64 6 Q 30 -4 0 0 Z" fill="${GREEN[1]}"/><path d="M0 0 Q 30 -10 64 6" stroke="${GREEN[3]}" stroke-width="1.6" fill="none"/></g>`;
+      s += `<circle cx="22" cy="-112" r="5" fill="#6b4128"/><circle cx="30" cy="-110" r="5" fill="#7a4a24"/></g>`;
+    }
+    s += fern(-60, 44, 1, W.leaf[1], W.leaf[2]) + flower(60, 48, W.flw[0]) + flower(70, 44, W.flw[1]);
+    return s;
+  }
+  function farm(W) {
+    let s = '';
+    for (let k = 0; k < 6; k++) s += `<rect x="${-80 + k * 30}" y="-30" width="7" height="40" rx="2" fill="#c98a4b"/><rect x="${-79 + k * 30}" y="-30" width="2" height="38" fill="#ffd9a0" opacity=".4"/>`;
+    s += `<rect x="-84" y="-22" width="160" height="6" rx="2" fill="#a8682f"/><rect x="-84" y="-6" width="160" height="6" rx="2" fill="#a8682f"/>`;
+    s += shadow(-20, 46, 34, 7) + `<rect x="-50" y="16" width="58" height="30" rx="8" fill="#f0c04a"/><path d="M-46 24 L 4 24 M-46 32 L 4 32 M-46 40 L 4 40" stroke="#c99a20" stroke-width="1.6"/><rect x="-50" y="16" width="58" height="8" rx="6" fill="#ffe08a" opacity=".6"/>`;
+    for (const [x, y] of [[40, 40], [58, 30], [24, 26]]) s += `<path d="M${x} ${y} L ${x} ${y - 40}" stroke="#3b7a2f" stroke-width="3"/><path d="M${x} ${y - 20} q 10 -6 14 2 q -8 4 -14 -2" fill="#4bb04f"/>${[0, 40, 80, 120, 160, 200, 240, 280, 320].map((a) => `<ellipse cx="${f(x + Math.cos(a * Math.PI / 180) * 8)}" cy="${f(y - 44 + Math.sin(a * Math.PI / 180) * 8)}" rx="5" ry="3" transform="rotate(${a} ${f(x + Math.cos(a * Math.PI / 180) * 8)} ${f(y - 44 + Math.sin(a * Math.PI / 180) * 8)})" fill="#ffcf2a"/>`).join('')}<circle cx="${x}" cy="${y - 44}" r="6" fill="#7a4a24"/>`;
+    return s;
+  }
+  function pumpkins(W) {
+    let s = tree(20, 0, 32, W.leaf);
+    for (const [x, y, r] of [[-40, 30, 16], [-12, 38, 12], [-62, 40, 10]]) s += shadow(x + 4, y + r * 0.7, r * 1.2, r * 0.3) + `<ellipse cx="${x}" cy="${y}" rx="${r * 1.2}" ry="${r}" fill="#f28a1e"/><ellipse cx="${x}" cy="${y}" rx="${r * 0.5}" ry="${r}" fill="#ff9f3a"/><path d="M${x - r * 0.6} ${y - r * 0.9} Q ${x - r * 0.8} ${y} ${x - r * 0.6} ${y + r * 0.9} M${x + r * 0.6} ${y - r * 0.9} Q ${x + r * 0.8} ${y} ${x + r * 0.6} ${y + r * 0.9}" stroke="#d26a10" stroke-width="1.4" fill="none"/><path d="M${x} ${y - r} q 2 -6 6 -7" stroke="#4a7a2a" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="${x - r * 0.5}" cy="${y - r * 0.4}" rx="${r * 0.2}" ry="${r * 0.3}" fill="#fff" opacity=".35"/>`;
+    for (let k = 0; k < 5; k++) s += `<path d="M${-70 + k * 22} 56 q 6 -6 12 0 q -6 4 -12 0" fill="${['#d8661f', '#f29b2b', '#ffd36b'][k % 3]}"/>`;
+    return s;
+  }
+
+  function buildMap(H, pts) {
+    seed = 4242;
+    const T = trail(pts), F = [], A = [], boxes = [];
+    const add = (l, y0, y1, s, sy) => F.push({ l, y0, y1, s, sy: sy == null ? y1 : sy });
+    // mundos: começam onde há salto grande entre pontos
+    const starts = [0]; for (let i = 1; i < pts.length; i++) if (pts[i - 1].y - pts[i].y > 200) starts.push(i);
+    const W = starts.map((st, wi) => { const end = (starts[wi + 1] || pts.length) - 1; return { st, end, bottom: wi ? pts[st].y + 205 : H, top: wi < starts.length - 1 ? pts[end].y - 75 : 0, river: pts[st].y + 202, ban: pts[st].y + 134 }; });
+    const worldAt = (y) => { for (let w = W.length - 1; w >= 0; w--) if (y < W[w].bottom) return Math.min(w, WP.length - 1); return 0; };
+    const nearPath = (x, y, d) => { for (const p of T.sm) if (Math.abs(p.y - y) < d && Math.hypot(p.x - x, p.y - y) < d) return true; return false; };
+    const nearNode = (x, y) => pts.some((p) => Math.abs(p.x * 400 - x) < 76 && y > p.y - 70 && y < p.y + 78);
+    const inBox = (x, y) => boxes.some((b) => x > b[0] && x < b[2] && y > b[1] && y < b[3]);
+    const nearBan = (x, y) => W.some((w) => Math.abs(y - w.ban) < 48 && x > 40 && x < 360);
+
+    /* --- céu: estrelas, lua, montanhas, nuvens --- */
+    let sky = '';
+    for (let k = 0; k < 70; k++) { const y = rnd() * 330, o = 0.95 - y / 380; sky += `<circle cx="${f(rnd() * 400)}" cy="${f(y)}" r="${f(0.6 + rnd() * 1.4)}" fill="#fff" opacity="${f(Math.max(0.15, o))}"/>`; }
+    for (const [x, y] of [[60, 60], [300, 40], [350, 150], [150, 120]]) sky += `<path d="M${x} ${y - 6} L ${x + 1.5} ${y - 1.5} L ${x + 6} ${y} L ${x + 1.5} ${y + 1.5} L ${x} ${y + 6} L ${x - 1.5} ${y + 1.5} L ${x - 6} ${y} L ${x - 1.5} ${y - 1.5} Z" fill="#fff"/>`;
+    sky += `<circle cx="318" cy="96" r="70" fill="url(#moonGlow)"/><circle cx="318" cy="96" r="26" fill="#fff6d8"/><circle cx="310" cy="90" r="4" fill="#efe0b8"/><circle cx="324" cy="106" r="3" fill="#efe0b8"/><circle cx="306" cy="104" r="2.2" fill="#efe0b8"/>`;
+    add(0, 0, 340, sky);
+    // cordilheiras com picos nevados, sombra lateral e névoa entre camadas
+    const range = (base, peaks, fill, shade, snow) => {
+      let d = `M-30 ${base + 300} L-30 ${base}`, o = '';
+      peaks.forEach(([x, y], k) => {
+        const nx = peaks[k + 1] ? peaks[k + 1][0] : 440, vx = (x + nx) / 2, vy = base - (base - Math.max(y, peaks[k + 1] ? peaks[k + 1][1] : y)) * 0.38;
+        d += ` L${x} ${y} L${f(vx)} ${f(vy)}`;
+        o += `<path d="M${x} ${y} L${f(vx)} ${f(vy)} L${f(x + (vx - x) * 0.3)} ${base} Z" fill="${shade}" opacity=".5"/>`;
+        if (snow) { const h = (base - y) * 0.24, lx = x - h * 0.9, rx = x + h * 0.85; o += `<path d="M${x} ${y} L${f(rx)} ${f(y + h)} L${f(x + h * 0.4)} ${f(y + h * 0.72)} L${f(x + h * 0.1)} ${f(y + h * 1.08)} L${f(x - h * 0.3)} ${f(y + h * 0.78)} L${f(lx)} ${f(y + h * 0.98)} Z" fill="${snow}"/><path d="M${x} ${y} L${f(rx)} ${f(y + h)} L${f(x + h * 0.4)} ${f(y + h * 0.72)} Z" fill="#c9b8ea" opacity=".7"/>`; }
+      });
+      return `<path d="${d} L440 ${base} L440 ${base + 300} Z" fill="${fill}"/>` + o;
+    };
+    let mt = range(560, [[-10, 400], [80, 300], [170, 380], [250, 270], [340, 350], [420, 300]], 'url(#mt1)', '#7a6fb8', '#fff3f8');
+    mt += `<rect x="0" y="400" width="400" height="200" fill="url(#haze)"/>`;
+    mt += range(660, [[20, 470], [120, 420], [210, 500], [300, 430], [390, 480]], 'url(#mt2)', '#3f4f94', '#e9e4ff');
+    for (const x of [96, 286]) mt += `<path d="M${x} 470 Q ${x + 5} 540 ${x - 2} 640" stroke="#e8f7ff" stroke-width="3.4" fill="none" opacity=".8"/><path d="M${x + 3} 480 Q ${x + 7} 550 ${x + 2} 640" stroke="#fff" stroke-width="1.2" fill="none" opacity=".7"/><ellipse cx="${x}" cy="642" rx="14" ry="5" fill="#fff" opacity=".6"/>`;
+    mt += `<rect x="0" y="540" width="400" height="200" fill="url(#haze)"/>`;
+    let hills = `<path d="M-10 900 L-10 700 Q 40 650 90 680 Q 150 630 210 670 Q 270 640 320 668 Q 370 640 410 676 L410 900 Z" fill="url(#mt3)"/>`;
+    for (let k = 0; k < 34; k++) { const x = rnd() * 400; hills += pine(x, 770 + rnd() * 40, 34 + rnd() * 26, ['#16384f', '#1d4660', '#2a5f7c', '#5e93b8']); }
+    add(1, 280, 1200, mt + hills, 0);
+    for (const [x, y, s, o] of [[60, 250, 0.8, 0.85], [330, 330, 1, 0.9], [120, 460, 1.1, 0.8], [360, 560, 0.9, 0.7], [30, 640, 1, 0.75]]) add(2, y - 50, y + 30, cloud(x, y, s, o), 0);
+    A.push({ t: 'cloud', x: 40, y: 190, s: 1 }, { t: 'cloud', x: 250, y: 420, s: 1.2 }, { t: 'cloud', x: 140, y: 600, s: 0.9 });
+
+    pts.forEach((p) => { if (p.y < SKY) add(2, p.y - 20, p.y + 60, cloud(p.x * 400, p.y + 34, 1.15, 0.95), p.y); });
+
+    /* --- textura do chão: manchas de luz e sombra --- */
+    for (let y = SKY - 40; y < H; y += 26) {
+      const wp = WP[worldAt(y)];
+      add(0, y - 30, y + 30, `<ellipse cx="${f(rnd() * 400)}" cy="${f(y)}" rx="${f(40 + rnd() * 70)}" ry="${f(10 + rnd() * 14)}" fill="${rnd() < 0.5 ? wp.g[0] : '#0b2a12'}" opacity="${rnd() < 0.5 ? 0.35 : 0.08}"/>`, 0);
+    }
+
+    /* --- rios entre os mundos (com ponte) --- */
+    W.forEach((w, wi) => {
+      if (!wi) return;
+      const y = w.river, wp = WP[Math.min(wi - 1, 5)];
+      let d1 = `M-10 ${y - 26}`, d2 = '', w1 = `M-10 ${y - 17}`, w2 = '';
+      for (let x = 0; x <= 420; x += 40) { d1 += ` Q ${x - 20} ${f(y - 30 + Math.sin(x / 50) * 4)} ${x} ${f(y - 26 + Math.sin(x / 60) * 3)}`; w1 += ` Q ${x - 20} ${f(y - 21 + Math.sin(x / 47) * 3)} ${x} ${f(y - 17 + Math.sin(x / 55) * 3)}`; }
+      for (let x = 420; x >= -10; x -= 40) { d2 += ` Q ${x + 20} ${f(y + 30 + Math.sin(x / 50) * 4)} ${x} ${f(y + 26 + Math.sin(x / 60) * 3)}`; w2 += ` Q ${x + 20} ${f(y + 21 + Math.sin(x / 47) * 3)} ${x} ${f(y + 17 + Math.sin(x / 55) * 3)}`; }
+      let s = `<path d="${d1} L 420 ${y + 26}${d2} Z" fill="#d9c08a"/><path d="${d1} L 420 ${y + 26}${d2} Z" fill="#7a5a2a" opacity=".25" transform="translate(0,4)"/>`;
+      s += `<path d="${w1} L 420 ${y + 17}${w2} Z" fill="url(#river${Math.min(wi - 1, 5)})"/>`;
+      for (let k = 0; k < 14; k++) { const x = rnd() * 400, yy = y - 10 + rnd() * 20; s += `<path d="M${f(x)} ${f(yy)} q 6 -2 12 0" stroke="#fff" stroke-width="1.6" fill="none" opacity=".6" stroke-linecap="round"/>`; }
+      for (let k = 0; k < 7; k++) { const x = rnd() * 400; s += stone(x, y + (rnd() < 0.5 ? -24 : 24), 4 + rnd() * 5); }
+      for (let k = 0; k < 6; k++) { const x = rnd() * 400; s += tuft(x, y - 26, wp.leaf[1]) + tuft(x + 30, y + 30, wp.leaf[2]); }
+      add(1, y - 40, y + 40, s, 0);
+      A.push({ t: 'river', y: y - 17, h: 34 });
+      boxes.push([-50, y - 32, 450, y + 32]);
+    });
+
+    /* --- paredes de floresta nas bordas --- */
+    for (let y = SKY - 10; y < H + 40; y += 30) {
+      const wi = worldAt(y), wp = WP[wi], L = rnd() < 0.55 ? wp.leaf : GREEN;
+      for (const side of [0, 1]) {
+        const x = side ? 400 + 6 - rnd() * 30 : -6 + rnd() * 30, r = 30 + rnd() * 18;
+        if (W.some((w, i) => i && Math.abs(y - w.river) < 34)) continue;
+        add(2, y - r * 2.2, y + 10, rnd() < 0.28 && wi !== 2 && wi !== 3 ? pine(x, y + 8, r * 2.6, L) : tree(x, y, r, L), y);
+      }
+    }
+
+    /* --- marcos especiais nos espaços livres (lado oposto à trilha) --- */
+    const kinds = [['falls', 'treehouse', 'pond', 'palms', 'grove'], ['falls', 'farm', 'treehouse', 'pond', 'grove'], ['treehouse', 'falls', 'pumpkins', 'grove', 'pond'], ['falls', 'treehouse', 'pond', 'grove', 'rocks'], ['falls', 'palms', 'treehouse', 'pond', 'grove'], ['rocks', 'treehouse', 'falls', 'grove', 'rocks']];
+    const cnt = W.map(() => 0);
+    pts.forEach((p, i) => {
+      if (p.x === 0.5 || p.y < SKY + 60) return;
+      const wi = worldAt(p.y), wp = WP[wi], left = p.x > 0.5, k = kinds[Math.min(wi, 5)][cnt[wi]++ % 5];
+      const cx = left ? 78 : 322, by = p.y + 60;
+      let s = '', y0 = p.y - 180, y1 = p.y + 120;
+      if (k === 'falls') {
+        const ox = left ? 0 : 400, sx = left ? 1 : -1, top = p.y - 40;
+        s = `<g transform="translate(${ox},${top + 50}) scale(${sx},1)">${falls(wp)}</g>`;
+        y0 = top - 160; y1 = top + 180;
+        A.push({ t: 'fall', x: left ? 54 : 400 - 104, w: 50, y: top - 100, h: 230, m: !left }, { t: 'mist', x: left ? 84 : 316, y: top + 135 });
+        boxes.push([left ? -20 : 240, top - 140, left ? 160 : 420, top + 175]);
+      } else if (k === 'treehouse') {
+        s = `<g transform="translate(${cx},${by})">${treehouse(wi === 2 || wi === 3 ? wp.leaf : (rnd() < 0.5 ? wp.leaf : GREEN), wi)}</g>`;
+        y0 = by - 300; y1 = by + 20;
+        A.push({ t: 'glow', x: cx - 16, y: by - 164, r: 30 }, { t: 'glow', x: cx - 60, y: by - 102, r: 26 });
+        boxes.push([cx - 90, by - 260, cx + 90, by + 14]);
+      } else {
+        const fn = { pond, grove, rocks, palms, farm, pumpkins }[k];
+        s = `<g transform="translate(${cx},${p.y - 10})">${fn(wp, wi)}</g>`;
+        y0 = p.y - 160; y1 = p.y + 80;
+        boxes.push([cx - 80, p.y - 70, cx + 80, p.y + 60]);
+        if (k === 'rocks') A.push({ t: 'glow', x: cx + 12, y: p.y - 30, r: 34, c: wi === 3 ? 'pink' : 'blue' });
+      }
+      add(3, y0, y1, s, by);
+      if (i % 8 === 3) A.push({ t: 'bfly', x: cx, y: p.y - 60, c: wi });
+    });
+
+    /* --- detalhes espalhados: tufos, flores, pedrinhas, cogumelos, samambaias --- */
+    for (let y = SKY + 20; y < H - 10; y += 12) {
+      const wi = worldAt(y), wp = WP[wi];
+      for (let k = 0; k < 2; k++) {
+        const x = 20 + rnd() * 360;
+        if (nearPath(x, y, 34) || nearNode(x, y) || inBox(x, y) || nearBan(x, y) || W.some((w, i) => i && Math.abs(y - w.river) < 34)) continue;
+        const r = rnd(); let s;
+        if (r < 0.34) s = tuft(x, y, wp.leaf[rnd() < 0.5 ? 1 : 2]);
+        else if (r < 0.62) s = flower(x, y, pick(wp.flw)) + (rnd() < 0.5 ? flower(x + 7, y + 3, pick(wp.flw)) : '');
+        else if (r < 0.72) s = stone(x, y, 4 + rnd() * 5);
+        else if (r < 0.8) s = mushroom(x, y, 0.45 + rnd() * 0.3, wi === 5 ? '#57d9ff' : '#e8443a', '#fff', wi === 5);
+        else if (r < 0.9) s = fern(x, y, 0.55 + rnd() * 0.3, wp.leaf[1], wp.leaf[2], rnd() < 0.5);
+        else s = bush(x, y, 10 + rnd() * 8, rnd() < 0.5 ? wp.leaf : GREEN);
+        add(3, y - 40, y + 6, s, y);
+      }
+    }
+
+    /* --- raios de sol e manchas de luz (por cima do cenário) --- */
+    for (let y = SKY; y < H; y += 640) {
+      const x = 30 + rnd() * 120;
+      add(5, y - 20, y + 700, `<path d="M${f(x)} ${y} L ${f(x + 60)} ${y} L ${f(x + 330)} ${y + 680} L ${f(x + 170)} ${y + 680} Z" fill="url(#ray)" opacity=".5"/><path d="M${f(x + 90)} ${y + 30} L ${f(x + 120)} ${y + 30} L ${f(x + 300)} ${y + 520} L ${f(x + 230)} ${y + 520} Z" fill="url(#ray)" opacity=".35"/>`, 0);
+    }
+    for (let y = SKY; y < H; y += 60) add(5, y - 20, y + 20, `<ellipse cx="${f(rnd() * 400)}" cy="${f(y)}" rx="${f(18 + rnd() * 30)}" ry="${f(6 + rnd() * 8)}" fill="#fff6c8" opacity=".13"/>`, 0);
+
+    /* --- névoa nos rios --- */
+    W.forEach((w, wi) => { if (wi) add(5, w.river - 60, w.river + 40, `<ellipse cx="120" cy="${w.river - 18}" rx="150" ry="22" fill="#fff" opacity=".14"/><ellipse cx="320" cy="${w.river - 10}" rx="130" ry="18" fill="#fff" opacity=".12"/>`, 0); });
+
+    // fundo (gradiente de cor por mundo)
+    const stops = [[0, '#14164f'], [150, '#2c2c86'], [300, '#7a62c4'], [430, '#f0a4c4'], [560, '#ffd8b4'], [SKY, WP[5].g[1]]];
+    for (let wi = W.length - 1; wi >= 0; wi--) { const w = W[wi], wp = WP[Math.min(wi, 5)]; if (wi < W.length - 1) stops.push([w.top, wp.g[0]]); stops.push([(w.top + w.bottom) / 2, wp.g[0]]); stops.push([w.bottom - 30, wp.g[1]]); }
+    stops.sort((a, b) => a[0] - b[0]);
+    const bg = stops.filter((s, i) => !i || s[0] > stops[i - 1][0]).map(([y, c]) => `<stop offset="${(Math.max(0, Math.min(H, y)) / H).toFixed(4)}" stop-color="${c}"/>`).join('');
+
+    F.sort((a, b) => a.l - b.l || a.sy - b.sy);
+    // trilha de tábuas com postes e corda
+    let rail = '';
+    for (let k = 4; k < T.sm.length - 4; k += 5) {
+      const a = T.sm[k], b = T.sm[k + 1]; if (a.y < 120 || pts.some((p) => Math.hypot(p.x * 400 - a.x, p.y - a.y) < 64)) continue;
+      const dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l;
+      for (const sd of [-1, 1]) rail += `<rect x="${f(a.x + nx * 23 * sd - 2.5)}" y="${f(a.y + ny * 23 * sd - 9)}" width="5" height="11" rx="1.5" fill="#5a3417"/><rect x="${f(a.x + nx * 23 * sd - 2.5)}" y="${f(a.y + ny * 23 * sd - 9)}" width="2" height="9" fill="#a8682f"/>`;
+    }
+    const path = `<path d="${T.d}" stroke="#0b2a12" stroke-width="54" fill="none" stroke-linecap="round" opacity=".25" transform="translate(5,10)"/>
+      <path d="${T.d}" stroke="#4a2a12" stroke-width="46" fill="none" stroke-linecap="round"/>
+      <path d="${T.d}" stroke="#c98a4b" stroke-width="38" fill="none" stroke-linecap="round"/>
+      <path d="${T.d}" stroke="#b07038" stroke-width="38" fill="none" stroke-dasharray="15 30 15 45"/>
+      <path d="${T.d}" stroke="#e2a868" stroke-width="38" fill="none" stroke-dasharray="15 60" stroke-dashoffset="30" opacity=".8"/>
+      <path d="${T.d}" stroke="#6e4220" stroke-width="38" fill="none" stroke-dasharray="1.6 13.4"/>
+      <path d="${T.d}" stroke="#ffe0b0" stroke-width="16" fill="none" opacity=".16" transform="translate(-4,-3)"/>
+      ${rail}`;
+    return { H, F, A, bg, path, key: H + ':' + pts.length + ':' + pts[0].y };
+  }
+
+  function mapDefs(M) {
+    const rv = WP.map((w, i) => `<linearGradient id="river${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${w.water[0]}"/><stop offset=".45" stop-color="${w.water[1]}"/><stop offset="1" stop-color="${w.water[2]}"/></linearGradient>`).join('');
+    return `<defs>
+      <linearGradient id="bg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${M.H}">${M.bg}</linearGradient>
+      <linearGradient id="edge" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#06210f" stop-opacity=".5"/><stop offset=".14" stop-color="#06210f" stop-opacity="0"/><stop offset=".86" stop-color="#06210f" stop-opacity="0"/><stop offset="1" stop-color="#06210f" stop-opacity=".5"/></linearGradient>
+      <linearGradient id="fall" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7ccfff"/><stop offset=".35" stop-color="#e8fbff"/><stop offset=".7" stop-color="#bfeaff"/><stop offset="1" stop-color="#5ab8f0"/></linearGradient>
+      <radialGradient id="pond" cx=".45" cy=".4" r=".65"><stop offset="0" stop-color="#c9f4ff"/><stop offset=".5" stop-color="#4fbdf0"/><stop offset="1" stop-color="#1f78c0"/></radialGradient>
+      <linearGradient id="rock" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b3a698"/><stop offset=".5" stop-color="#857869"/><stop offset="1" stop-color="#5a4e44"/></linearGradient>
+      <linearGradient id="bark" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9a6238"/><stop offset=".45" stop-color="#7a4a2a"/><stop offset="1" stop-color="#4f2e18"/></linearGradient>
+      <linearGradient id="cabinShade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#3a1a05" stop-opacity=".3"/></linearGradient>
+      <radialGradient id="winGlow"><stop offset="0" stop-color="#fff8d0"/><stop offset=".6" stop-color="#ffd36b"/><stop offset="1" stop-color="#ff9a2a"/></radialGradient>
+      <radialGradient id="lampGlow"><stop offset="0" stop-color="#ffe08a" stop-opacity=".9"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>
+      <radialGradient id="mglow"><stop offset="0" stop-color="#9ff3ff" stop-opacity=".7"/><stop offset="1" stop-color="#57c8ff" stop-opacity="0"/></radialGradient>
+      <radialGradient id="moonGlow"><stop offset="0" stop-color="#fff6d8" stop-opacity=".55"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></radialGradient>
+      <linearGradient id="haze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe6f0" stop-opacity="0"/><stop offset=".6" stop-color="#ffe6f0" stop-opacity=".45"/><stop offset="1" stop-color="#ffe6f0" stop-opacity="0"/></linearGradient>
+      <linearGradient id="mt1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9a6e6"/><stop offset=".5" stop-color="#9c8fd6"/><stop offset="1" stop-color="#7f7ec8"/></linearGradient>
+      <linearGradient id="mt2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7b7fcf"/><stop offset="1" stop-color="#4f63a8"/></linearGradient>
+      <linearGradient id="mt3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f6f9a"/><stop offset="1" stop-color="${WP[5].g[1]}"/></linearGradient>
+      <linearGradient id="ray" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbe0" stop-opacity=".55"/><stop offset="1" stop-color="#fffbe0" stop-opacity="0"/></linearGradient>
+      <pattern id="grass" width="60" height="44" patternUnits="userSpaceOnUse"><path d="M6 40 l-2 -7 M9 40 l1 -8 M12 40 l3 -6 M36 18 l-2 -6 M39 18 l1 -7 M42 18 l3 -5 M24 30 l0 -5 M52 34 l-1 -5" stroke="#0b3a14" stroke-width="1.3" stroke-linecap="round" opacity=".28"/><path d="M20 8 l-1 -5 M48 6 l1 -5" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity=".14"/></pattern>
+      ${rv}</defs>`;
+  }
+
+  const mapCache = {};
+  function mapData(H, pts) {
+    const k = H + ':' + pts.map((p) => p.x + ',' + p.y).join(';');
+    return mapCache[k] || (mapCache[k] = buildMap(H, pts));
+  }
+  const CH = 900;
+  function mapChunk(M, i) {
+    const y0 = i * CH, y1 = Math.min(M.H, y0 + CH + 2), h = y1 - y0;
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${y0} 400 ${h}" preserveAspectRatio="none">${mapDefs(M)}`;
+    s += `<rect x="0" y="${y0}" width="400" height="${h}" fill="url(#bg)"/>`;
+    if (y1 > SKY - 60) s += `<rect x="0" y="${Math.max(y0, SKY - 60)}" width="400" height="${h}" fill="url(#grass)"/>`;
+    let layer = 0;
+    for (const ft of M.F) {
+      if (ft.l >= 4 && layer < 4) { s += M.path; layer = 4; }
+      if (ft.y1 > y0 && ft.y0 < y1) s += ft.s;
+    }
+    if (layer < 4) s += M.path;
+    s += `<rect x="0" y="${y0}" width="400" height="${h}" fill="url(#edge)"/>`;
+    return s + '</svg>';
+  }
+  const chunkCache = {};
+  function map(H, pts) { // imagem base leve (os pedaços detalhados vêm por cima)
+    const M = mapData(H, pts);
+    window.LUMI_SCENES._map = M;
+    return enc(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 ${H}" preserveAspectRatio="none">${mapDefs(M).replace(/<pattern[\s\S]*?<\/pattern>/, '')}<rect width="4" height="${H}" fill="url(#bg)"/></svg>`);
+  }
+  function mapChunks(M) { return { CH, n: Math.ceil(M.H / CH), get: (i) => { const k = M.key + '#' + i; return chunkCache[k] || (chunkCache[k] = enc(mapChunk(M, i))); } }; }
+
+
+  // galhos de folhas em primeiro plano (bordas da tela do mapa)
+  function mapLeaves(side) {
+    seed = 77 + side * 13;
+    const C = ['#1f6b34', '#2d8a44', '#3fa553', '#5cbf5c', '#86d46a'];
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 220"><g${side ? ' transform="translate(120,0) scale(-1,1)"' : ''}>`;
+    s += `<path d="M-4 18 Q 40 22 62 58 Q 78 86 70 128" stroke="#4a2c18" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M30 30 Q 22 70 30 110 M56 52 Q 90 70 96 100" stroke="#5b3720" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+    const at = [[6, 20], [18, 26], [30, 32], [42, 40], [54, 50], [62, 62], [68, 76], [70, 92], [70, 108], [70, 124], [28, 50], [26, 70], [28, 90], [30, 108], [70, 66], [84, 78], [92, 92], [96, 104]];
+    at.forEach(([x, y], k) => { const c = C[k % 5]; s += leaf(x + (rnd() - 0.5) * 6, y + 8, 150 + (rnd() - 0.5) * 80 + (k % 2 ? 40 : -40), 0.7 + rnd() * 0.4, c, '#0f3d1c'); });
+    for (const [x, y] of [[8, 34], [40, 58], [64, 140], [30, 124], [96, 118]]) s += `<circle cx="${x}" cy="${y}" r="4.2" fill="#ffb3d6"/><circle cx="${x}" cy="${y}" r="1.8" fill="#ffe36b"/>`;
+    s += `<circle cx="70" cy="150" r="3" fill="#fff6c8" opacity=".9"/><circle cx="70" cy="150" r="9" fill="#fff6c8" opacity=".25"/>`;
+    return s + '</g></svg>';
+  }
 
   const cache = {};
   const memo = (k, fn) => cache[k] || (cache[k] = enc(fn()));
@@ -255,6 +628,8 @@
     room: (theme) => memo('r' + theme, () => room(theme)),
     vines: (theme) => memo('v' + theme, () => vines(theme)),
     rays: (theme) => memo('y' + theme, () => rays(theme)),
-    map: (H, pts) => enc(map(H, pts)),
+    map: (H, pts) => map(H, pts),
+    mapChunks,
+    mapLeaves: (side) => memo('ml' + side, () => mapLeaves(side)),
   };
 })();

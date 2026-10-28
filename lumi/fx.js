@@ -55,3 +55,66 @@ document.querySelectorAll('.screen[data-scene]').forEach((sc) => {
   sc.insertBefore(rays, host || sc.firstChild);
   if (host) host.after(vines, dust); else sc.append(vines, dust);
 });
+
+/* ---------- mapa: pedaços do cenário sob demanda + animações (água, luzes, borboletas) ---------- */
+const LOCK = '<svg viewBox="0 0 32 32" class="lkic"><path d="M10 14 V10 a6 6 0 0 1 12 0 V14" stroke="#7a4a24" stroke-width="3.4" fill="none"/><rect x="6" y="13" width="20" height="16" rx="5" fill="#ffc94a" stroke="#b07a10" stroke-width="1.6"/><rect x="8" y="15" width="16" height="4" rx="2" fill="#fff" opacity=".45"/><circle cx="16" cy="21" r="2.6" fill="#7a4a24"/><rect x="15" y="22" width="2" height="4" rx="1" fill="#7a4a24"/></svg>';
+const BFLY = ['#ff8ab3', '#ffd23f', '#ff9a3d', '#c792ea', '#57d9ff', '#9ff3ff'];
+const mapWrap = document.getElementById('mapwrap'), mapScroll = document.getElementById('map-scroll');
+let chunkIO = null;
+function decorateMap() {
+  if (!mapWrap || !S || !S._map || mapWrap.querySelector('.mchunk')) return;
+  const M = S._map, C = S.mapChunks(M), pc = (x) => (x / 4).toFixed(2) + '%';
+  const frag = document.createDocumentFragment();
+  const chunks = [];
+  for (let i = 0; i < C.n; i++) {
+    const d = document.createElement('div'); d.className = 'mchunk'; d.dataset.i = i;
+    d.style.top = i * C.CH + 'px'; d.style.height = Math.min(C.CH + 2, M.H - i * C.CH) + 'px';
+    frag.appendChild(d); chunks.push(d);
+  }
+  const fx = document.createElement('div'); fx.className = 'mfx';
+  M.A.forEach((a) => {
+    const e = document.createElement('div');
+    if (a.t === 'fall') { e.className = 'mfall' + (a.m ? ' flip' : ''); e.style.cssText = `left:${pc(a.x)};width:${pc(a.w)};top:${a.y}px;height:${a.h}px`; e.innerHTML = '<i></i>'; }
+    else if (a.t === 'mist') { e.className = 'mmist'; e.style.cssText = `left:${pc(a.x)};top:${a.y}px`; e.innerHTML = '<i></i><i></i><i></i>'; }
+    else if (a.t === 'river') { e.className = 'mriver'; e.style.cssText = `top:${a.y}px;height:${a.h}px`; e.innerHTML = '<i></i>'; }
+    else if (a.t === 'glow') { e.className = 'mglow' + (a.c ? ' ' + a.c : ''); e.style.cssText = `left:${pc(a.x)};top:${a.y}px;width:${a.r * 2}px;height:${a.r * 2}px;animation-delay:${(-Math.random() * 3).toFixed(2)}s`; }
+    else if (a.t === 'cloud') { e.className = 'mcloud'; e.style.cssText = `left:${pc(a.x)};top:${a.y}px;--s:${a.s};animation-delay:${(-Math.random() * 40).toFixed(1)}s`; }
+    else if (a.t === 'bfly') { e.className = 'mbfly'; e.style.cssText = `left:${pc(a.x)};top:${a.y}px;--c:${BFLY[a.c % BFLY.length]};animation-delay:${(-Math.random() * 12).toFixed(1)}s`; e.innerHTML = '<b><i></i><i></i></b>'; }
+    fx.appendChild(e);
+  });
+  // vaga-lumes / brilhos mágicos espalhados pelo caminho
+  for (let y = 760; y < M.H; y += 230) {
+    const e = document.createElement('i'); e.className = 'mfly' + (y < 2000 ? ' blue' : '');
+    e.style.cssText = `left:${(8 + Math.random() * 84).toFixed(1)}%;top:${(y + Math.random() * 200).toFixed(0)}px;animation-delay:${(-Math.random() * 8).toFixed(2)}s;animation-duration:${(6 + Math.random() * 5).toFixed(1)}s`;
+    fx.appendChild(e);
+  }
+  for (let k = 0; k < 14; k++) { const e = document.createElement('i'); e.className = 'mstar'; e.style.cssText = `left:${(4 + Math.random() * 92).toFixed(1)}%;top:${(10 + Math.random() * 320).toFixed(0)}px;animation-delay:${(-Math.random() * 4).toFixed(2)}s`; fx.appendChild(e); }
+  frag.appendChild(fx);
+  mapWrap.insertBefore(frag, mapWrap.firstChild);
+  mapWrap.querySelectorAll('.node .lk').forEach((e) => { e.innerHTML = LOCK; });
+  // carrega só os pedaços próximos da tela e libera os distantes
+  if (chunkIO) chunkIO.disconnect();
+  if ('IntersectionObserver' in window) {
+    chunkIO = new IntersectionObserver((es) => es.forEach((en) => { en.target.style.backgroundImage = en.isIntersecting ? C.get(+en.target.dataset.i) : ''; }), { root: mapScroll, rootMargin: '1000px 0px' });
+    chunks.forEach((d) => chunkIO.observe(d));
+  } else chunks.forEach((d, i) => { d.style.backgroundImage = C.get(i); });
+}
+if (mapWrap) {
+  new MutationObserver(decorateMap).observe(mapWrap, { childList: true });
+  decorateMap();
+  // camada da tela: folhas balançando nas bordas, raios de luz e partículas mágicas
+  const scr = document.getElementById('s-map'), ov = document.createElement('div');
+  ov.className = 'mapov';
+  ov.innerHTML = '<div class="mrays"><i></i><i></i><i></i></div><div class="mleaf l1"></div><div class="mleaf r1"></div><div class="mleaf l2"></div><div class="mleaf r2"></div><div class="mdust"></div>';
+  const dust = ov.querySelector('.mdust');
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('i');
+    p.style.cssText = `left:${(4 + Math.random() * 92).toFixed(1)}%;top:${(12 + Math.random() * 80).toFixed(1)}%;animation-delay:${(-Math.random() * 10).toFixed(2)}s;animation-duration:${(8 + Math.random() * 7).toFixed(1)}s`;
+    const s = 3 + Math.random() * 4; p.style.width = p.style.height = s.toFixed(1) + 'px';
+    if (i % 3 === 0) p.className = 'gold'; else if (i % 3 === 1) p.className = 'cyan';
+    dust.appendChild(p);
+  }
+  ov.querySelectorAll('.mleaf').forEach((e) => { e.style.backgroundImage = S.mapLeaves(e.classList.contains('l1') || e.classList.contains('l2') ? 0 : 1); });
+  scr.appendChild(ov);
+  const mic = scr.querySelector('.mapic'); if (mic) { mic.innerHTML = ICONS.map(); mic.classList.add('svgic'); }
+}

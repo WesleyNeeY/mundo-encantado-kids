@@ -58,12 +58,14 @@ export class Lumi3D {
     // rabo
     P.tail = new THREE.Group(); P.tail.position.set(0.3, 0.5, -0.62); P.bounce.add(P.tail);
     for (let i = 0; i <= 12; i++) { const k = i / 12, a = k * 2.1; const r = 0.2 + Math.sin(k * Math.PI * 0.9) * 0.16;
-      const s = sph(r, k > 0.85 ? cream : fur, 24); s.position.set(Math.sin(a) * 0.55, (1 - Math.cos(a)) * 0.55 + k * 0.5, -k * 0.25); P.tail.add(s); }
+      const s = sph(r, k > 0.85 ? cream : fur, 24); s.position.set(Math.sin(a) * 0.55, (1 - Math.cos(a)) * 0.55 + k * 0.5, -k * 0.25); s.userData.b = s.position.clone(); s.userData.k = k; P.tail.add(s); }
     // braços
     for (const s of [-1, 1]) {
       const sh = new THREE.Group(); sh.position.set(0.66 * s, 1.36, 0.2); P.body.add(sh);
       const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.42, 8, 20), fur); arm.position.y = -0.34; sh.add(arm);
       const hand = sph(0.2, cream, 28); hand.position.y = -0.62; hand.scale.set(1, 0.9, 0.95); sh.add(hand);
+      const pad = sph(0.08, mat.pink(), 14); pad.scale.set(1, 0.8, 0.35); pad.position.set(0, -0.64, 0.17); sh.add(pad);
+      for (const dx of [-0.08, 0, 0.08]) { const tp = sph(0.035, mat.pink(), 10); tp.scale.z = 0.35; tp.position.set(dx, -0.53, 0.17); sh.add(tp); }
       sh.rotation.z = 0.45 * s; P[s < 0 ? 'armL' : 'armR'] = sh;
       const sl = new THREE.Group(); sh.add(sl); P[s < 0 ? 'sleeveL' : 'sleeveR'] = sl;
     }
@@ -80,6 +82,7 @@ export class Lumi3D {
     }
     const muz = sph(0.52, cream); muz.scale.set(1.18, 0.74, 0.62); muz.position.set(0, -0.36, 0.7); H.add(muz); P.muzzle = muz;
     const nose = sph(0.1, navy, 24); nose.scale.set(1.35, 0.9, 0.8); nose.position.set(0, -0.2, 1.02); H.add(nose);
+    const nh = sph(0.03, mat.white(), 10); nh.scale.set(1.4, 0.7, 0.4); nh.position.set(-0.035, -0.165, 1.09); H.add(nh);
     // boca
     P.mouth = new THREE.Group(); P.mouth.position.set(0, -0.42, 1.0); P.mouth.scale.setScalar(1.35); H.add(P.mouth);
     P.lip = tube([[-0.2, 0.02, -0.03], [-0.1, -0.07, 0.01], [0, 0.0, 0.02], [0.1, -0.07, 0.01], [0.2, 0.02, -0.03]], 0.022, navy); P.mouth.add(P.lip);
@@ -90,12 +93,15 @@ export class Lumi3D {
     for (const s of [-1, 1]) {
       const g = new THREE.Group(); g.position.set(0.4 * s, 0.1, 0.83); g.rotation.y = 0.28 * s; H.add(g);
       const open = new THREE.Group(); g.add(open);
-      const eb = sph(0.27, navy, 36); eb.scale.set(1, 1.18, 0.55); open.add(eb);
-      const ir = sph(0.21, mat.iris(), 36); ir.scale.set(1, 1.18, 0.42); ir.position.z = 0.05; open.add(ir);
+      const eb = sph(0.27, mat.std(0x0a1640, { roughness: 0.25, clearcoat: 1 }), 36); eb.scale.set(1.04, 1.22, 0.55); open.add(eb);
       const pupil = new THREE.Group(); open.add(pupil);
-      const pu = sph(0.11, navy, 28); pu.scale.set(1, 1.2, 0.4); pu.position.z = 0.1; pupil.add(pu);
-      const h1 = sph(0.07, mat.white(), 20); h1.position.set(-0.08, 0.11, 0.16); pupil.add(h1);
-      const h2 = sph(0.033, mat.white(), 16); h2.position.set(0.08, -0.09, 0.15); pupil.add(h2);
+      const it = irisTexture();
+      const ir = new THREE.Mesh(new THREE.CircleGeometry(0.215, 56), new THREE.MeshStandardMaterial({ map: it, emissiveMap: it, emissive: 0xffffff, emissiveIntensity: 0.3, roughness: 0.15, transparent: true }));
+      ir.scale.set(1, 1.2, 1); ir.position.z = 0.152; pupil.add(ir);
+      const h1 = sph(0.075, mat.white(), 20); h1.scale.set(1, 1.25, 0.3); h1.position.set(-0.075, 0.1, 0.17); pupil.add(h1);
+      const h2 = sph(0.036, mat.white(), 16); h2.scale.z = 0.3; h2.position.set(0.085, -0.1, 0.165); pupil.add(h2);
+      const h3 = starMesh(0.03, mat.white()); h3.position.set(0.05, 0.13, 0.17); h3.scale.z = 0.2; pupil.add(h3);
+      for (let k = 0; k < 3; k++) { const lash = tube([[0.12 + k * 0.04, 0.27 - k * 0.04, 0.1], [0.19 + k * 0.05, 0.33 - k * 0.05, 0.08], [0.25 + k * 0.05, 0.35 - k * 0.07, 0.05]].map(([x, y, z]) => [x * s, y, z]), 0.014, navy); open.add(lash); }
       const happy = tube([[-0.18, -0.03, 0.12], [-0.09, 0.08, 0.15], [0, 0.11, 0.16], [0.09, 0.08, 0.15], [0.18, -0.03, 0.12]], 0.035, navy); happy.visible = false; g.add(happy);
       const sleep = tube([[-0.18, 0.04, 0.12], [-0.09, -0.06, 0.15], [0, -0.08, 0.16], [0.09, -0.06, 0.15], [0.18, 0.04, 0.12]], 0.035, navy); sleep.visible = false; g.add(sleep);
       const brow = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.18, 6, 12), mat.std(0x2a5fb8)); brow.rotation.z = Math.PI / 2 + 0.12 * s; brow.position.set(0, 0.42, 0.06); g.add(brow);
@@ -126,13 +132,13 @@ export class Lumi3D {
   }
   /* ---- pelo fofinho: camadas (shell fur) que seguem a forma de cada parte ---- */
   addFurAll() {
-    const P = this.p, blue = [0x2c7ad8, 0xd2efff], cream = [0xe6d6c0, 0xffffff];
+    const P = this.p, blue = [0x3a86dc, 0x8cc6ff], cream = [0xf0e6d8, 0xffffff];
     const add = (m, col, n, len, rep, mask) => { if (m) furShells(m, col, n, len, rep, mask); };
     const lite = (navigator.deviceMemory || 4) < 4 ? 0.6 : 1, N = (x) => Math.max(4, Math.round(x * lite));
     // no rosto o pelo é bem curtinho para não cobrir olhos, focinho e bochechas
     const face = new THREE.Vector3(0, -0.12, 1).normalize(), v = new THREE.Vector3();
     const faceMask = (x, y, z) => { const d = v.set(x, y, z).normalize().dot(face); return Math.min(1, Math.max(0.06, (0.72 - d) / 0.3)); };
-    add(P.headMesh, blue, N(12), 0.15, [5, 3], faceMask); add(P.bodyMesh, blue, N(10), 0.13, [4, 3]);
+    add(P.headMesh, blue, N(12), 0.12, [5, 3], faceMask); add(P.bodyMesh, blue, N(10), 0.105, [4, 3]);
     add(P.belly, cream, N(6), 0.07, [3, 2]);
     this.fur = { face: faceMask };
     P.cheeks.forEach((c) => add(c, blue, N(8), 0.12, [2, 1]));
@@ -218,10 +224,12 @@ export class Lumi3D {
     if (this.earTw.t > 0) { this.earTw.t -= dt; if (this.earTw.s < 0) eL += 0.35; else eR -= 0.35; } else if (Math.random() < dt * 0.25) this.earTw = { s: Math.random() < 0.5 ? -1 : 1, t: 0.18 };
     if (m === 'sad' || sleeping) { eL -= 0.35; eR += 0.35; }
     if (m === 'listen') { eL += 0.15; eR -= 0.15; }
-    P.earL.rotation.z = 0.38 + eL; P.earR.rotation.z = -0.38 + eR;
+    const lag = Math.sin(t * (sleeping ? 1.3 : 2.2) - 0.7) * 0.05; // orelhas acompanham a respiração com atraso
+    P.earL.rotation.z = 0.38 + eL + lag; P.earR.rotation.z = -0.38 + eR - lag; P.earL.rotation.x = P.earR.rotation.x = lag * 0.6;
     // rabo
     const ts = sleeping ? 0.7 : m === 'happy' ? 5 : 1.7;
     P.tail.rotation.set(0, Math.sin(t * ts * 0.7) * 0.2, Math.sin(t * ts) * (m === 'happy' ? 0.3 : 0.12));
+    for (const c of P.tail.children) { const k = c.userData.k, b = c.userData.b; if (!b) continue; c.position.set(b.x + Math.sin(t * ts * 1.3 - k * 3) * 0.12 * k, b.y + Math.sin(t * ts * 1.1 - k * 2.5) * 0.05 * k, b.z); }
     // braços
     let aL = -0.45 - Math.sin(t * 2.2) * 0.04, aR = 0.45 + Math.sin(t * 2.2) * 0.04, fL = 0, fR = 0;
     if (this.waveT > 0) { this.waveT -= dt; aR = 2.5 + Math.sin(t * 12) * 0.3; }
@@ -311,13 +319,33 @@ export class Lumi3D {
   }
 }
 
+/* ------------------------------------------------------------ olhos */
+let IRIS_TEX = null;
+function irisTexture() {
+  if (IRIS_TEX) return IRIS_TEX;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256; const x = cv.getContext('2d'), c = 128;
+  const g = x.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, '#0d2a86'); g.addColorStop(0.45, '#1d5fd8'); g.addColorStop(0.8, '#3fb5ff'); g.addColorStop(1, '#8ff0ff');
+  x.fillStyle = g; x.beginPath(); x.arc(c, c, 126, 0, Math.PI * 2); x.fill();
+  x.globalAlpha = 0.28; x.strokeStyle = '#d8fbff'; x.lineWidth = 2;
+  for (let i = 0; i < 64; i++) { const a = (i / 64) * Math.PI * 2, r0 = 52 + Math.random() * 10, r1 = 96 + Math.random() * 24; x.beginPath(); x.moveTo(c + Math.cos(a) * r0, c + Math.sin(a) * r0); x.lineTo(c + Math.cos(a) * r1, c + Math.sin(a) * r1); x.stroke(); }
+  x.globalAlpha = 1;
+  const pg = x.createRadialGradient(c, c - 6, 0, c, c - 6, 74); pg.addColorStop(0, '#020717'); pg.addColorStop(0.7, '#050f36'); pg.addColorStop(0.9, '#08164a'); pg.addColorStop(1, 'rgba(6,18,61,0)'); x.fillStyle = pg; x.beginPath(); x.arc(c, c - 6, 74, 0, Math.PI * 2); x.fill();
+  x.strokeStyle = '#061444'; x.lineWidth = 12; x.beginPath(); x.arc(c, c, 120, 0, Math.PI * 2); x.stroke();
+  const bg = x.createRadialGradient(c, c + 90, 0, c, c + 90, 70); bg.addColorStop(0, 'rgba(200,255,255,.7)'); bg.addColorStop(1, 'rgba(200,255,255,0)'); x.fillStyle = bg; x.beginPath(); x.arc(c, c, 118, 0, Math.PI * 2); x.fill();
+  IRIS_TEX = new THREE.CanvasTexture(cv); IRIS_TEX.colorSpace = THREE.SRGBColorSpace; return IRIS_TEX;
+}
+
 /* ------------------------------------------------------------ pelo */
 let FUR_TEX = null;
 function furTexture() {
   if (FUR_TEX) return FUR_TEX;
   const cv = document.createElement('canvas'); cv.width = cv.height = 256; const x = cv.getContext('2d');
   x.fillStyle = '#000'; x.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 2600; i++) { const px = Math.random() * 256, py = Math.random() * 256, r = 1.8 + Math.random() * 2.6; const g = x.createRadialGradient(px, py, 0, px, py, r); const v = 150 + Math.random() * 105; g.addColorStop(0, `rgb(${v},${v},${v})`); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, Math.PI * 2); x.fill(); }
+  x.lineCap = 'round';
+  for (let i = 0; i < 700; i++) { const px = Math.random() * 256, py = Math.random() * 256, L = 6 + Math.random() * 6, a = Math.PI / 2 + (Math.random() - 0.5) * 0.7, v = 170 + Math.random() * 85;
+    const g = x.createLinearGradient(px, py, px + Math.cos(a) * L, py + Math.sin(a) * L); g.addColorStop(0, `rgb(${v},${v},${v})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.strokeStyle = g; x.lineWidth = 2.6 + Math.random() * 2; x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(a) * L, py + Math.sin(a) * L); x.stroke(); }
+  for (let i = 0; i < 1500; i++) { const px = Math.random() * 256, py = Math.random() * 256, r = 2.6 + Math.random() * 3; const g = x.createRadialGradient(px, py, 0, px, py, r); const v = 150 + Math.random() * 105; g.addColorStop(0, `rgb(${v},${v},${v})`); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, Math.PI * 2); x.fill(); }
   FUR_TEX = new THREE.CanvasTexture(cv); FUR_TEX.wrapS = FUR_TEX.wrapT = THREE.RepeatWrapping; return FUR_TEX;
 }
 function furShells(mesh, [c0, c1], n, len, rep, mask) {
@@ -901,7 +929,9 @@ export class Stage {
     this.hemi = new THREE.HemisphereLight(0xdff1ff, 0x8fd47e, 0.9); scene.add(this.hemi);
     const key = (this.key = new THREE.DirectionalLight(0xfff4e0, 2.4)); key.position.set(3.5, 7, 6); key.castShadow = true;
     key.shadow.mapSize.set(1024, 1024); key.shadow.camera.left = -5; key.shadow.camera.right = 5; key.shadow.camera.top = 6; key.shadow.camera.bottom = -2; key.shadow.radius = 6; key.shadow.bias = -0.0006; scene.add(key);
-    const rim = (this.rim = new THREE.DirectionalLight(0xbfe0ff, 1.4)); rim.position.set(-5, 4, -6); scene.add(rim);
+    const rim = (this.rim = new THREE.DirectionalLight(0xd4ecff, 2.2)); rim.position.set(-5, 5, -6); scene.add(rim);
+    const rim2 = new THREE.DirectionalLight(0xfff0d8, 1.2); rim2.position.set(6, 3, -5); scene.add(rim2);
+    const fill = (this.fill = new THREE.DirectionalLight(0xffe6cc, 0.55)); fill.position.set(-4, 2, 6); scene.add(fill);
     this.camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
     this.lumi = new Lumi3D(); scene.add(this.lumi.root);
     this.island = makeIsland(); scene.add(this.island);
@@ -928,7 +958,8 @@ export class Stage {
     if (preset.instant || !this.mounted) { this.mounted = true; this.framing = Object.assign({}, p); this.snapNext = true; }
     const room = p.scene === 'room' || p.night; this.island.visible = !room; this.rug.visible = room && !p.night;
     this.props.visible = p.props && !room; this.pillow.visible = !!p.night;
-    this.hemi.color.set(p.night ? 0x5c6bc0 : 0xdff1ff); this.hemi.groundColor.set(p.night ? 0x2b2f74 : 0x8fd47e); this.hemi.intensity = p.night ? 0.7 : 0.9;
+    this.hemi.color.set(p.night ? 0x5c6bc0 : room ? 0xfff0dc : 0xdff1ff); this.hemi.groundColor.set(p.night ? 0x2b2f74 : room ? 0xc98b55 : 0x8fd47e); this.hemi.intensity = p.night ? 0.7 : room ? 1.0 : 0.9;
+    this.fill.color.set(p.night ? 0xffb86b : 0xffe6cc); this.fill.intensity = p.night ? 0.5 : 0.55;
     this.key.color.set(p.night ? 0xaac4ff : 0xfff4e0); this.key.intensity = p.night ? 1.2 : 2.4;
     this.renderer.toneMappingExposure = p.night ? 0.95 : 1.05;
   }

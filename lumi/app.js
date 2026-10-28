@@ -31,7 +31,7 @@ function bind() {
   $$('[data-bind-w]').forEach((el) => { const k = el.dataset.bindW; el.style.width = (k === 'xp' ? (S.xp % 300) / 3 : Math.min(100, S[k])) + '%'; });
   const n = doneCount(), gi = growIdx(n), g = D.grow[gi], nx = D.grow[gi + 1];
   const ic = $('#grow-ic'); if (ic) ic.textContent = S.hatched ? g.icon : '🥚';
-  const hn = $('#home-name'); if (hn) hn.textContent = !S.hatched ? 'Lumi vai nascer!' : nx ? `Lumi ${g.name} · cresce em ${nx.min - n} fase${nx.min - n > 1 ? 's' : ''}` : 'Lumi ' + g.name;
+  const hn = $('#home-name'); if (hn) hn.textContent = !S.hatched ? 'Vai nascer!' : 'Lumi ' + g.name;
   const gb = $('#grow-bar'); if (gb) gb.style.width = (!S.hatched ? 0 : nx ? ((n - g.min) / (nx.min - g.min)) * 100 : 100) + '%';
 }
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 1900); }
@@ -46,15 +46,29 @@ lumi.setGrowth(growIdx(), true);
 setTimeout(() => updateFx(), 0);
 if (!S.hatched) stage.setEgg(true);
 const PRESET = {
-  splash: { fit: [0.2, 0.7], scene: 'room' },
-  home: { fit: [0.17, 0.555], x: 0.55, scene: 'room' },
-  lesson: { fit: [0.07, 0.5], x: 0.95, scene: 'room' },
-  result: { fit: [0.26, 0.74], scene: 'room' },
-  rest: { fit: [0.18, 0.6], night: true, tilt: 4 },
-  snack: { fit: [0.15, 0.5], scene: 'room' },
-  shop: { fit: [0.13, 0.43], scene: 'room' },
+  splash: { fit: [0.2, 0.7], scene: 'room', above: '.splashui' },
+  home: { fit: [0.2, 0.62], x: 0.55, scene: 'room', above: '.hcards' },
+  lesson: { fit: [0.075, 0.6], x: 0.95, scene: 'room', peek: ['.lbody', 0.17] },
+  result: { fit: [0.26, 0.74], scene: 'room', above: '.rbox' },
+  rest: { fit: [0.18, 0.6], night: true, tilt: 4, above: '.pbottom' },
+  snack: { fit: [0.15, 0.55], scene: 'room', above: '.pbottom' },
+  shop: { fit: [0.14, 0.5], scene: 'room', above: '.spanel' },
 };
+// o Lumi ocupa só o espaço livre acima dos cards (vale para qualquer altura de tela)
+function presetFor(name) {
+  const P = Object.assign({}, PRESET[name] || {}), sc = $('#s-' + name);
+  if (!sc || !P.fit) return P;
+  const H = sc.clientHeight || innerHeight, top = sc.getBoundingClientRect().top, fr = (el) => (el.getBoundingClientRect().top - top) / H;
+  const hdr = sc.querySelector('.ltop, .ptop'); let a = P.fit[0];
+  if (hdr) a = Math.max(a, (hdr.getBoundingClientRect().bottom - top) / H + 0.01);
+  let b = P.fit[1];
+  if (P.above) { const el = sc.querySelector(P.above); if (el && el.offsetHeight) b = fr(el) - 0.012; }
+  if (P.peek) { const el = sc.querySelector(P.peek[0]); if (el) b = fr(el) + P.peek[1]; a = P.fit[0]; }
+  if (b - a < 0.25) a = Math.max(0.04, b - 0.25);
+  P.fit = [a, b]; return P;
+}
 // cenários pintados e barra de baixo
+addEventListener('resize', () => { if (current) { const host = $('#s-' + current + ' [data-host]'); if (host) stage.mount(host, presetFor(current)); } });
 $$('[data-scene]').forEach((el) => { el.style.backgroundImage = window.LUMI_SCENES.room(el.dataset.scene); });
 $$('[data-nav]').forEach((n) => { n.innerHTML = [['home', '🏠', 'Início'], ['rest', '🌙', 'Descanso'], ['snack', '🍎', 'Lanche'], ['shop', '🎩', 'Acessórios']].map(([g, i, l]) => `<button data-go="${g}"><span>${i}</span>${l}</button>`).join(''); });
 
@@ -184,7 +198,7 @@ function show(name) {
   current = name;
   if (stage.egg.visible !== !S.hatched) stage.setEgg(!S.hatched);
   const host = $('#s-' + name + ' [data-host]');
-  if (host) stage.mount(host, PRESET[name] || {});
+  if (host) stage.mount(host, presetFor(name));
 }
 function go(name) {
   if (!S.hatched && ['map', 'snack', 'rest', 'shop'].includes(name)) { toast('🥚 Primeiro faça o Lumi nascer!'); speak(T.pt.eggTap, 'pt'); return; }

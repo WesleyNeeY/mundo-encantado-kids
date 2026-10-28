@@ -465,6 +465,68 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 #s-shop .item.wear{border-color:#34c96b;background:#f1fff5}
 #s-shop .item.sel{border-color:var(--blue)}
 .item img{width:74px;height:74px}
+
+/* ===== compacto: cards menores para não cobrir o jogo ===== */
+.gchip{margin-top:6px;display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.92);border-radius:999px;padding:3px 10px 3px 6px;font-size:11.5px;font-weight:700;color:var(--ink);box-shadow:0 3px 0 rgba(90,40,10,.15);max-width:190px}
+.gchip .gbar{width:44px;height:6px;border-radius:6px;background:#e8eef7;overflow:hidden;flex:none}
+.gchip .gbar i{display:block;height:100%;background:linear-gradient(90deg,#8de38f,#34c96b)}
+.sbtn{width:56px;padding:6px 0 5px;font-size:10.5px;border-radius:16px}
+.sbtn span{font-size:24px}
+.side{top:calc(128px + env(safe-area-inset-top,0px));gap:8px}
+.hcards{gap:8px;bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+.hcard{padding:9px 12px;border-radius:20px}
+.lvrow b{font-size:16px}
+.xpt{font-size:13px}
+.xpbar.big{height:9px;margin-top:5px}
+.chestmini svg{width:30px;height:26px}
+.tic{width:48px;height:48px;font-size:28px;border-radius:14px}
+.tt small{font-size:11.5px}
+.tt b{font-size:17px}
+.tt span{font-size:12px}
+.chev{font-size:28px}
+.big.go{height:46px;font-size:19px;margin-top:8px;border-radius:16px}
+.tabbar{padding:5px 10px calc(5px + env(safe-area-inset-bottom,0px));border-radius:22px 22px 0 0}
+.tabbar button{font-size:11.5px;padding:4px 0}
+.tabbar button span{font-size:21px}
+.bubble.hb{top:calc(118px + env(safe-area-inset-top,0px));font-size:15.5px;padding:8px 13px}
+/* aula: card menor e controles soltos sobre o cenário */
+#s-lesson .lbody{top:36%;gap:8px}
+#s-lesson .card{padding:10px 12px 10px;max-width:300px}
+#s-lesson .pic{width:min(34vw,128px);font-size:min(20vw,84px)}
+#s-lesson .wen{font-size:32px;margin-top:2px}
+#s-lesson .wpt{font-size:15px}
+#s-lesson .card .spk{width:42px;height:42px;font-size:18px;right:10px;top:10px}
+#s-lesson .turn{background:none;box-shadow:none;padding:0;gap:6px;min-height:0}
+#s-lesson .turnlbl{background:rgba(255,255,255,.95);border-radius:999px;padding:6px 14px;font-size:17px;box-shadow:0 4px 12px rgba(60,25,5,.25);min-height:0}
+#s-lesson .turnlbl:empty{display:none}
+#s-lesson .mic{width:80px;height:80px;font-size:36px}
+#s-lesson .skip{background:rgba(255,255,255,.85);border-radius:999px;padding:4px 12px;font-size:13px}
+#s-lesson .qtitle{font-size:20px;padding:8px 14px}
+#s-lesson .tiles{max-width:330px;gap:10px}
+#s-lesson .tile{font-size:min(12vw,50px);border-radius:22px}
+.qcard{padding:10px 12px 12px;max-width:310px}
+.qcard .pic{width:min(28vw,108px)!important;font-size:min(16vw,64px)!important}
+.qcard .qtxt{font-size:18px;margin-top:4px}
+.wopts{gap:8px;margin-top:8px}
+.wopt{height:44px;font-size:19px;border-radius:15px}
+.mgrid{max-width:330px;gap:8px}
+.mcard .face{font-size:38px}
+.bubble.lb{font-size:15px;padding:8px 12px}
+.pbottom{bottom:calc(72px + env(safe-area-inset-bottom,0px));gap:8px}
+.gcard{padding:9px 12px;border-radius:18px}
+.gi{font-size:22px}
+.gc b{font-size:16px}
+.ebar{height:11px}
+.food{width:96px;padding:8px 4px}
+.food .em{font-size:42px}
+.food b{font-size:15px}
+.food .pr{font-size:13px}
+.food .dar{width:72px;height:30px;font-size:15px}
+.spanel{bottom:calc(70px + env(safe-area-inset-bottom,0px));padding:8px 8px 4px}
+#s-shop .items{max-height:calc(33vh - 50px)}
+#s-shop .tab{height:34px;font-size:13px}
+.item img{width:62px;height:62px}
+.rbox{gap:10px}
 @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -485,7 +547,7 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
  <section class="screen room" id="s-home" data-scene="day">
   <div class="host" data-host></div>
   <div class="htop ui">
-   <div class="hlogo"><div class="logo sm">Lumi<i>★</i></div><small>Seu mundo de inglês</small></div>
+   <div class="hlogo"><div class="logo sm">Lumi<i>★</i></div><small>Seu mundo de inglês</small><div class="gchip"><span id="grow-ic">🍼</span><span id="home-name">Lumi</span><span class="gbar"><i id="grow-bar"></i></span></div></div>
    <div class="spacer"></div>
    <div class="pill"><span class="ic coin">$</span><span data-bind="coins">0</span></div>
    <div class="pill"><span class="ic fire">🔥</span><span data-bind="streak">0</span></div>
@@ -501,8 +563,7 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
     <div class="lvrow"><b>Nível <span data-bind="level">1</span></b><span class="xpt"><span data-bind="xpin">0</span>/300 XP</span>
      <button class="chestmini" id="btn-chest" style="display:none"><svg width="38" height="32" viewBox="0 0 38 32"><rect x="2" y="12" width="34" height="18" rx="3" fill="#c0392b" stroke="#7a1f14" stroke-width="2"/><path d="M2 14 Q2 2 19 2 Q36 2 36 14 Z" fill="#e74c3c" stroke="#7a1f14" stroke-width="2"/><rect x="2" y="12" width="34" height="4" fill="#f1c40f"/><rect x="16" y="11" width="6" height="9" rx="1.5" fill="#f1c40f" stroke="#a87b00"/><rect x="8" y="2.5" width="3" height="27" fill="#f1c40f" opacity=".9"/><rect x="27" y="2.5" width="3" height="27" fill="#f1c40f" opacity=".9"/></svg><i id="chest-n">1</i></button></div>
     <div class="xpbar big"><i data-bind-w="xp"></i></div>
-    <div class="growline"><span id="grow-ic">🍼</span> <span id="home-name">Lumi</span><span class="gbar"><i id="grow-bar"></i></span></div>
-   </div>
+       </div>
    <div class="hcard today">
     <div class="trow" data-go="map"><div class="tic" id="home-unit-ic">🌟</div><div class="tt"><small>Aula de hoje</small><b id="home-unit-name">Primeiras palavras</b><span id="home-unit-meta">4 palavras · +50 XP</span></div><span class="chev">›</span></div>
     <button class="big go" id="btn-play">Começar agora <span>→</span></button>

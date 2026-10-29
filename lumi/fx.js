@@ -40,7 +40,7 @@ document.querySelectorAll('.ic.fire').forEach((e) => { e.classList.add('svgic');
 /* ---------- camadas animadas do cenário ---------- */
 const S = window.LUMI_SCENES;
 document.querySelectorAll('.screen[data-scene]').forEach((sc) => {
-  const t = sc.dataset.scene;
+  const t = sc.dataset.scene === 'bedroom' ? 'night' : sc.dataset.scene; // quarto 3D: as camadas desenhadas de reserva são as da noite
   if (t === 'school') { schoolFx(sc); return; }
   const rays = document.createElement('div'); rays.className = 'fx fx-rays'; rays.style.backgroundImage = S.rays(t);
   const vines = document.createElement('div'); vines.className = 'fx fx-vines'; vines.style.backgroundImage = S.vines(t);

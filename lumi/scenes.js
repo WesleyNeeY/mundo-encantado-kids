@@ -157,6 +157,7 @@
 
   function room(theme) {
     if (theme === 'school') return school();
+    if (theme === 'bedroom') theme = 'night'; // reserva sem WebGL: o quarto desenhado de antes
     seed = { day: 11, lesson: 21, kitchen: 31, wardrobe: 41, night: 51 }[theme];
     const P = PAL[theme], night = theme === 'night';
     let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice">

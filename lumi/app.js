@@ -828,9 +828,10 @@ function recordPhrase(ctx, stream, onLevel, alive) {
     const src = ctx.createMediaStreamSource(stream), proc = ctx.createScriptProcessor(2048, 1, 1), mute = ctx.createGain(); mute.gain.value = 0;
     src.connect(proc); proc.connect(mute); mute.connect(ctx.destination);
     const SRt = ctx.sampleRate, PRE = Math.ceil((SRt * 0.6) / 2048), chunks = [], lv = [], t0 = performance.now();
-    let floor = 0.004, thr = 0.012, voiced = 0, lastVoice = 0, start = -1, done = false;
+    let floor = 0.003, thr = 0.008, voiced = 0, lastVoice = 0, start = -1, done = false, lastCb = performance.now();
     const end = (ok) => {
       if (done) return; done = true; clearInterval(guard); proc.onaudioprocess = null; try { src.disconnect(); proc.disconnect(); mute.disconnect(); } catch (e) {}
+      if (ok === 'stall') return resolve('stall');
       if (!ok || start < 0) return resolve(null);
       // corta o silêncio: começa um pouquinho antes da primeira sílaba e termina logo depois da última
       let a = start; while (a > 0 && lv[a - 1] > thr * 0.35) a--; a = Math.max(0, a - 2);
@@ -842,20 +843,24 @@ function recordPhrase(ctx, stream, onLevel, alive) {
       for (let i = 0; i < n; i++) out[i] *= g * Math.min(1, i / fade, (n - 1 - i) / fade);
       resolve(buf);
     };
-    const guard = setInterval(() => { if (!alive()) end(false); }, 200);
+    const guard = setInterval(() => { // saiu da tela, ou o áudio do celular travou (sem som chegando): recomeça a escuta
+      if (!alive()) return end(false);
+      const tr = stream.getAudioTracks()[0];
+      if (performance.now() - lastCb > 1500 || (tr && tr.readyState === 'ended')) end('stall');
+    }, 200);
     proc.onaudioprocess = (ev) => {
-      if (done) return;
+      if (done) return; lastCb = performance.now();
       const d = new Float32Array(ev.inputBuffer.getChannelData(0)); let e = 0; for (let i = 0; i < d.length; i++) e += d[i] * d[i];
       const rms = Math.sqrt(e / d.length), now = performance.now(), ms = (d.length / SRt) * 1000;
-      if (start < 0) floor = rms < floor ? floor * 0.7 + rms * 0.3 : Math.min(0.04, floor + (rms - floor) * 0.004);
-      thr = Math.max(0.012, floor * 3);
+      if (start < 0) floor = rms < floor ? floor * 0.7 + rms * 0.3 : Math.min(0.03, floor + (rms - floor) * 0.003);
+      thr = Math.max(0.007, floor * 3.2);
       chunks.push(d); lv.push(rms); if (start < 0 && chunks.length > PRE) { chunks.shift(); lv.shift(); }
       if (onLevel) onLevel(Math.min(1, rms / (thr * 2.2)));
-      if (rms > thr && now - t0 > 150) { if (start < 0) start = chunks.length - 1; voiced += ms; lastVoice = now; }
+      if (now - t0 > 120 && (rms > thr || (start >= 0 && rms > thr * 0.6))) { if (start < 0) start = chunks.length - 1; voiced += ms; lastVoice = now; } // depois que começa, ouve até a voz baixinha
       const secs = start < 0 ? 0 : ((chunks.length - start) * d.length) / SRt;
-      if (start >= 0 && voiced > 180 && now - lastVoice > 700) end(true);
-      else if (secs > 7) end(voiced > 180);
-      else if (start >= 0 && voiced <= 180 && now - lastVoice > 900) { start = -1; voiced = 0; while (chunks.length > PRE) { chunks.shift(); lv.shift(); } } // foi só um barulhinho
+      if (start >= 0 && voiced > 90 && now - lastVoice > 600) end(true); // palavras curtinhas ("oi!") também valem
+      else if (secs > 7) end(voiced > 90);
+      else if (start >= 0 && voiced <= 90 && now - lastVoice > 700) { start = -1; voiced = 0; while (chunks.length > PRE) { chunks.shift(); lv.shift(); } } // foi só um estalo
     };
   });
 }
@@ -869,7 +874,7 @@ function playFunny(ctx, buf) {
     lumi.talk(true); s.start(); lip();
   });
 }
-async function audioReadyToPlay(ctx) { await wait(250); if (ctx.state !== 'running') await ctx.resume().catch(() => {}); return ctx.state === 'running'; }
+async function audioReadyToPlay(ctx) { await wait(120); if (ctx.state !== 'running') await ctx.resume().catch(() => {}); return ctx.state === 'running'; }
 
 // tela principal: botão 🎤 Repete (uma fala por toque)
 async function echoTalk() {
@@ -881,7 +886,8 @@ async function echoTalk() {
   echoBusy = true; stopTalk(); lumi.setMood('listen'); btn.classList.add('rec'); showBubble(bub, 'Fala alguma coisa que eu repito! 🎤');
   let stream; try { stream = await openMic(); } catch (e) { setSession('playback'); btn.classList.remove('rec'); lumi.setMood('idle'); echoBusy = false; showBubble(bub, 'Preciso do microfone para ouvir você! 🎤'); return; }
   if (ctx.state !== 'running') await ctx.resume().catch(() => {});
-  const buf = await recordPhrase(ctx, stream, (v) => btn.style.setProperty('--lv', v.toFixed(2)), () => current === 'home');
+  let buf = await recordPhrase(ctx, stream, (v) => btn.style.setProperty('--lv', v.toFixed(2)), () => current === 'home');
+  if (buf === 'stall') buf = null;
   closeMic(stream); btn.classList.remove('rec'); btn.style.removeProperty('--lv');
   await audioReadyToPlay(ctx);
   if (!buf || current !== 'home') { lumi.setMood('idle'); echoBusy = false; if (current === 'home') showBubble(bub, 'Não ouvi nada... Toca no 🎤 e fala de novo!'); return; }
@@ -896,21 +902,29 @@ async function startParrot() {
   const ctx = audioCtx(); if (!ctx || !ctx.createScriptProcessor) return;
   const P = (parrot = { on: true, stream: null, wake: null }), badge = $('#echo-badge'), bub = $('#splash-bubble'), alive = () => P.on && current === 'splash' && !document.hidden;
   let first = true;
+  let stalls = 0;
   while (alive()) {
     try { P.stream = await openMic(); } catch (e) { break; } // sem permissão do microfone: a abertura segue normal
     if (!alive()) break;
+    if (ctx.state !== 'running') await ctx.resume().catch(() => {});
+    if (ctx.state !== 'running') { // o celular só libera o som depois do primeiro toque: pede um toque e segue sozinho
+      lumi.setMood('idle'); showBubble(bub, 'Toca em mim e fala comigo! 👆'); first = false;
+      await new Promise((r) => (P.wake = r)); P.wake = null; if (!alive()) break; await ctx.resume().catch(() => {});
+    }
     badge.classList.add('on'); lumi.setMood('listen');
-    if (first) { showBubble(bub, 'Fala comigo! Eu repito! 🎤'); first = false; }
+    if (first) { showBubble(bub, 'Fala comigo! Eu repito! 🎤'); first = false; } else if (bub.textContent.includes('👆')) bub.innerHTML = '';
     const buf = await recordPhrase(ctx, P.stream, (v) => badge.style.setProperty('--lv', v.toFixed(2)), alive);
     closeMic(P.stream); P.stream = null; badge.classList.remove('on'); badge.style.removeProperty('--lv');
     if (!alive()) break;
+    if (buf === 'stall') { if (++stalls > 4) break; await wait(300); continue; } // áudio travou: reabre o microfone
+    stalls = 0;
     if (!buf) continue;
     if (!(await audioReadyToPlay(ctx))) { // o celular só deixa tocar som depois do primeiro toque
       lumi.setMood('idle'); showBubble(bub, 'Toca em mim que eu repito! 👆');
       await new Promise((r) => (P.wake = r)); P.wake = null; if (!alive()) break; await ctx.resume().catch(() => {});
     }
     bub.innerHTML = ''; lumi.setMood('idle'); await playFunny(ctx, buf);
-    if (!alive()) break; lumi.setMood('happy'); await wait(380);
+    if (!alive()) break; lumi.setMood('happy'); // já volta a ouvir na hora (sem pausa: a criança costuma falar logo em seguida)
   }
   if (P.stream) closeMic(P.stream); badge.classList.remove('on'); if (parrot === P) parrot = null;
   if (current === 'splash' && lumi.mood !== 'sleep') lumi.setMood('idle');

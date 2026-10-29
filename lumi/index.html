@@ -810,6 +810,31 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 .bend p{margin:0;font-weight:600;color:var(--muted)}
 .bend .row .big{font-size:18px}
 @media (max-height:700px){.btext .en{font-size:21px}.book{height:112px}}
+/* músicas */
+#s-songs .spnl{position:absolute;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:5;padding:10px;border-radius:26px;background:linear-gradient(180deg,rgba(255,255,255,.93),rgba(255,255,255,.86));border:1.5px solid rgba(255,255,255,.9);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 10px 28px rgba(20,16,90,.32)}
+.slist{display:flex;flex-direction:column;gap:9px}
+.song{display:flex;align-items:center;gap:12px;width:100%;padding:8px 10px 8px 8px;border-radius:20px;background:#fff;border:2px solid #e8eefa;text-align:left;box-shadow:0 4px 0 rgba(20,60,140,.08)}
+.song:active{transform:scale(.98)}
+.song .sic{width:58px;height:58px;flex:none;border-radius:16px;display:grid;place-items:center;font-size:32px;background:linear-gradient(150deg,color-mix(in srgb,var(--sc) 60%,#fff),var(--sc));box-shadow:inset 0 -3px 0 rgba(0,0,0,.14)}
+.song .stt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.song b{font-size:18px;color:var(--ink);line-height:1.15}
+.song small{font-size:13px;color:var(--muted);font-weight:600}
+.song .splay{width:46px;height:46px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:19px;color:#fff;background:linear-gradient(180deg,#5fe08a,#24b25a);box-shadow:0 4px 0 #178a43;padding-left:3px}
+.karaoke{min-height:112px;display:flex;flex-direction:column;justify-content:center;gap:6px;text-align:center;padding:2px}
+.kline{font-weight:700;line-height:1.28}
+.kline.cur{font-size:27px;color:var(--ink)}
+.kline.next{font-size:16px;color:#97a3c2}
+.kline .k{display:inline-block;padding:0 3px;border-radius:9px;transition:color .1s,background .1s,transform .1s}
+.kline .k.done{color:var(--blue)}
+.kline .k.on{background:#ffe27a;color:#17337e;transform:translateY(-3px) scale(1.07)}
+.kbar{height:8px;border-radius:8px;background:#e1e8f6;overflow:hidden;margin:6px 4px 10px}
+.kbar i{display:block;height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,#ff8ad8,#9a55ff)}
+.kctrl{display:flex;align-items:center;gap:10px}
+.kctrl .round{flex:none}
+.kctrl .big{flex:1}
+.mnote{position:absolute;z-index:4;font-style:normal;font-size:32px;font-weight:700;pointer-events:none;text-shadow:0 2px 8px rgba(0,0,0,.25);animation:mnote 1.8s ease-out forwards}
+@keyframes mnote{from{transform:translateY(12px) scale(.6);opacity:0}20%{opacity:1}to{transform:translateY(-80px) rotate(18deg) scale(1.15);opacity:0}}
+@media (max-height:700px){.kline.cur{font-size:23px}.karaoke{min-height:96px}.song .sic{width:50px;height:50px;font-size:28px}}
 </style>
 </head>
 <body>
@@ -846,6 +871,7 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
    <button class="sbtn" id="btn-mission"><span>🎯</span>Missão<i class="sbadge" id="mission-n"></i></button>
    <button class="sbtn" data-go="talk" id="btn-talk"><span>🗣️</span>Tradutor</button>
    <button class="sbtn" data-go="books" id="btn-books"><span>📚</span>Histórias</button>
+   <button class="sbtn" data-go="songs" id="btn-songs"><span>🎵</span>Músicas</button>
   </div>
   <div class="bubble hb pop" id="home-bubble"></div>
   <div class="hcards">
@@ -954,6 +980,14 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
   <div class="ptop"><button class="round" id="bk-back" aria-label="Voltar">‹</button><div class="ptt"><b id="bk-title">Histórias</b><small id="bk-sub">Escolha um livrinho para o Lumi ler!</small></div></div>
   <div class="bubble pb pop" id="books-bubble"></div>
   <div class="bpanel" id="bpanel"></div>
+ </section>
+
+ <!-- MÚSICAS: o Lumi canta e dança, a letra acende -->
+ <section class="screen room" id="s-songs" data-scene="school">
+  <div class="host" data-host></div>
+  <div class="ptop"><button class="round" id="sg-back" aria-label="Voltar">‹</button><div class="ptt"><b id="sg-title">Músicas</b><small id="sg-sub">Cante junto com o Lumi!</small></div></div>
+  <div class="bubble pb pop" id="songs-bubble"></div>
+  <div class="spnl" id="spnl"></div>
  </section>
  <div class="chestmodal" id="chestmodal"></div>
  <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>

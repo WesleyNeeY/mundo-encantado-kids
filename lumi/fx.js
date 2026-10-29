@@ -36,6 +36,11 @@ export const ICONS = {
     <path d="M24 13 C 18 8, 9 8, 3 10 v29 c6 -2 15 -2 21 3 z" fill="url(#${a})" stroke="#c2410c" stroke-width="1.2"/><path d="M24 13 C 30 8, 39 8, 45 10 v29 c-6 -2 -15 -2 -21 3 z" fill="url(#${b})" stroke="#1d4ed8" stroke-width="1.2"/>
     <path d="M8 17 c4 -1 8 -1 12 1 M8 23 c4 -1 8 -1 12 1 M8 29 c4 -1 8 -1 12 1 M28 18 c4 -2 8 -2 12 -1 M28 24 c4 -2 8 -2 12 -1" stroke="#fff" stroke-width="2" fill="none" opacity=".75" stroke-linecap="round"/><path d="M24 13 v29" stroke="#fff" stroke-width="1.4" opacity=".6"/>
     <path d="M39 1 L40.6 5.4 L45 7 L40.6 8.6 L39 13 L37.4 8.6 L33 7 L37.4 5.4 Z" fill="#ffd21f" stroke="#e0a000" stroke-width=".8"/></svg>`; },
+  music() { const a = id('u'); return `<svg viewBox="0 0 48 48"><defs><linearGradient id="${a}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9ad5"/><stop offset="1" stop-color="#8a4dff"/></linearGradient></defs>
+    <path d="M18 35 V11 L40 6 V30" fill="none" stroke="url(#${a})" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/><path d="M18 15 L40 10" stroke="url(#${a})" stroke-width="5.5" stroke-linecap="round"/>
+    <ellipse cx="12.5" cy="36" rx="7.5" ry="6" fill="url(#${a})" transform="rotate(-18 12.5 36)"/><ellipse cx="34.5" cy="31" rx="7.5" ry="6" fill="url(#${a})" transform="rotate(-18 34.5 31)"/>
+    <ellipse cx="10.5" cy="34" rx="2.6" ry="1.6" fill="#fff" opacity=".6" transform="rotate(-18 10.5 34)"/><ellipse cx="32.5" cy="29" rx="2.6" ry="1.6" fill="#fff" opacity=".6" transform="rotate(-18 32.5 29)"/>
+    <path d="M7 6 l1.3 3.2 3.2 1.3 -3.2 1.3 -1.3 3.2 -1.3 -3.2 -3.2 -1.3 3.2 -1.3z" fill="#ffd21f"/></svg>`; },
   fire() { const a = id('f'); return `<svg viewBox="0 0 48 48"><defs><linearGradient id="${a}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff3d00"/><stop offset=".6" stop-color="#ff9100"/><stop offset="1" stop-color="#ffd54f"/></linearGradient></defs>
     <path d="M24 3 C 28 12, 38 16, 38 29 C 38 38, 31 45, 24 45 C 16 45, 10 38, 10 30 C 10 22, 16 18, 17 11 C 21 15, 21 19, 21 22 C 24 18, 26 11, 24 3 Z" fill="url(#${a})"/><path d="M24 26 C 27 30, 31 32, 30 37 C 29 41, 26 43, 24 43 C 21 43, 18 40, 18 36 C 18 32, 22 30, 24 26 Z" fill="#fff3a0"/></svg>`; },
 };
@@ -49,6 +54,7 @@ document.querySelectorAll('#btn-echo > span, #echo-badge > span').forEach((e) =>
 document.querySelectorAll('#btn-mission > span').forEach((e) => setIcon(e, 'target'));
 document.querySelectorAll('#btn-talk > span').forEach((e) => setIcon(e, 'talk'));
 document.querySelectorAll('#btn-books > span').forEach((e) => setIcon(e, 'book'));
+document.querySelectorAll('#btn-songs > span').forEach((e) => setIcon(e, 'music'));
 const tabIcon = { home: 'home', rest: 'moon', snack: 'apple', shop: 'hat' };
 document.querySelectorAll('.tabbar button').forEach((b) => setIcon(b.querySelector('span'), tabIcon[b.dataset.go]));
 document.querySelectorAll('.ic.coin').forEach((e) => { e.classList.add('svgic'); setIcon(e, 'coin'); });

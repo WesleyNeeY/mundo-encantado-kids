@@ -55,6 +55,7 @@ const PRESET = {
   shop: { fit: [0.14, 0.5], scene: 'room', above: '.spanel' },
   talk: { fit: [0.15, 0.6], scene: 'room', above: '.tpanel' },
   books: { fit: [0.15, 0.6], scene: 'room', above: '.bpanel' },
+  songs: { fit: [0.15, 0.62], scene: 'room', above: '.spnl' },
 };
 // o Lumi ocupa só o espaço livre acima dos cards (vale para qualquer altura de tela)
 function presetFor(name) {
@@ -241,7 +242,7 @@ $$('[data-stars]').forEach((d) => { let s = ''; for (let i = 0; i < 40; i++) s +
 /* ---------------- navegação ---------------- */
 let current = '';
 function show(name) {
-  stopTalk(); stopListen(); if (name !== 'splash') stopParrot();
+  stopTalk(); stopListen(); if (name !== 'splash') stopParrot(); if (name !== 'songs') stopSong();
   if (current === 'shop') { preview = null; lumi.setOutfit(S.outfit); }
   $$('.screen').forEach((s) => s.classList.toggle('on', s.id === 's-' + name));
   $$('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.go === name));
@@ -251,10 +252,10 @@ function show(name) {
   if (host) stage.mount(host, presetFor(name));
 }
 function go(name) {
-  if (!S.hatched && ['map', 'snack', 'rest', 'shop', 'talk', 'books'].includes(name)) { toast('🚀 Primeiro abra a cápsula do Lumi!'); speak(T.pt.eggTap, 'pt'); return; }
+  if (!S.hatched && ['map', 'snack', 'rest', 'shop', 'talk', 'books', 'songs'].includes(name)) { toast('🚀 Primeiro abra a cápsula do Lumi!'); speak(T.pt.eggTap, 'pt'); return; }
   if (name !== 'lesson') LS = null;
   show(name);
-  ({ home: enterHome, map: enterMap, rest: enterRest, snack: enterSnack, shop: enterShop, talk: enterTalk, books: enterBooks }[name] || (() => {}))();
+  ({ home: enterHome, map: enterMap, rest: enterRest, snack: enterSnack, shop: enterShop, talk: enterTalk, books: enterBooks, songs: enterSongs }[name] || (() => {}))();
 }
 document.addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { audioCtx(); go(b.dataset.go); } });
 stage.onPoke = () => {
@@ -1369,6 +1370,94 @@ $('#bpanel').addEventListener('click', (e) => {
   if (t.closest('#bmore')) { stopTalk(); renderLib(); say($('#books-bubble'), [[T.pt.bookPick, 'pt']]); }
 });
 $('#bk-back').addEventListener('click', () => { audioCtx(); if (BK) { stopTalk(); $('#books-bubble').innerHTML = ''; renderLib(); } else go('home'); });
+
+/* ---------------- MÚSICAS: o Lumi canta (voz dele afinada na melodia) e dança; a letra acende na hora de cantar ---------------- */
+const SONGS = [
+  { id: 'abc', en: 'The ABC Song', pt: 'Cante o alfabeto!', icon: '🔤', color: '#ff5d73' },
+  { id: 'colors', en: 'The Colors Song', pt: 'Cante as cores!', icon: '🌈', color: '#10b5c9' },
+  { id: 'numbers', en: 'Count to Ten', pt: 'Cante os números!', icon: '🔢', color: '#9a55ff' },
+];
+const MOVES = ['dance', 'clap', 'wiggle', 'dance', 'stomp', 'clap', 'spin', 'dance'];
+const songMeta = {}, songBuf = {};
+let SG = null;
+function enterSongs() { tickSleep(); wake(); lumi.setMood('idle'); renderSongList(); setTimeout(() => current === 'songs' && !SG && say($('#songs-bubble'), [[T.pt.songPick, 'pt']]), 350); }
+function renderSongList() {
+  stopSong(); $('#sg-title').textContent = 'Músicas'; $('#sg-sub').textContent = 'Cante junto com o Lumi!';
+  $('#spnl').innerHTML = `<div class="slist">${SONGS.map((s) => `<button class="song" data-s="${s.id}" style="--sc:${s.color}"><span class="sic">${s.icon}</span><span class="stt"><b>${esc(s.en)}</b><small>${esc(s.pt)}${S.songs && S.songs[s.id] ? ' · ⭐' : ''}</small></span><span class="splay">▶</span></button>`).join('')}</div>`;
+  reframe('songs');
+}
+function loadSong(id) {
+  const ctx = audioCtx(); if (!ctx) return Promise.reject(new Error('sem áudio'));
+  if (!songMeta[id]) songMeta[id] = fetch('songs/' + id + '.json').then((r) => r.json());
+  if (!songBuf[id]) songBuf[id] = fetch('songs/' + id + '.mp3').then((r) => r.arrayBuffer()).then((a) => new Promise((res, rej) => ctx.decodeAudioData(a, res, rej)));
+  return Promise.all([songMeta[id], songBuf[id]]);
+}
+async function openSong(id) {
+  const s = SONGS.find((x) => x.id === id); if (!s) return;
+  stopTalk(); stopSong(); const tk = {}; SG = { s, tk, playing: false, off: 0 };
+  $('#sg-title').textContent = s.en; $('#sg-sub').textContent = s.pt; $('#songs-bubble').innerHTML = '';
+  $('#spnl').innerHTML = `<div class="karaoke"><div class="kline cur" id="kcur">🎵 Carregando...</div><div class="kline next" id="knext"></div></div><div class="kbar"><i id="kprog"></i></div>
+    <div class="kctrl"><button class="round" id="kback" aria-label="Outras músicas">‹</button><button class="big sm" id="kplay">⏸ Pausar</button><button class="round" id="kagain" aria-label="Recomeçar">↺</button></div>`;
+  reframe('songs');
+  let r; try { r = await loadSong(id); } catch (e) { delete songMeta[id]; delete songBuf[id]; if (SG && SG.tk === tk) $('#kcur').textContent = '😕 Não deu para tocar. Tente de novo!'; return; }
+  if (!SG || SG.tk !== tk || current !== 'songs') return;
+  [SG.meta, SG.buf] = r; startSong(0);
+}
+function startSong(from) {
+  const ctx = audioCtx(); if (!SG || !SG.buf || !ctx) return;
+  if (ctx.state !== 'running') ctx.resume();
+  const src = ctx.createBufferSource(); src.buffer = SG.buf; src.connect(analyser);
+  src.onended = () => { if (SG && SG.src === src && SG.playing) songEnd(); };
+  src.start(0, from); Object.assign(SG, { src, t0: ctx.currentTime - from, playing: true, ended: false, move: -1, line: -2 });
+  const b = $('#kplay'); if (b) b.textContent = '⏸ Pausar';
+  lumi.setMood('happy'); lumi.talk(true); cancelAnimationFrame(SG.raf); songTick();
+}
+function songTick() {
+  if (!SG || !SG.playing) return;
+  const M = SG.meta, t = actx.currentTime - SG.t0, beat = 60 / M.bpm;
+  let li = -1; for (let i = 0; i < M.lines.length; i++) if (t >= M.lines[i].s - 0.7) li = i; // a linha aparece um pouquinho antes
+  if (li !== SG.line) { SG.line = li; renderKaraoke(li); }
+  if (li >= 0) $$('#kcur .k').forEach((el, i) => { const w = M.lines[li].words[i]; el.classList.toggle('on', t >= w.s - 0.05 && t < w.e - 0.03); el.classList.toggle('done', t >= w.e - 0.03); });
+  const pr = $('#kprog'); if (pr) pr.style.width = Math.min(100, (t / M.dur) * 100) + '%';
+  const m = M.mouth[Math.floor(t * 25)] || 0; lumi.mouthLevel = m > 0.08 ? m : 0; // a boca acompanha só a voz
+  const mv = Math.floor((t - M.start) / (2 * beat)); // muda o passo de dança a cada 2 tempos
+  if (mv >= 0 && mv !== SG.move && t < M.dur - 1.5) { SG.move = mv; lumi.act(MOVES[mv % MOVES.length], 2 * beat); if (mv % 2 === 0) noteFloat(); }
+  SG.raf = requestAnimationFrame(songTick);
+}
+function renderKaraoke(li) {
+  const M = SG.meta, cur = $('#kcur'), nx = $('#knext'); if (!cur) return;
+  if (li < 0) { cur.innerHTML = '🎵 Vamos cantar! 🎵'; nx.textContent = M.lines[0].words.map((w) => w.w).join(' '); return; }
+  cur.innerHTML = M.lines[li].words.map((w) => `<span class="k">${esc(w.w)}</span>`).join(' ');
+  const n = M.lines[li + 1]; nx.textContent = n ? n.words.map((w) => w.w).join(' ') : '⭐ ⭐ ⭐';
+}
+function noteFloat() {
+  const h = $('#s-songs'), n = document.createElement('i'); n.className = 'mnote'; n.textContent = rnd(['♪', '♫', '♬', '♪']);
+  n.style.left = 12 + Math.random() * 72 + '%'; n.style.top = 20 + Math.random() * 24 + '%'; n.style.color = rnd(['#ff5d73', '#2f86ff', '#ffc928', '#34c96b', '#9a55ff', '#ff8ad8']);
+  h.appendChild(n); setTimeout(() => n.remove(), 1900);
+}
+function pauseSong() {
+  if (!SG || !SG.playing) return; SG.off = actx.currentTime - SG.t0; SG.playing = false;
+  try { SG.src.onended = null; SG.src.stop(); } catch (e) {}
+  cancelAnimationFrame(SG.raf); lumi.mouthLevel = null; lumi.talk(false); lumi.setMood('idle');
+  const b = $('#kplay'); if (b) b.textContent = '▶ Continuar';
+}
+function stopSong() { if (!SG) return; pauseSong(); SG = null; lumi.mouthLevel = null; lumi.talk(false); }
+function songEnd() {
+  SG.playing = false; SG.ended = true; SG.off = 0; cancelAnimationFrame(SG.raf); lumi.mouthLevel = null; lumi.talk(false);
+  $('#kprog').style.width = '100%'; $('#kcur').innerHTML = '🎉 Muito bem!'; $('#knext').textContent = 'Toque em “De novo” para cantar outra vez'; $('#kplay').textContent = '↺ De novo';
+  S.songs = S.songs || {}; S.songs[SG.s.id] = (S.songs[SG.s.id] || 0) + 1; save();
+  lumi.celebrate(); confetti(50); say($('#songs-bubble'), [[rnd(T.en.praise), 'en'], [T.pt.songDone, 'pt']]);
+}
+$('#spnl').addEventListener('click', (e) => {
+  const t = e.target; audioCtx();
+  const s = t.closest('.song'); if (s) { openSong(s.dataset.s); return; }
+  if (!SG) return;
+  if (t.closest('#kplay')) { if (SG.playing) pauseSong(); else if (SG.buf) { stopTalk(); $('#songs-bubble').innerHTML = ''; startSong(SG.ended ? 0 : SG.off); } return; }
+  if (t.closest('#kagain')) { if (SG.buf) { pauseSong(); stopTalk(); $('#songs-bubble').innerHTML = ''; startSong(0); } return; }
+  if (t.closest('#kback')) { stopTalk(); $('#songs-bubble').innerHTML = ''; renderSongList(); }
+});
+$('#sg-back').addEventListener('click', () => { audioCtx(); if (SG) { stopTalk(); $('#songs-bubble').innerHTML = ''; renderSongList(); } else go('home'); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) pauseSong(); });
 
 /* ---------------- modais ---------------- */
 function sheet(html) { $('#sheet').innerHTML = html; $('#modal').classList.add('on'); }

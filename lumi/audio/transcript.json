@@ -1,12 +1,17 @@
 [
  {
   "s": 0.0,
-  "e": 2.900125,
-  "text": "Escolha uma música para a gente cantar."
+  "e": 3.466,
+  "text": "Pires, você me pegou. O certo é..."
  },
  {
-  "s": 2.900125,
-  "e": 5.1226875,
-  "text": "Você canta muito bem!"
+  "s": 3.466,
+  "e": 6.048875,
+  "text": "Era sim, em Inglês é."
+ },
+ {
+  "s": 6.048875,
+  "e": 8.486625,
+  "text": "Não era, o certo é."
  }
 ]

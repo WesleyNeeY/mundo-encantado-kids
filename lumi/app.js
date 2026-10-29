@@ -454,6 +454,7 @@ async function runLesson(ls) {
   else if (g === 'balloon') await playBalloon(ls);
   else if (g === 'feed') await playFeed(ls);
   else if (g === 'memory') await playMemory(ls);
+  else if (g === 'yesno') await playYesNo(ls);
   if (alive(ls)) finishLesson(ls);
 }
 function turnHTML() { return `<div class="turn" id="turn"><div class="turnlbl" id="tlbl"></div><button class="mic idle" id="mic" aria-label="Falar">🎤</button><button class="skip" id="skip" style="visibility:hidden">Pular ›</button></div>`; }
@@ -603,6 +604,35 @@ async function playSimon(ls) {
     if (!(await say(bub, [[T.pt.simonSays, 'pt'], [c.en, 'en']], `Lumi diz: <span class="en">${esc(c.en)}</span>`))) return;
     await wait(600); if (!alive(ls)) return;
     await turnLoop(ls, c, T.pt.doAndSay, 'Agora você! Faz e fala:', show);
+  }
+}
+
+/* ---------- MINI-JOGO 5: Certo ou errado (o Lumi fala uma palavra e às vezes erra de propósito) ---------- */
+async function playYesNo(ls) {
+  const bub = $('#lesson-bubble');
+  $('#lbody').innerHTML = '<div class="qtitle" style="margin-top:30px">👍 Certo ou errado? 👎</div><p class="ghint">O Lumi fala uma palavra. Ele acertou?</p>';
+  lumi.hop(); await say(bub, [[T.pt.yesnoIntro, 'pt']]); if (!alive(ls)) return;
+  for (const w of ls.words) {
+    if (!alive(ls)) return;
+    const right = Math.random() < 0.5, others = ls.items.filter((x) => x.en !== w.en), said = right || !others.length ? w : rnd(others);
+    $('#lbody').innerHTML = `<div class="card in yn"><div class="pic" id="pic">${picHTML(w)}</div><div class="ynq">${esc(said.en)}?</div></div>
+      <div class="ynbtns"><button class="ynb yes" data-a="1">👍<b>Yes</b></button><button class="ynb no" data-a="0">👎<b>No</b></button></div>`;
+    lumi.setMood('idle');
+    if (!(await say(bub, [[said.en, 'en']], `<span class="en">${esc(said.en)}</span>? 🤔`)) || !alive(ls)) return;
+    const yes = await new Promise((res) => $$('.ynb').forEach((b) => (b.onclick = () => { audioCtx(); res(b.dataset.a === '1'); })));
+    if (!alive(ls)) return;
+    $$('.ynb').forEach((b) => { b.onclick = null; b.classList.toggle('dim', (b.dataset.a === '1') !== yes); });
+    const btn = $(yes ? '.ynb.yes' : '.ynb.no');
+    if (yes === (said === w)) {
+      lumi.celebrate(); addStar(btn);
+      if (said === w) await say(bub, [[rnd(T.en.praise), 'en'], [w.en, 'en']], `Isso! <span class="en">${esc(w.en)}</span>! 👍`);
+      else await say(bub, [[T.pt.yesnoCaught, 'pt'], [w.en, 'en']], `Hihi! Você me pegou! O certo é <span class="en">${esc(w.en)}</span>! 😄`);
+    } else {
+      ls.misses++; lumi.encourage();
+      await say(bub, [[said === w ? T.pt.yesnoWasYes : T.pt.yesnoWasNo, 'pt'], [w.en, 'en']], `${said === w ? 'Era sim! Em inglês é' : 'Não era! O certo é'} <span class="en">${esc(w.en)}</span>!`);
+      addStar(null);
+    }
+    if (!alive(ls)) return; lumi.setMood('idle'); await wait(350);
   }
 }
 

@@ -3,7 +3,7 @@
   // "Inglês|português|emoji"  (emoji começando com # vira número/texto na figura)
   const W = (list) => list.map((s) => { const [en, pt, img] = s.split('|'); return img[0] === '#' ? { en, pt, txt: img.slice(1) } : { en, pt, img }; });
   const L = (id, name, icon, words) => ({ id, type: 'lesson', name, icon, words: W(words) });
-  const G = (id, name, game, pool) => ({ id, type: 'game', game, name, icon: { balloon: '🎈', simon: '🙌', feed: '🍽️', memory: '🃏' }[game], pool });
+  const G = (id, name, game, pool) => ({ id, type: 'game', game, name, icon: { balloon: '🎈', simon: '🙌', feed: '🍽️', memory: '🃏', yesno: '👍' }[game], pool });
 
   const worlds = [
     { id: 'ilha', name: 'Ilha do Lumi', icon: '🏝️', color: '#2f86ff', welcome: 'Bem-vindo à Ilha do Lumi!', units: [
@@ -28,14 +28,14 @@
       L('fruits2', 'Mais frutas', '🍒', ['Lemon|limão|🍋', 'Cherries|cerejas|🍒', 'Pear|pera|🍐', 'Peach|pêssego|🍑', 'Mango|manga|🥭', 'Coconut|coco|🥥', 'Kiwi|kiwi|🥝', 'Melon|melão|🍈']),
       L('weather', 'O tempo', '⛈️', ['Hot|calor|🥵', 'Cold|frio|🥶', 'Snow|neve|❄️', 'Wind|vento|🌬️', 'Storm|tempestade|⛈️', 'Lightning|raio|⚡', 'Snowman|boneco de neve|⛄', 'Umbrella|guarda-chuva|☂️']),
       L('bugs', 'Bichinhos', '🐞', ['Bee|abelha|🐝', 'Butterfly|borboleta|🦋', 'Ant|formiga|🐜', 'Ladybug|joaninha|🐞', 'Spider|aranha|🕷️', 'Snail|caracol|🐌', 'Worm|minhoca|🪱', 'Caterpillar|lagarta|🐛']),
-      G('g-memory-1', 'Jogo da memória', 'memory', ['animals', 'farm', 'bugs']),
+      G('g-memory-1', 'Certo ou errado', 'yesno', ['animals', 'farm', 'bugs']),
     ] },
     { id: 'casa', name: 'Casa', icon: '🏠', color: '#ff8a1f', welcome: 'Bem-vindo à Casa do Lumi!', units: [
       L('house', 'Minha casa', '🚪', ['Door|porta|🚪', 'Window|janela|🪟', 'Bed|cama|🛏️', 'Chair|cadeira|🪑', 'Sofa|sofá|🛋️', 'Toilet|privada|🚽', 'Bathtub|banheira|🛁', 'Mirror|espelho|🪞']),
       L('kitchen', 'Cozinha', '🥄', ['Cup|xícara|☕', 'Plate|prato|🍽️', 'Spoon|colher|🥄', 'Knife|faca|🔪', 'Bowl|tigela|🥣', 'Teapot|bule|🫖']),
       L('breakfast', 'Café da manhã', '🥛', ['Bread|pão|🍞', 'Milk|leite|🥛', 'Egg|ovo|🥚', 'Cheese|queijo|🧀', 'Butter|manteiga|🧈', 'Juice|suco|🧃', 'Cookie|biscoito|🍪', 'Cake|bolo|🍰']),
       L('clothes', 'Roupas', '👕', ['Shirt|camiseta|👕', 'Pants|calça|👖', 'Dress|vestido|👗', 'Shoes|tênis|👟', 'Cap|boné|🧢', 'Socks|meias|🧦', 'Coat|casaco|🧥', 'Gloves|luvas|🧤']),
-      G('g-balloon-2', 'Estoura balão', 'balloon', ['house', 'kitchen', 'clothes']),
+      G('g-balloon-2', 'Certo ou errado', 'yesno', ['house', 'kitchen', 'clothes']),
       L('meals', 'Comidas', '🍕', ['Pizza|pizza|🍕', 'Hamburger|hambúrguer|🍔', 'Sandwich|sanduíche|🥪', 'Rice|arroz|🍚', 'Soup|sopa|🍲', 'Ice cream|sorvete|🍦', 'Candy|bala|🍬', 'Chocolate|chocolate|🍫', 'Popcorn|pipoca|🍿']),
       L('things', 'Coisas de casa', '⏰', ['Clock|relógio|⏰', 'Key|chave|🔑', 'Phone|telefone|📱', 'Television|televisão|📺', 'Light bulb|lâmpada|💡', 'Gift|presente|🎁', 'Camera|câmera|📷', 'Bag|bolsa|👜']),
       L('clean', 'Hora do banho', '🧼', ['Toothbrush|escova de dente|🪥', 'Soap|sabonete|🧼', 'Shower|chuveiro|🚿', 'Sponge|esponja|🧽', 'Broom|vassoura|🧹', 'Bucket|balde|🪣', 'Basket|cesto|🧺']),
@@ -71,7 +71,7 @@
       L('bignumbers', 'Números grandes', '💯', ['Thirty|trinta|#30', 'Forty|quarenta|#40', 'Fifty|cinquenta|#50', 'Sixty|sessenta|#60', 'Seventy|setenta|#70', 'Eighty|oitenta|#80', 'Ninety|noventa|#90', 'One hundred|cem|#100']),
       L('phrases', 'Frases educadas', '🙏', ['Please|por favor|🥺', 'Sorry|desculpa|😔', 'Excuse me|com licença|🙋', "Let's play|vamos brincar|🎮", 'Good job|muito bem|👏', "I'm hungry|estou com fome|😋", "I'm sleepy|estou com sono|🥱", 'Goodbye|tchau|👋']),
       L('desserts', 'Doces', '🧁', ['Donut|rosquinha|🍩', 'Cupcake|bolinho|🧁', 'Pie|torta|🥧', 'Honey|mel|🍯', 'Lollipop|pirulito|🍭', 'Pancakes|panquecas|🥞', 'Waffle|waffle|🧇', 'Pretzel|pretzel|🥨']),
-      G('g-feed-3', 'Dar comida', 'feed', ['desserts', 'breakfast', 'fruits2']),
+      G('g-feed-3', 'Certo ou errado', 'yesno', ['desserts', 'breakfast', 'fruits2']),
       L('explorer', 'Kit do explorador', '🧭', ['Map|mapa|🗺️', 'Compass|bússola|🧭', 'Flashlight|lanterna|🔦', 'Magnet|ímã|🧲', 'Hammer|martelo|🔨', 'Ladder|escada|🪜', 'Lock|cadeado|🔒', 'Rope|corda|🪢']),
       L('elements', 'Elementos', '🔥', ['Fire|fogo|🔥', 'Water|água|💧', 'Ice|gelo|🧊', 'Rock|pedra|🪨', 'Leaf|folha|🍃', 'Sunflower|girassol|🌻', 'Rose|rosa|🌹', 'Seed|semente|🌱']),
       L('body2', 'Mais do corpo', '💪', ['Arm|braço|💪', 'Leg|perna|🦵', 'Brain|cérebro|🧠', 'Bone|osso|🦴', 'Finger|dedo|☝️', 'Footprints|pegadas|👣']),

@@ -300,7 +300,7 @@ function enterHome() {
   $('#home-unit-ic').textContent = u.icon; $('#home-unit-name').textContent = u.name;
   $('#home-unit-meta').textContent = `Fase ${u.num} · ${worldOf(u).name} · +50 XP`;
   $('#btn-gift').classList.toggle('glow', S.giftDay !== today());
-  renderChestBtn();
+  renderChestBtn(); renderMissionBtn();
   lumi.setMood(S.sleeping ? 'sleep' : 'idle');
   bind();
   setTimeout(() => {
@@ -310,6 +310,8 @@ function enterHome() {
     lumi.doWave(1.8);
     const first = !S.seen.home; S.seen.home = 1; save();
     if (S.energy < 10) say($('#home-bubble'), T.pt.tired);
+    else if (!first && missionReady()) say($('#home-bubble'), T.pt.missionReady);
+    else if (!first && !S.seen.missionHi) { S.seen.missionHi = 1; save(); say($('#home-bubble'), T.pt.missionIntro); }
     else if (first) say($('#home-bubble'), [[T.pt.hello, 'pt'], [T.pt.letsLearn, 'pt']], `Olá, ${esc(S.name)}! Eu sou o Lumi! Vamos aprender inglês?`);
     else say($('#home-bubble'), [[T.en.hello, 'en'], [T.pt.play, 'pt']], `<span class="en">Hello</span>, ${esc(S.name)}! Vamos jogar?`);
   }, 400);
@@ -478,7 +480,7 @@ async function turnLoop(ls, w, firstLine, firstTxt, onRetry) {
     last = r; if (r === 'silent') silent++;
     if (r === 'skip') { lumi.setMood('idle'); return; }
     if (r === 'ok') {
-      lumi.celebrate(); addStar($('#mic'));
+      lumi.celebrate(); addStar($('#mic')); missionAdd('palavras');
       $('#tlbl').innerHTML = '🎉 Isso!';
       await say(bub, [[rnd(T.en.praise), 'en'], [rnd(T.pt.praise), 'pt']]);
       lumi.setMood('idle'); await wait(300); return;
@@ -771,7 +773,7 @@ function finishLesson(ls) {
   st.done = true; st.stars = Math.max(st.stars || 0, stars);
   st.seenWords = [...new Set([...(st.seenWords || []), ...ls.words.map((w) => w.en)])];
   S.units[u.id] = st; S.coins += 20; S.xp += 50; touchStreak(); save();
-  LS = null; avatarURL = null;
+  LS = null; avatarURL = null; missionAdd('aula');
   show('result');
   $('#result-title').textContent = ls.u.type === 'game' ? 'Fase completa!' : 'Aula completa!';
   $('#result-coins').textContent = ls.coins + 20; $('#result-xp').textContent = 50;
@@ -810,6 +812,45 @@ function checkAwards(levelBefore, growBefore) {
 function renderChestBtn() { const b = $('#btn-chest'); if (!b) return; b.style.display = S.chests.length ? '' : 'none'; $('#chest-n').textContent = S.chests.length; }
 $('#btn-chest').addEventListener('click', () => { audioCtx(); openChest(); });
 $('#btn-legend').addEventListener('click', () => { audioCtx(); slot = 'legend'; go('shop'); });
+
+/* ---------------- MISSÃO DO DIA: 3 tarefinhas que valem um baú ---------------- */
+const CHEST_SVG = '<svg viewBox="0 0 38 32"><rect x="2" y="12" width="34" height="18" rx="3" fill="#c0392b" stroke="#7a1f14" stroke-width="2"/><path d="M2 14 Q2 2 19 2 Q36 2 36 14 Z" fill="#e74c3c" stroke="#7a1f14" stroke-width="2"/><rect x="2" y="12" width="34" height="4" fill="#f1c40f"/><rect x="16" y="11" width="6" height="9" rx="1.5" fill="#f1c40f" stroke="#a87b00"/><rect x="8" y="2.5" width="3" height="27" fill="#f1c40f" opacity=".9"/><rect x="27" y="2.5" width="3" height="27" fill="#f1c40f" opacity=".9"/></svg>';
+const MISSION = [
+  { k: 'aula', n: 1, ic: '📖', txt: 'Fazer 1 aula', go: () => startLesson(unitIndex()) },
+  { k: 'comida', n: 1, ic: '🍎', txt: 'Dar comida ao Lumi', go: () => go('snack') },
+  { k: 'palavras', n: 5, ic: '🗣️', txt: 'Falar 5 palavras em inglês', go: () => startLesson(unitIndex()) },
+];
+function mission() { const d = today(); if (!S.mission || S.mission.day !== d) S.mission = { day: d, aula: 0, comida: 0, palavras: 0, got: false }; return S.mission; }
+const missionCount = (m = mission()) => MISSION.filter((t) => m[t.k] >= t.n).length;
+const missionReady = (m = mission()) => missionCount(m) === MISSION.length && !m.got;
+function missionAdd(k, n = 1) {
+  const m = mission(), t = MISSION.find((x) => x.k === k); if (!t || m[k] >= t.n) return;
+  m[k] = Math.min(t.n, m[k] + n); save(); renderMissionBtn();
+  if (m[k] >= t.n) toast(missionReady(m) ? '🎯 Missão completa! Pegue seu baú! 🎁' : `🎯 Missão: ${t.txt} ✓`);
+}
+function renderMissionBtn() {
+  const m = mission(), b = $('#btn-mission'), n = $('#mission-n'); if (!b) return;
+  const ready = missionReady(m);
+  b.classList.toggle('glow', ready || (!m.got && !S.seen.mission));
+  n.className = 'sbadge' + (m.got ? ' ok' : ''); n.textContent = m.got ? '✓' : ready ? '🎁' : missionCount(m) + '/' + MISSION.length;
+}
+function openMission() {
+  const m = mission(), ready = missionReady(m);
+  sheet(`<h2>🎯 Missão do dia</h2><p>Faça as 3 tarefinhas e ganhe um baú!</p>
+    <div class="mlist">${MISSION.map((t) => { const ok = m[t.k] >= t.n;
+      return `<button class="mrow ${ok ? 'done' : ''}" data-k="${t.k}"><span class="mi">${t.ic}</span><span class="mt"><b>${t.txt}</b><span class="mbar"><i style="width:${(Math.min(m[t.k], t.n) / t.n) * 100}%"></i></span></span><span class="mck">${ok ? '✓' : t.n > 1 ? m[t.k] + '/' + t.n : 'Ir ›'}</span></button>`; }).join('')}</div>
+    <div class="mprize ${m.got ? 'got' : ready ? 'ready' : ''}">${CHEST_SVG}<p>${m.got ? 'Baú de hoje já ganho! Volte amanhã para uma nova missão ⭐' : ready ? 'Missão completa! O baú é seu!' : 'Complete tudo e o baú é seu!'}</p></div>
+    ${ready ? '<button class="big yellow" id="mclaim">Abrir baú! 🎁</button>' : '<button class="big sm blue" data-close>Fechar</button>'}`);
+  $$('#sheet .mrow').forEach((r) => (r.onclick = () => {
+    const t = MISSION.find((x) => x.k === r.dataset.k); if (m[t.k] >= t.n) return;
+    closeSheet(); if (!S.hatched) { toast('🚀 Primeiro abra a cápsula do Lumi!'); return; } t.go();
+  }));
+  const c = $('#mclaim');
+  if (c) c.onclick = () => { m.got = true; S.chests.push('raro'); save(); renderMissionBtn(); renderChestBtn(); closeSheet(); lumi.celebrate(); confetti(50); openChest(); };
+  if (!S.seen.mission) { S.seen.mission = 1; save(); renderMissionBtn(); }
+  say($('#home-bubble'), [[m.got ? T.pt.missionDone : ready ? T.pt.chestWon : T.pt.missionIntro, 'pt']]);
+}
+$('#btn-mission').addEventListener('click', () => { audioCtx(); openMission(); });
 
 /* ---------------- Lumi papagaio: a criança fala e ele repete com voz fininha (tipo Talking Tom) ----------------
    Na abertura ele fica ouvindo sozinho (sem tocar em nada); na tela principal, pelo botão 🎤 Repete.
@@ -1032,7 +1073,7 @@ $('#foods').addEventListener('click', async (e) => {
   requestAnimationFrame(() => requestAnimationFrame(() => { fly.style.transform = `translate(${to.x - from.left - 28}px, ${to.y - from.top - 30}px) scale(.35)`; fly.style.opacity = '0'; }));
   setTimeout(() => fly.remove(), 950);
   await wait(650);
-  lumi.eat(2.2); S.energy = Math.min(100, S.energy + f.energy); save();
+  lumi.eat(2.2); S.energy = Math.min(100, S.energy + f.energy); save(); missionAdd('comida');
   await say($('#snack-bubble'), [[T.en.yummy, 'en'], [f.en + '!', 'en'], [T.pt.yummy, 'pt']]);
 });
 

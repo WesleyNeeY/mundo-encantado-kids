@@ -26,6 +26,9 @@ export const ICONS = {
   mic() { const a = id('p'); return `<svg viewBox="0 0 48 48"><defs><linearGradient id="${a}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb3d9"/><stop offset="1" stop-color="#d23f8f"/></linearGradient></defs>
     <rect x="15" y="4" width="18" height="27" rx="9" fill="url(#${a})" stroke="#a8286c" stroke-width="1.2"/><path d="M19 11 h10 M19 16 h10 M19 21 h10" stroke="#fff" stroke-width="1.6" opacity=".55" stroke-linecap="round"/>
     <path d="M10 22 a14 14 0 0 0 28 0" fill="none" stroke="#7a4cc9" stroke-width="3" stroke-linecap="round"/><path d="M24 36 v7 M16 44 h16" stroke="#7a4cc9" stroke-width="3" stroke-linecap="round"/><rect x="18" y="6" width="4" height="12" rx="2" fill="#fff" opacity=".45"/></svg>`; },
+  target() { const a = id('t'), b = id('t'); return `<svg viewBox="0 0 48 48"><defs><radialGradient id="${a}" cx=".38" cy=".35" r=".75"><stop offset="0" stop-color="#ff8f8f"/><stop offset="1" stop-color="#e0283f"/></radialGradient><linearGradient id="${b}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff59d"/><stop offset="1" stop-color="#ffb300"/></linearGradient></defs>
+    <circle cx="21" cy="27" r="18" fill="url(#${a})" stroke="#b51d33" stroke-width="1.2"/><circle cx="21" cy="27" r="12.5" fill="#fff"/><circle cx="21" cy="27" r="8" fill="url(#${a})"/><circle cx="21" cy="27" r="3.4" fill="#fff"/>
+    <path d="M21 27 L39 9" stroke="#7a4cc9" stroke-width="3" stroke-linecap="round"/><path d="M39 9 L37.5 2.5 L45.5 4 L46 10.5 Z" fill="url(#${b})" stroke="#d99a00" stroke-width="1"/><path d="M12 17 Q 15 13 21 12.5" stroke="#fff" stroke-width="2.2" fill="none" opacity=".55" stroke-linecap="round"/></svg>`; },
   fire() { const a = id('f'); return `<svg viewBox="0 0 48 48"><defs><linearGradient id="${a}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff3d00"/><stop offset=".6" stop-color="#ff9100"/><stop offset="1" stop-color="#ffd54f"/></linearGradient></defs>
     <path d="M24 3 C 28 12, 38 16, 38 29 C 38 38, 31 45, 24 45 C 16 45, 10 38, 10 30 C 10 22, 16 18, 17 11 C 21 15, 21 19, 21 22 C 24 18, 26 11, 24 3 Z" fill="url(#${a})"/><path d="M24 26 C 27 30, 31 32, 30 37 C 29 41, 26 43, 24 43 C 21 43, 18 40, 18 36 C 18 32, 22 30, 24 26 Z" fill="#fff3a0"/></svg>`; },
 };
@@ -36,6 +39,7 @@ document.querySelectorAll('#btn-gift > span').forEach((e) => setIcon(e, 'gift'))
 document.querySelectorAll('#btn-legend > span').forEach((e) => setIcon(e, 'sparkle'));
 document.querySelectorAll('.sbtn[data-go="map"] > span').forEach((e) => setIcon(e, 'map'));
 document.querySelectorAll('#btn-echo > span, #echo-badge > span').forEach((e) => setIcon(e, 'mic'));
+document.querySelectorAll('#btn-mission > span').forEach((e) => setIcon(e, 'target'));
 const tabIcon = { home: 'home', rest: 'moon', snack: 'apple', shop: 'hat' };
 document.querySelectorAll('.tabbar button').forEach((b) => setIcon(b.querySelector('span'), tabIcon[b.dataset.go]));
 document.querySelectorAll('.ic.coin').forEach((e) => { e.classList.add('svgic'); setIcon(e, 'coin'); });

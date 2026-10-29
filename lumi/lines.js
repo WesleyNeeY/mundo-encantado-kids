@@ -56,6 +56,9 @@ window.LUMI_LINES = {
     gotLegend: 'É lendária! Que demais!',
     setDone: 'Coleção completa! Olha que lindo!',
     legendHint: 'Essas roupas não estão à venda. Ganha baús jogando!',
+    missionIntro: 'Missão do dia! Faça as três tarefas e ganhe um baú!',
+    missionReady: 'Missão completa! Toca na missão para abrir o baú!',
+    missionDone: 'Você já fez a missão de hoje! Volta amanhã!',
   },
   en: {
     praise: ['Great job!', 'Awesome!', 'Well done!', 'Excellent!', 'Super!'],

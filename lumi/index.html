@@ -709,6 +709,31 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 .sch-dust i{background:radial-gradient(circle,#ffffff 0,#7ff3ff 45%,rgba(127,243,255,0) 72%);box-shadow:0 0 8px 2px rgba(127,243,255,.55)}
 .sch-dust i.l{background:radial-gradient(circle,#ffffff 0,#c3a8ff 45%,rgba(195,168,255,0) 72%);box-shadow:0 0 8px 2px rgba(195,168,255,.55)}
 @media (prefers-reduced-motion:reduce){.sch-lights,.sch-holo,.sch-car,.sch-rays{animation:none}}
+/* ===== coluna da direita (missão, histórias, músicas, traduz) ===== */
+.side.right{left:auto;right:12px}
+.sbtn{position:relative}
+.sbadge{position:absolute;top:-7px;right:-7px;min-width:22px;height:20px;padding:0 5px;border-radius:10px;background:linear-gradient(180deg,#ff9a6a,#ff4f6a);color:#fff;font-style:normal;font-size:11px;font-weight:700;display:grid;place-items:center;border:1.5px solid #fff;box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.sbadge.ok{background:linear-gradient(180deg,#6fe597,#24b25a)}
+.sbadge:empty{display:none}
+#s-home .bubble.hb{right:80px;max-width:calc(100% - 172px)}
+/* missão do dia */
+.mlist{display:flex;flex-direction:column;gap:9px}
+.mrow{display:flex;align-items:center;gap:12px;width:100%;padding:9px 12px;border-radius:20px;background:#f2f6ff;border:2px solid #e1e9ff;text-align:left;color:var(--ink)}
+.mrow:active{transform:scale(.98)}
+.mrow .mi{width:46px;height:46px;border-radius:14px;flex:none;display:grid;place-items:center;font-size:27px;background:#fff;box-shadow:0 3px 0 rgba(20,60,140,.1)}
+.mrow .mt{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.mrow .mt b{font-size:16.5px;line-height:1.15}
+.mrow .mbar{height:9px;border-radius:9px;background:#dce5f8;overflow:hidden}
+.mrow .mbar i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#ffd04a,#ff9a1f);transition:width .5s}
+.mrow .mck{flex:none;min-width:44px;height:32px;padding:0 6px;border-radius:12px;display:grid;place-items:center;font-weight:700;font-size:14px;color:#fff;background:linear-gradient(180deg,#5fb0ff,#2f86ff);box-shadow:0 3px 0 var(--blueD)}
+.mrow.done{background:#eefcf2;border-color:#bdeccb}
+.mrow.done .mbar i{background:linear-gradient(90deg,#8de38f,#34c96b)}
+.mrow.done .mck{background:#34c96b;box-shadow:0 3px 0 var(--greenD);font-size:19px}
+.mprize{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:22px;background:linear-gradient(180deg,#fff7dc,#ffeab0);border:2px solid #ffd77a}
+.mprize svg{flex:none;width:58px;height:50px;filter:drop-shadow(0 3px 2px rgba(120,60,0,.25))}
+.mprize p{flex:1;margin:0;text-align:left;color:#7a4b00;font-weight:600;font-size:15px}
+.mprize.ready svg{animation:cpulse 1.2s ease-in-out infinite}
+.mprize.got{background:#eefcf2;border-color:#bdeccb}.mprize.got p{color:#1f7a44}
 </style>
 </head>
 <body>
@@ -740,6 +765,9 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
    <button class="sbtn" id="btn-legend"><span>✨</span>Coleções</button>
    <button class="sbtn" data-go="map"><span>🗺️</span>Mapa</button>
    <button class="sbtn" id="btn-echo"><span>🎤</span>Repete</button>
+  </div>
+  <div class="side right ui">
+   <button class="sbtn" id="btn-mission"><span>🎯</span>Missão<i class="sbadge" id="mission-n"></i></button>
   </div>
   <div class="bubble hb pop" id="home-bubble"></div>
   <div class="hcards">

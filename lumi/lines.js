@@ -65,6 +65,9 @@ window.LUMI_LINES = {
     talkMoreTap: 'Toca em outra figura!',
     talkUnknown: 'Hmm... Essa eu ainda não sei. Fala outra!',
     talkNotHeard: 'Não ouvi! Toca no microfone e fala de novo.',
+    bookPick: 'Escolhe uma história que eu leio para você!',
+    bookTip: 'Toca nas palavras para ouvir!',
+    bookEnd: 'Que história legal!',
   },
   en: {
     praise: ['Great job!', 'Awesome!', 'Well done!', 'Excellent!', 'Super!'],
@@ -79,5 +82,6 @@ window.LUMI_LINES = {
     thanks: 'Thank you!',
     noThanks: 'No, thank you!',
     match: 'Match!',
+    theEnd: 'The end!',
   },
 };

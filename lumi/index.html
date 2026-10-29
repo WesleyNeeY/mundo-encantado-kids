@@ -763,6 +763,53 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 .tgrid button:active{transform:scale(.93)}
 .tgrid button.sel{border-color:var(--blue);background:#eaf3ff}
 @media (max-height:700px){.tstage{min-height:92px}.tcard .tpic{width:78px;height:78px;font-size:50px}.tcard .ten{font-size:28px}.tgrid{grid-template-rows:repeat(2,62px);grid-auto-columns:62px}.tgrid button .e{font-size:28px}}
+/* histórias */
+#s-books .bpanel{position:absolute;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:5;padding:10px;border-radius:26px;background:linear-gradient(180deg,rgba(255,255,255,.93),rgba(255,255,255,.86));border:1.5px solid rgba(255,255,255,.9);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 10px 28px rgba(20,16,90,.32)}
+.shelf{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.book{position:relative;height:126px;min-width:0;border-radius:10px 16px 16px 10px;padding:8px 8px 9px 15px;text-align:left;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;overflow:hidden;background:linear-gradient(150deg,color-mix(in srgb,var(--bc) 70%,#fff),var(--bc) 60%,color-mix(in srgb,var(--bc) 82%,#000));box-shadow:inset 7px 0 0 rgba(0,0,0,.2),inset 9px 0 0 rgba(255,255,255,.3),0 5px 0 color-mix(in srgb,var(--bc) 55%,#000),0 10px 18px rgba(20,20,80,.22)}
+.book::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.28),rgba(255,255,255,0) 40%);pointer-events:none}
+.book .bic{position:absolute;right:6px;top:6px;font-size:38px;line-height:1;filter:drop-shadow(0 3px 2px rgba(0,0,0,.22))}
+.book b{font-size:13.5px;line-height:1.1;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.book small{font-size:10.5px;font-weight:600;line-height:1.15;opacity:.95;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.book .bdone{position:absolute;left:13px;top:8px;font-style:normal;font-size:10.5px;font-weight:700;background:rgba(255,255,255,.95);color:#c27a00;padding:2px 6px;border-radius:8px}
+.book:active{transform:scale(.96)}
+.bpage{position:relative;height:clamp(118px,21vh,186px);border-radius:20px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;align-content:center;gap:2px 12px;padding:10px 12px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.08);animation:pgin .4s ease}
+.bpage span{font-size:clamp(50px,9vh,78px);line-height:1.05;animation:artf 3s ease-in-out infinite;filter:drop-shadow(0 6px 4px rgba(0,0,0,.2))}
+.bpage span:nth-child(2n){animation-delay:-1s}.bpage span:nth-child(3n){animation-delay:-2s}
+.bpage.many span{font-size:clamp(30px,5.2vh,44px)}
+@keyframes artf{50%{transform:translateY(-6px) rotate(-3deg)}}
+@keyframes pgin{from{transform:translateX(26px) rotate(1.5deg);opacity:0}}
+.bg-grass{background:linear-gradient(180deg,#bfe9ff 0 60%,#8fdc7a 60%,#5fc25a)}
+.bg-farm{background:linear-gradient(180deg,#ffe7b8 0 56%,#a7e07b 56%,#6cc153)}
+.bg-room{background:linear-gradient(180deg,#ffeedd 0 62%,#ebbd8f 62%,#d49a66)}
+.bg-night{background:radial-gradient(circle at 82% 22%,#fff 0 1.5px,transparent 2.5px),radial-gradient(circle at 18% 30%,#fff 0 1.5px,transparent 2.5px),radial-gradient(circle at 58% 14%,#fff 0 1px,transparent 2px),radial-gradient(circle at 34% 72%,#fff 0 1px,transparent 2px),linear-gradient(180deg,#1d2a6b,#3d2f8c)}
+.bg-space{background:radial-gradient(circle at 14% 24%,#fff 0 1.5px,transparent 2.5px),radial-gradient(circle at 76% 14%,#fff 0 1px,transparent 2px),radial-gradient(circle at 88% 72%,#fff 0 1.5px,transparent 2.5px),radial-gradient(circle at 40% 82%,#fff 0 1px,transparent 2px),linear-gradient(180deg,#2a1260,#5b2ca8)}
+.bg-sky{background:linear-gradient(180deg,#8fd6ff,#dff4ff)}
+.pnum{position:absolute;right:10px;top:8px;font-style:normal;font-size:12px;font-weight:700;color:#fff;background:rgba(0,0,0,.28);padding:2px 8px;border-radius:9px}
+.btext{position:relative;padding:8px 2px 0;text-align:center}
+.btext .en{margin:0;font-size:24px;font-weight:700;color:var(--ink);line-height:1.32}
+.btext .w{display:inline-block;padding:0 3px;border-radius:9px;cursor:pointer;transition:background .12s,color .12s,transform .12s}
+.btext .w.on{background:#ffe27a;color:#17337e;transform:translateY(-2px)}
+.btext .w.hit{background:#cfe6ff;color:var(--blue);transform:scale(1.1)}
+.btext .ptl{margin-top:5px;font-size:15px;font-weight:600;color:var(--muted);padding:4px 10px;border-radius:12px;background:#eef2fb;line-height:1.25}
+.wtip{position:absolute;transform:translate(-50%,-100%);background:var(--ink);color:#fff;font-size:14px;font-weight:700;padding:5px 11px;border-radius:12px;white-space:nowrap;pointer-events:none;z-index:3;animation:tipin .25s ease}
+.wtip b{color:#ffe27a}
+.wtip::after{content:"";position:absolute;left:50%;bottom:-5px;margin-left:-6px;border:6px solid transparent;border-bottom:0;border-top-color:var(--ink)}
+@keyframes tipin{from{opacity:0;margin-top:6px}}
+.bctrl{display:flex;align-items:center;gap:10px;margin-top:8px}
+.bctrl .round{flex:none}
+.bctrl .round.go{width:auto;min-width:58px;padding:0 16px 3px;border-radius:16px;background:linear-gradient(180deg,#5fe08a,#24b25a);color:#fff;border:0;box-shadow:0 4px 0 #178a43;font-size:26px;font-weight:700;height:46px}
+.bctrl .round.go.pulse{animation:nxp 1s ease-in-out infinite}
+@keyframes nxp{50%{transform:scale(1.08)}}
+.bctrl .dots{flex:1;display:flex;justify-content:center;gap:6px}
+.bctrl .dots i{width:8px;height:8px;border-radius:50%;background:#d3dcef}
+.bctrl .dots i.on{background:var(--blue);transform:scale(1.3)}
+.bctrl .spk{width:46px;height:46px;font-size:20px;flex:none}
+.bend{display:flex;flex-direction:column;gap:8px;text-align:center}
+.bend h3{margin:2px 0 0;font-size:30px;color:var(--blue)}
+.bend p{margin:0;font-weight:600;color:var(--muted)}
+.bend .row .big{font-size:18px}
+@media (max-height:700px){.btext .en{font-size:21px}.book{height:112px}}
 </style>
 </head>
 <body>
@@ -798,6 +845,7 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
   <div class="side right ui">
    <button class="sbtn" id="btn-mission"><span>🎯</span>Missão<i class="sbadge" id="mission-n"></i></button>
    <button class="sbtn" data-go="talk" id="btn-talk"><span>🗣️</span>Tradutor</button>
+   <button class="sbtn" data-go="books" id="btn-books"><span>📚</span>Histórias</button>
   </div>
   <div class="bubble hb pop" id="home-bubble"></div>
   <div class="hcards">
@@ -899,6 +947,14 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
   </div>
  </section>
 
+
+ <!-- HISTÓRIAS COM O LUMI -->
+ <section class="screen room" id="s-books" data-scene="school">
+  <div class="host" data-host></div>
+  <div class="ptop"><button class="round" id="bk-back" aria-label="Voltar">‹</button><div class="ptt"><b id="bk-title">Histórias</b><small id="bk-sub">Escolha um livrinho para o Lumi ler!</small></div></div>
+  <div class="bubble pb pop" id="books-bubble"></div>
+  <div class="bpanel" id="bpanel"></div>
+ </section>
  <div class="chestmodal" id="chestmodal"></div>
  <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
  <div class="toast" id="toast"></div>
@@ -906,6 +962,7 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 </div>
 <script src="data.js"></script>
 <script src="lines.js"></script>
+<script src="stories.js"></script>
 <script src="scenes.js"></script>
 <script type="module" src="app.js"></script>
 <script type="module" src="fx.js"></script>

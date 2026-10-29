@@ -54,6 +54,7 @@ const PRESET = {
   snack: { fit: [0.15, 0.55], scene: 'room', above: '.pbottom' },
   shop: { fit: [0.14, 0.5], scene: 'room', above: '.spanel' },
   talk: { fit: [0.15, 0.6], scene: 'room', above: '.tpanel' },
+  books: { fit: [0.15, 0.6], scene: 'room', above: '.bpanel' },
 };
 // o Lumi ocupa só o espaço livre acima dos cards (vale para qualquer altura de tela)
 function presetFor(name) {
@@ -250,10 +251,10 @@ function show(name) {
   if (host) stage.mount(host, presetFor(name));
 }
 function go(name) {
-  if (!S.hatched && ['map', 'snack', 'rest', 'shop', 'talk'].includes(name)) { toast('🚀 Primeiro abra a cápsula do Lumi!'); speak(T.pt.eggTap, 'pt'); return; }
+  if (!S.hatched && ['map', 'snack', 'rest', 'shop', 'talk', 'books'].includes(name)) { toast('🚀 Primeiro abra a cápsula do Lumi!'); speak(T.pt.eggTap, 'pt'); return; }
   if (name !== 'lesson') LS = null;
   show(name);
-  ({ home: enterHome, map: enterMap, rest: enterRest, snack: enterSnack, shop: enterShop, talk: enterTalk }[name] || (() => {}))();
+  ({ home: enterHome, map: enterMap, rest: enterRest, snack: enterSnack, shop: enterShop, talk: enterTalk, books: enterBooks }[name] || (() => {}))();
 }
 document.addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { audioCtx(); go(b.dataset.go); } });
 stage.onPoke = () => {
@@ -1273,6 +1274,101 @@ async function teachTalk(tk, w) {
 }
 $('#ttabs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; talkWorld = +b.dataset.wi; renderTalkGrid(); b.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' }); });
 $('#tgrid').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; audioCtx(); stopTalk(); stopListen(); teachTalk((TK = {}), VOCAB[+b.dataset.i]); });
+
+/* ---------------- HISTÓRIAS COM O LUMI: livrinhos em inglês com legenda; o Lumi lê e a criança toca nas palavras ---------------- */
+const BOOKS = window.LUMI_STORIES || { books: [], gl: {} };
+let BK = null, EN1 = null;
+const bkAlive = (tk) => !!BK && BK.tk === tk && current === 'books';
+function enWordKey(t) { // a palavra solta com o áudio que já existe ("ball" usa o áudio de "Ball" das aulas)
+  if (!EN1 || !EN1.size) { EN1 = new Map(); for (const k in AUDIO) if (k.startsWith('en|') && !/\s/.test(k.slice(3))) { const w = k.slice(3).toLowerCase().replace(/[.!?]+$/, ''); if (!EN1.has(w) || k.slice(3) === w) EN1.set(w, k.slice(3)); } }
+  return EN1.get(t) || t;
+}
+const reframe = (name) => { const host = $('#s-' + name + ' [data-host]'); if (host && current === name) stage.mount(host, presetFor(name)); };
+function enterBooks() {
+  tickSleep(); wake(); lumi.setMood('idle'); renderLib();
+  setTimeout(() => current === 'books' && !BK && say($('#books-bubble'), [[T.pt.bookPick, 'pt']]), 350);
+}
+function renderLib() {
+  BK = null; $('#bk-title').textContent = 'Histórias'; $('#bk-sub').textContent = 'Escolha um livrinho para o Lumi ler!';
+  $('#bpanel').innerHTML = `<div class="shelf">${BOOKS.books.map((b) => `<button class="book" data-b="${b.id}" style="--bc:${b.color}"><span class="bic">${b.icon}</span>${S.books && S.books[b.id] ? '<i class="bdone">⭐ Lido</i>' : ''}<b>${esc(b.en)}</b><small>${esc(b.pt)}</small></button>`).join('')}</div>`;
+  reframe('books');
+}
+async function openBook(id) {
+  const book = BOOKS.books.find((b) => b.id === id); if (!book) return;
+  stopTalk(); BK = { book, page: 0, tk: {} }; const tk = BK.tk;
+  $('#bk-title').textContent = book.en; $('#bk-sub').textContent = book.pt;
+  renderPage(); reframe('books'); lumi.setMood('happy'); lumi.hop && lumi.hop();
+  if (!(await say($('#books-bubble'), [[book.en, 'en']], `📖 <span class="en">${esc(book.en)}</span>`)) || !bkAlive(tk)) return;
+  $('#books-bubble').innerHTML = ''; readPage(tk);
+}
+function renderPage() {
+  const b = BK.book, n = b.pages.length;
+  if (BK.page >= n) {
+    $('#bpanel').innerHTML = `<div class="bend"><div class="bpage bg-${b.bg}"><span>🎉</span><span>${b.icon}</span><span>⭐</span></div><h3>The End!</h3><p>Fim! Que história legal!</p>
+      <div class="row"><button class="big sm blue" id="bagain">📖 De novo</button><button class="big sm" id="bmore">📚 Outras</button></div></div>`;
+    return;
+  }
+  const p = b.pages[BK.page], art = p.art.split(' ').filter(Boolean);
+  const words = p.en.split(/\s+/).map((t) => `<span class="w" data-k="${esc(t.toLowerCase().replace(/^[^a-z']+|[^a-z']+$/g, ''))}">${esc(t)}</span>`).join(' ');
+  $('#bpanel').innerHTML = `<div class="bpage bg-${b.bg} ${art.length > 3 ? 'many' : ''}">${art.map((a) => `<span>${a}</span>`).join('')}<i class="pnum">${BK.page + 1}/${n}</i></div>
+    <div class="btext" id="btext"><p class="en">${words}</p><button class="ptl" id="bpt">🇧🇷 ${esc(p.pt)}</button></div>
+    <div class="bctrl"><button class="round" id="bprev" aria-label="Página anterior"${BK.page ? '' : ' style="visibility:hidden"'}>‹</button><button class="spk" id="bread" aria-label="Ler de novo">🔊</button>
+      <div class="dots">${b.pages.map((_, i) => `<i class="${i === BK.page ? 'on' : ''}"></i>`).join('')}</div><button class="round go" id="bnext" aria-label="Próxima página">›</button></div>`;
+}
+async function readPage(tk) { // o Lumi lê a página e cada palavra acende na hora em que ele fala (karaokê)
+  stopTalk(); const my = speakToken, p = BK.book.pages[BK.page], ws = $$('#btext .w');
+  await audioReady; if (!bkAlive(tk) || my !== speakToken) return;
+  const f = AUDIO[keyOf(p.en, 'en')]; let buf = null;
+  if (f && audioCtx()) { try { buf = await getBuf(f); } catch (e) {} }
+  if (!bkAlive(tk) || my !== speakToken) return;
+  if (!buf) { await speakTTS(p.en, 'en'); if (bkAlive(tk)) afterRead(tk); return; }
+  const wt = ws.map((w) => Math.max(1, (w.textContent.toLowerCase().match(/[aeiouy]+/g) || []).length) + 0.35);
+  const gap = ws.map((w) => (/\.\.\.$/.test(w.textContent) ? 1.6 : /[.!?]$/.test(w.textContent) ? 1.2 : /,$/.test(w.textContent) ? 0.7 : 0));
+  const u = buf.duration / (wt.reduce((a, x) => a + x, 0) + gap.slice(0, -1).reduce((a, x) => a + x, 0)), st = []; let acc = 0;
+  ws.forEach((w, i) => { st.push([acc, acc + wt[i] * u]); acc += (wt[i] + gap[i]) * u; });
+  const t0 = performance.now(); let live = true;
+  const tick = () => { if (!live) return; const t = (performance.now() - t0) / 1000; ws.forEach((w, i) => w.classList.toggle('on', t >= st[i][0] - 0.03 && t < st[i][1] + 0.05)); requestAnimationFrame(tick); };
+  tick(); await playFile(f, my); live = false; ws.forEach((w) => w.classList.remove('on'));
+  if (bkAlive(tk) && my === speakToken) afterRead(tk);
+}
+function afterRead(tk) {
+  const nx = $('#bnext'); if (nx) nx.classList.add('pulse');
+  if (!S.seen.bookTip) { S.seen.bookTip = 1; save(); say($('#books-bubble'), [[T.pt.bookTip, 'pt']], 'Toca nas palavras para ouvir! 👆').then((ok) => { if (ok && bkAlive(tk)) setTimeout(() => bkAlive(tk) && ($('#books-bubble').innerHTML = ''), 1500); }); }
+}
+function turnPage(d) {
+  stopTalk(); $('#books-bubble').innerHTML = '';
+  const n = BK.book.pages.length; BK.page = Math.max(0, Math.min(n, BK.page + d)); const tk = (BK.tk = {});
+  renderPage();
+  if (BK.page < n) { readPage(tk); return; }
+  const b = BK.book; S.books = S.books || {}; const first = !S.books[b.id]; S.books[b.id] = 1; save(); // terminou o livro
+  lumi.celebrate(); confetti(first ? 70 : 40);
+  say($('#books-bubble'), [[T.en.theEnd, 'en'], [T.pt.bookEnd, 'pt']], `🎉 <span class="en">The end!</span> Que história legal!`);
+}
+function tapWord(w) {
+  stopTalk(); BK.tk = {}; const box = $('#btext');
+  $$('.w', box).forEach((x) => x.classList.remove('on', 'hit')); $$('.wtip', box).forEach((x) => x.remove());
+  w.classList.add('hit'); setTimeout(() => w.classList.remove('hit'), 900);
+  const k = w.dataset.k, tr = BOOKS.gl[k];
+  if (tr && tr.toLowerCase() !== k) {
+    const tip = document.createElement('div'); tip.className = 'wtip'; tip.innerHTML = `<b>${esc(k)}</b> = ${esc(tr)}`;
+    tip.style.left = Math.max(60, Math.min(box.clientWidth - 60, w.offsetLeft + w.offsetWidth / 2)) + 'px'; tip.style.top = w.offsetTop - 3 + 'px';
+    box.appendChild(tip); setTimeout(() => tip.remove(), 2400);
+  }
+  if (k) speak(enWordKey(k), 'en');
+}
+$('#bpanel').addEventListener('click', (e) => {
+  const t = e.target; audioCtx();
+  const book = t.closest('.book'); if (book) { openBook(book.dataset.b); return; }
+  if (!BK) return;
+  const w = t.closest('.w'); if (w) { tapWord(w); return; }
+  if (t.closest('#bpt')) { stopTalk(); BK.tk = {}; speak(BK.book.pages[BK.page].pt, 'pt'); return; }
+  if (t.closest('#bread')) { readPage((BK.tk = {})); return; }
+  if (t.closest('#bnext')) { turnPage(1); return; }
+  if (t.closest('#bprev')) { turnPage(-1); return; }
+  if (t.closest('#bagain')) { openBook(BK.book.id); return; }
+  if (t.closest('#bmore')) { stopTalk(); renderLib(); say($('#books-bubble'), [[T.pt.bookPick, 'pt']]); }
+});
+$('#bk-back').addEventListener('click', () => { audioCtx(); if (BK) { stopTalk(); $('#books-bubble').innerHTML = ''; renderLib(); } else go('home'); });
 
 /* ---------------- modais ---------------- */
 function sheet(html) { $('#sheet').innerHTML = html; $('#modal').classList.add('on'); }

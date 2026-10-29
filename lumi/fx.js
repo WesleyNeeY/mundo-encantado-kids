@@ -29,6 +29,9 @@ export const ICONS = {
   target() { const a = id('t'), b = id('t'); return `<svg viewBox="0 0 48 48"><defs><radialGradient id="${a}" cx=".38" cy=".35" r=".75"><stop offset="0" stop-color="#ff8f8f"/><stop offset="1" stop-color="#e0283f"/></radialGradient><linearGradient id="${b}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff59d"/><stop offset="1" stop-color="#ffb300"/></linearGradient></defs>
     <circle cx="21" cy="27" r="18" fill="url(#${a})" stroke="#b51d33" stroke-width="1.2"/><circle cx="21" cy="27" r="12.5" fill="#fff"/><circle cx="21" cy="27" r="8" fill="url(#${a})"/><circle cx="21" cy="27" r="3.4" fill="#fff"/>
     <path d="M21 27 L39 9" stroke="#7a4cc9" stroke-width="3" stroke-linecap="round"/><path d="M39 9 L37.5 2.5 L45.5 4 L46 10.5 Z" fill="url(#${b})" stroke="#d99a00" stroke-width="1"/><path d="M12 17 Q 15 13 21 12.5" stroke="#fff" stroke-width="2.2" fill="none" opacity=".55" stroke-linecap="round"/></svg>`; },
+  talk() { const a = id('b'), b = id('b'); return `<svg viewBox="0 0 48 48"><defs><linearGradient id="${a}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7ee8a0"/><stop offset="1" stop-color="#1fae55"/></linearGradient><linearGradient id="${b}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#86c8ff"/><stop offset="1" stop-color="#2f6fe8"/></linearGradient></defs>
+    <path d="M7 5 h20 a5 5 0 0 1 5 5 v10 a5 5 0 0 1 -5 5 h-12 l-6 6 v-6 h-2 a5 5 0 0 1 -5 -5 v-10 a5 5 0 0 1 5 -5 z" fill="url(#${a})" stroke="#15843f" stroke-width="1.2"/><text x="17" y="20" font-size="11.5" font-weight="700" fill="#fff" text-anchor="middle" font-family="Fredoka,sans-serif">Oi</text>
+    <path d="M21 19 h20 a5 5 0 0 1 5 5 v10 a5 5 0 0 1 -5 5 h-1 v6 l-6 -6 h-13 a5 5 0 0 1 -5 -5 v-10 a5 5 0 0 1 5 -5 z" fill="url(#${b})" stroke="#1a55c4" stroke-width="1.2"/><text x="31" y="34" font-size="11.5" font-weight="700" fill="#fff" text-anchor="middle" font-family="Fredoka,sans-serif">Hi</text><path d="M9 9 h8" stroke="#fff" stroke-width="2" opacity=".5" stroke-linecap="round"/></svg>`; },
   fire() { const a = id('f'); return `<svg viewBox="0 0 48 48"><defs><linearGradient id="${a}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff3d00"/><stop offset=".6" stop-color="#ff9100"/><stop offset="1" stop-color="#ffd54f"/></linearGradient></defs>
     <path d="M24 3 C 28 12, 38 16, 38 29 C 38 38, 31 45, 24 45 C 16 45, 10 38, 10 30 C 10 22, 16 18, 17 11 C 21 15, 21 19, 21 22 C 24 18, 26 11, 24 3 Z" fill="url(#${a})"/><path d="M24 26 C 27 30, 31 32, 30 37 C 29 41, 26 43, 24 43 C 21 43, 18 40, 18 36 C 18 32, 22 30, 24 26 Z" fill="#fff3a0"/></svg>`; },
 };
@@ -40,6 +43,7 @@ document.querySelectorAll('#btn-legend > span').forEach((e) => setIcon(e, 'spark
 document.querySelectorAll('.sbtn[data-go="map"] > span').forEach((e) => setIcon(e, 'map'));
 document.querySelectorAll('#btn-echo > span, #echo-badge > span').forEach((e) => setIcon(e, 'mic'));
 document.querySelectorAll('#btn-mission > span').forEach((e) => setIcon(e, 'target'));
+document.querySelectorAll('#btn-talk > span').forEach((e) => setIcon(e, 'talk'));
 const tabIcon = { home: 'home', rest: 'moon', snack: 'apple', shop: 'hat' };
 document.querySelectorAll('.tabbar button').forEach((b) => setIcon(b.querySelector('span'), tabIcon[b.dataset.go]));
 document.querySelectorAll('.ic.coin').forEach((e) => { e.classList.add('svgic'); setIcon(e, 'coin'); });

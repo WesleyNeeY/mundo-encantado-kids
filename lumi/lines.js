@@ -59,6 +59,12 @@ window.LUMI_LINES = {
     missionIntro: 'Missão do dia! Faça as três tarefas e ganhe um baú!',
     missionReady: 'Missão completa! Toca na missão para abrir o baú!',
     missionDone: 'Você já fez a missão de hoje! Volta amanhã!',
+    talkIntro: 'Me fala uma palavra em português que eu te ensino em inglês!',
+    talkTap: 'Toca numa figura que eu te ensino em inglês!',
+    talkMore: 'Fala outra palavra!',
+    talkMoreTap: 'Toca em outra figura!',
+    talkUnknown: 'Hmm... Essa eu ainda não sei. Fala outra!',
+    talkNotHeard: 'Não ouvi! Toca no microfone e fala de novo.',
   },
   en: {
     praise: ['Great job!', 'Awesome!', 'Well done!', 'Excellent!', 'Super!'],

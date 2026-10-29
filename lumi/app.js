@@ -53,6 +53,7 @@ const PRESET = {
   rest: { fit: [0.18, 0.6], night: true, tilt: 4, above: '.pbottom' },
   snack: { fit: [0.15, 0.55], scene: 'room', above: '.pbottom' },
   shop: { fit: [0.14, 0.5], scene: 'room', above: '.spanel' },
+  talk: { fit: [0.15, 0.6], scene: 'room', above: '.tpanel' },
 };
 // o Lumi ocupa só o espaço livre acima dos cards (vale para qualquer altura de tela)
 function presetFor(name) {
@@ -249,10 +250,10 @@ function show(name) {
   if (host) stage.mount(host, presetFor(name));
 }
 function go(name) {
-  if (!S.hatched && ['map', 'snack', 'rest', 'shop'].includes(name)) { toast('🚀 Primeiro abra a cápsula do Lumi!'); speak(T.pt.eggTap, 'pt'); return; }
+  if (!S.hatched && ['map', 'snack', 'rest', 'shop', 'talk'].includes(name)) { toast('🚀 Primeiro abra a cápsula do Lumi!'); speak(T.pt.eggTap, 'pt'); return; }
   if (name !== 'lesson') LS = null;
   show(name);
-  ({ home: enterHome, map: enterMap, rest: enterRest, snack: enterSnack, shop: enterShop }[name] || (() => {}))();
+  ({ home: enterHome, map: enterMap, rest: enterRest, snack: enterSnack, shop: enterShop, talk: enterTalk }[name] || (() => {}))();
 }
 document.addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { audioCtx(); go(b.dataset.go); } });
 stage.onPoke = () => {
@@ -818,7 +819,7 @@ const CHEST_SVG = '<svg viewBox="0 0 38 32"><rect x="2" y="12" width="34" height
 const MISSION = [
   { k: 'aula', n: 1, ic: '📖', txt: 'Fazer 1 aula', go: () => startLesson(unitIndex()) },
   { k: 'comida', n: 1, ic: '🍎', txt: 'Dar comida ao Lumi', go: () => go('snack') },
-  { k: 'palavras', n: 5, ic: '🗣️', txt: 'Falar 5 palavras em inglês', go: () => startLesson(unitIndex()) },
+  { k: 'palavras', n: 5, ic: '🗣️', txt: 'Falar 5 palavras em inglês', go: () => go('talk') },
 ];
 function mission() { const d = today(); if (!S.mission || S.mission.day !== d) S.mission = { day: d, aula: 0, comida: 0, palavras: 0, got: false }; return S.mission; }
 const missionCount = (m = mission()) => MISSION.filter((t) => m[t.k] >= t.n).length;
@@ -1151,6 +1152,128 @@ $('#shop-items').addEventListener('click', (e) => {
   say($('#shop-bubble'), [[T.pt.thanks, 'pt'], ...cheer().slice(0, 1)]);
 });
 
+/* ---------------- COMO SE DIZ? A criança fala em português e o Lumi ensina em inglês ----------------
+   Só com as palavras das aulas (figuras e áudios que já estão no app). Onde o celular não deixa reconhecer
+   a fala (app do iPhone aberto pelo ícone), a criança toca na figura. */
+const VOCAB = (() => { const out = [], seen = new Set(); D.units.forEach((u) => { if (u.type !== 'lesson') return; u.words.forEach((w) => { const k = w.pt.toLowerCase(); if (!seen.has(k)) { seen.add(k); out.push(Object.assign({ wi: u.wi }, w)); } }); }); return out; })();
+const ptNorm = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+const ptLow = (s) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+const PT_BY_LOW = new Map(VOCAB.map((w) => [ptLow(w.pt), w])), PT_BY_NORM = new Map(), PT_AMBIG = new Set();
+VOCAB.forEach((w) => { const k = ptNorm(w.pt); if (PT_BY_NORM.has(k) && PT_BY_NORM.get(k).en !== w.en) PT_AMBIG.add(k); else if (!PT_BY_NORM.has(k)) PT_BY_NORM.set(k, w); });
+const PT_SYN = { cao: 'cachorro', cachorra: 'cachorro', mae: 'mamae', pai: 'papai', oi: 'ola', obrigada: 'obrigado', nenem: 'bebe', ave: 'passaro', olho: 'olhos', dente: 'dentes', tchauzinho: 'tchau' };
+const PT_SYN_ACC = { 'vó': 'vovó', 'avó': 'vovó', 'vô': 'vovô', 'avô': 'vovô' };
+const PT_STOP = new Set('como se diz fala falar fale e o a os as de do da dos das em no na que qual eu quero sei saber ingles portugues palavra isso e ai la me te por favor agora'.split(' '));
+function findWord(text) {
+  const low = ' ' + ptLow(text) + ' ', nrm = ' ' + ptNorm(text) + ' ';
+  let best = null;
+  for (const w of VOCAB) { // 1) a palavra (ou frase) inteira, com e sem acento; a mais comprida ganha
+    const a = ' ' + ptLow(w.pt) + ' ', b = ' ' + ptNorm(w.pt) + ' ';
+    let i = low.indexOf(a), sc = 3, len = a.length;
+    if (i < 0) { i = PT_AMBIG.has(b.trim()) ? -1 : nrm.indexOf(b); sc = 2; len = b.length; }
+    if (i >= 0 && (!best || len > best.len || (len === best.len && sc > best.sc))) best = { w, sc, len };
+  }
+  if (best) return best.w;
+  const toks = ptLow(text).split(' ').filter(Boolean);
+  for (const t of toks) { // 2) número falado em algarismos, apelidos, plural e diminutivo
+    const n = ptNorm(t); if (!n || PT_STOP.has(n)) continue;
+    let w = /^\d+$/.test(n) ? VOCAB.find((x) => x.txt === String(+n)) : null;
+    if (!w && PT_SYN_ACC[t]) w = PT_BY_LOW.get(PT_SYN_ACC[t]);
+    if (!w && PT_SYN[n]) w = PT_BY_NORM.get(PT_SYN[n]);
+    if (!w) for (const v of [n.replace(/oes$|aes$/, 'ao'), n.replace(/es$/, ''), n.replace(/s$/, ''), n.replace(/zinh[oa]s?$/, ''), n.replace(/inh([oa])s?$/, '$1'), n.replace(/ões$/, 'ao')]) { if (v !== n && !PT_AMBIG.has(v) && PT_BY_NORM.has(v)) { w = PT_BY_NORM.get(v); break; } }
+    if (w) return w;
+  }
+  let bs = 0, bw = null; // 3) falou parecido (a criança ainda está aprendendo a falar)
+  for (const t of toks) { const n = ptNorm(t); if (n.length < 4 || PT_STOP.has(n)) continue;
+    for (const w of VOCAB) { const p = ptNorm(w.pt); if (p.includes(' ') || PT_AMBIG.has(p)) continue; const sc = 1 - lev(n, p) / Math.max(n.length, p.length); if (sc > bs) { bs = sc; bw = w; } } }
+  return bs >= 0.75 ? bw : null;
+}
+let srPTBroken = false;
+const canHearPT = () => !!SR && !IOS_APP && !srPTBroken;
+function hearPT(onLive) {
+  return new Promise((resolve) => {
+    const r = new SR(); curRec = r; r.lang = 'pt-BR'; r.interimResults = true; r.maxAlternatives = 5; r.continuous = false;
+    let alts = [], live = '', done = false, any = false;
+    const fin = (extra) => {
+      if (done) return; done = true; if (curRec === r) curRec = null; try { r.abort(); } catch (e) {}
+      if (!alts.length && live) alts = [live];
+      setSession('playback'); setTimeout(() => { if (actx && actx.state !== 'running') actx.resume(); resolve(Object.assign({ alts, heardAny: any || !!alts.length }, extra || {})); }, 450);
+    };
+    r.onresult = (ev) => { any = true; const res = ev.results[ev.results.length - 1]; live = res[0].transcript; if (onLive) onLive(live); if (res.isFinal) { alts = [...res].map((a) => a.transcript); fin(); } };
+    r.onerror = (e) => fin(['not-allowed', 'service-not-allowed', 'audio-capture', 'network', 'language-not-supported'].includes(e.error) ? { broken: true, error: e.error } : { error: e.error });
+    r.onend = () => fin();
+    setTimeout(() => fin(), 8000);
+    setSession('play-and-record');
+    try { r.start(); } catch (e) { fin({ broken: true }); }
+  });
+}
+let TK = null, talkWorld = 0;
+const talkAlive = (tk) => TK === tk && current === 'talk';
+function enterTalk() {
+  tickSleep(); wake(); lumi.setMood('idle');
+  talkWorld = D.units[unitIndex()].wi || 0;
+  $('#ttabs').innerHTML = D.worlds.map((w, i) => `<button data-wi="${i}"><span>${w.icon}</span>${esc(w.name)}</button>`).join('');
+  renderTalkGrid(); talkIdle((TK = {}), true);
+}
+function renderTalkGrid() {
+  $$('#ttabs button').forEach((b) => b.classList.toggle('on', +b.dataset.wi === talkWorld));
+  $('#tgrid').innerHTML = VOCAB.map((w, i) => (w.wi === talkWorld ? `<button data-i="${i}" aria-label="${esc(w.pt)}"><span class="e">${picHTML(w)}</span><small>${esc(w.pt)}</small></button>` : '')).join('');
+  $('#tgrid').scrollLeft = 0;
+}
+async function talkIdle(tk, first) {
+  const can = canHearPT(), bub = $('#talk-bubble');
+  lumi.setMood('idle');
+  $('#tstage').innerHTML = can ? `<button class="mic" id="tmic" aria-label="Falar">🎤</button><div class="tlbl" id="tlbl">${first ? 'Toque no 🎤 e fale uma palavra em português' : 'Fala outra palavra!'}<small>ou toque numa figura 👇</small></div>`
+    : `<div class="tlbl solo">👇 Toque numa figura<small>que o Lumi te ensina em inglês!</small></div>`;
+  if (can) $('#tmic').onclick = () => { audioCtx(); hearAndTeach((TK = {})); };
+  const ok = await say(bub, [[can ? (first ? T.pt.talkIntro : T.pt.talkMore) : (first ? T.pt.talkTap : T.pt.talkMoreTap), 'pt']]);
+  if (ok && first && can && talkAlive(tk)) hearAndTeach(tk); // na primeira vez já começa a ouvir sozinho
+}
+async function hearAndTeach(tk) {
+  stopTalk(); stopListen(); await wait(60); if (!talkAlive(tk)) return;
+  const mic = $('#tmic'), lbl = $('#tlbl'); if (!mic) return;
+  mic.className = 'mic listen'; lbl.innerHTML = 'Estou ouvindo... 👂<small>fale uma palavra em português</small>'; lumi.setMood('listen');
+  const r = await hearPT((t) => { if (talkAlive(tk)) lbl.innerHTML = `“${esc(t)}”<small>estou ouvindo... 👂</small>`; });
+  if (!talkAlive(tk)) return;
+  lumi.setMood('idle'); mic.className = 'mic';
+  if (r.broken) { srPTBroken = true; return talkIdle(tk, true); } // sem reconhecimento de voz aqui: vira "toque na figura"
+  let w = null; for (const a of r.alts) { w = findWord(a); if (w) break; }
+  if (w) return teachTalk(tk, w);
+  lumi.encourage();
+  if (!r.alts.length) { lbl.innerHTML = 'Não ouvi! 🤔<small>toque no 🎤 e fale de novo</small>'; say($('#talk-bubble'), [[T.pt.talkNotHeard, 'pt']]); return; }
+  lbl.innerHTML = `Eu ouvi: “${esc(r.alts[0])}”<small>essa eu ainda não sei 🤔</small>`; say($('#talk-bubble'), [[T.pt.talkUnknown, 'pt']]);
+}
+async function teachTalk(tk, w) {
+  const bub = $('#talk-bubble'), ptw = cap(w.pt) + '!';
+  $$('#tgrid button').forEach((b) => b.classList.toggle('sel', VOCAB[+b.dataset.i] === w));
+  $('#tstage').innerHTML = `<div class="tcard"><div class="tpic">${picHTML(w)}</div><div class="tw"><b class="ten">${esc(w.en)}</b><span class="tpt">${esc(w.pt)}</span><span class="tok" id="tok"></span></div><button class="spk" id="tspk" aria-label="Ouvir">🔊</button></div>`;
+  $('#tspk').onclick = () => { audioCtx(); stopListen(); speak(w.en, 'en'); };
+  lumi.hop && lumi.hop();
+  if (!(await say(bub, [[ptw + ' ' + T.pt.inEn, 'pt'], [w.en, 'en']], `${esc(ptw)} Em inglês é <span class="en">${esc(w.en)}</span>!`)) || !talkAlive(tk)) return;
+  for (let tries = 0; tries < 2; tries++) { // a vez da criança: repete em inglês (vale para a missão do dia)
+    if (!(await say(bub, [[tries ? T.pt.again : T.pt.yourTurn, 'pt'], [w.en, 'en']], `${tries ? 'Escuta de novo:' : 'Agora você! Fala:'} <span class="en">${esc(w.en)}</span>`)) || !talkAlive(tk)) return;
+    const sp = $('#tspk'); sp.outerHTML = `<button class="mic listen" id="tsay" aria-label="Falar">${micBroken ? '✅' : '🎤'}</button>`;
+    const btn = $('#tsay'), tok = $('#tok'); lumi.setMood('listen');
+    let r;
+    if (micBroken) { tok.textContent = 'Fale e toque no ✅'; r = await new Promise((res) => (btn.onclick = () => res({ ok: true }))); }
+    else { tok.textContent = 'Sua vez! 👂'; r = await listen(w.key || w.en); if (r.broken) { btn.textContent = '✅'; tok.textContent = 'Fale e toque no ✅'; r = await new Promise((res) => (btn.onclick = () => res({ ok: true }))); } }
+    if (!talkAlive(tk)) return;
+    lumi.setMood('idle'); btn.className = 'mic idle';
+    if (r.ok) {
+      lumi.celebrate(); missionAdd('palavras'); tok.textContent = '🎉 Isso!'; coinFly(btn, '⭐');
+      await say(bub, [[rnd(T.en.praise), 'en'], [rnd(T.pt.praise), 'pt']]); break;
+    }
+    tok.textContent = r.heardAny ? (r.heard ? `Eu ouvi: “${r.heard}”` : '') : 'Não ouvi 🤔'; lumi.encourage();
+    if (tries === 1) { lumi.hop(); await say(bub, [[T.pt.goodTry, 'pt'], [w.en, 'en']], `Boa tentativa! <span class="en">${esc(w.en)}</span> 👍`); }
+    else await wait(400);
+    if (!talkAlive(tk)) return;
+    const b2 = $('#tsay'); if (b2) b2.outerHTML = '<button class="spk" id="tspk" aria-label="Ouvir">🔊</button>';
+  }
+  if (!talkAlive(tk)) return;
+  await wait(700); if (talkAlive(tk)) talkIdle(tk, false);
+}
+$('#ttabs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; talkWorld = +b.dataset.wi; renderTalkGrid(); b.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' }); });
+$('#tgrid').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; audioCtx(); stopTalk(); stopListen(); teachTalk((TK = {}), VOCAB[+b.dataset.i]); });
+
 /* ---------------- modais ---------------- */
 function sheet(html) { $('#sheet').innerHTML = html; $('#modal').classList.add('on'); }
 function closeSheet() { $('#modal').classList.remove('on'); }
@@ -1168,7 +1291,7 @@ function openTired() {
 bind();
 enterSplash();
 setTimeout(() => $('#loading').classList.add('off'), 250);
-window.__lumi = { S, stage, go, startLesson, openChest, checkAwards, updateFx, get LS() { return LS; }, setMicBroken: (v) => { micBroken = v; }, get micMode() { return micBroken ? 'tap' : srBroken ? 'vad' : 'sr'; } };
+window.__lumi = { S, stage, go, startLesson, openChest, checkAwards, updateFx, findWord, get LS() { return LS; }, setMicBroken: (v) => { micBroken = v; }, get micMode() { return micBroken ? 'tap' : srBroken ? 'vad' : 'sr'; } };
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   const SW = navigator.serviceWorker, hadSW = !!SW.controller;
   SW.register('sw.js', { updateViaCache: 'none' }).then((reg) => {

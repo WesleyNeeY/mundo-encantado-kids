@@ -68,6 +68,7 @@ window.LUMI_LINES = {
     bookPick: 'Escolhe uma história que eu leio para você!',
     bookTip: 'Toca nas palavras para ouvir!',
     bookEnd: 'Que história legal!',
+    gamesPick: 'Escolhe um jogo para a gente brincar!',
     yesnoIntro: 'Certo ou errado? Eu falo uma palavra e você diz se eu acertei!',
     yesnoCaught: 'Hihi! Você me pegou! O certo é...',
     yesnoWasYes: 'Era sim! Em inglês é...',

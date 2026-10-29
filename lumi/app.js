@@ -394,7 +394,7 @@ $('#mapwrap').addEventListener('click', (e) => {
 let LS = null;
 const STARS = 8;
 function picHTML(w) { return w.txt ? `<span class="num">${w.txt}</span>` : w.img; }
-function setStars() { $('#lbar').style.width = (LS.stars / STARS) * 100 + '%'; $('#lcount').textContent = LS.stars + '/' + STARS; $('#ltitle').textContent = (LS.u.type === 'game' ? 'Fase ' : 'Aula ') + LS.u.num; }
+function setStars() { $('#lbar').style.width = (LS.stars / STARS) * 100 + '%'; $('#lcount').textContent = LS.stars + '/' + STARS; $('#ltitle').textContent = LS.u.free ? LS.u.name : (LS.u.type === 'game' ? 'Fase ' : 'Aula ') + LS.u.num; }
 function addStar(el) {
   LS.stars = Math.min(STARS, LS.stars + 1); setStars();
   if (el) coinFly(el, '+2 🪙'); S.coins += 2; LS.coins += 2; save();
@@ -409,7 +409,7 @@ const give = (en) => 'Give me the ' + en.toLowerCase() + '!';
 function startLesson(ui) {
   tickSleep(); wake();
   if (S.energy < 10) { openTired(); return; }
-  const u = D.units[ui], world = worldOf(u);
+  const u = typeof ui === 'object' ? ui : D.units[ui], world = worldOf(u); // ui também pode ser um jogo livre (botão Jogos)
   let words = [], items = [];
   if (u.type === 'lesson') {
     const seenW = (S.units[u.id] && S.units[u.id].seenWords) || [];
@@ -804,7 +804,8 @@ function finishLesson(ls) {
   const u = ls.u, st = S.units[u.id] || {};
   st.done = true; st.stars = Math.max(st.stars || 0, stars);
   st.seenWords = [...new Set([...(st.seenWords || []), ...ls.words.map((w) => w.en)])];
-  S.units[u.id] = st; S.coins += 20; S.xp += 50; touchStreak(); save();
+  if (!u.free) S.units[u.id] = st; // jogo livre não mexe no progresso do mapa
+  S.coins += 20; S.xp += 50; touchStreak(); save();
   LS = null; avatarURL = null; missionAdd('aula');
   show('result');
   $('#result-title').textContent = ls.u.type === 'game' ? 'Fase completa!' : 'Aula completa!';
@@ -844,6 +845,23 @@ function checkAwards(levelBefore, growBefore) {
 function renderChestBtn() { const b = $('#btn-chest'); if (!b) return; b.style.display = S.chests.length ? '' : 'none'; $('#chest-n').textContent = S.chests.length; }
 $('#btn-chest').addEventListener('click', () => { audioCtx(); openChest(); });
 $('#btn-legend').addEventListener('click', () => { audioCtx(); slot = 'legend'; go('shop'); });
+
+/* ---------------- JOGOS: a criança escolhe qualquer jogo para brincar quando quiser ---------------- */
+const GAMES = [['balloon', 'Estoura balão', 'Estoure o balão que o Lumi falar'], ['yesno', 'Certo ou errado', 'Será que o Lumi acertou a palavra?'], ['memory', 'Jogo da memória', 'Ache os pares iguais'], ['feed', 'Dar comida', 'Dê ao Lumi o que ele pedir'], ['simon', 'Lumi diz', 'Faça o que o Lumi mandar']];
+function freeGame(g) { // usa as palavras da fase desse jogo mais adiantada que a criança já liberou (sem mexer no progresso)
+  const cur = unitIndex(); let k = -1;
+  D.units.forEach((u, i) => { if (u.type === 'game' && u.game === g) { if (i <= cur) k = i; else if (k < 0) k = i; } });
+  const name = GAMES.find((x) => x[0] === g)[1];
+  return Object.assign({}, D.units[k], { id: 'free-' + g, free: true, name });
+}
+function openGames() {
+  sheet(`<h2>🎮 Jogos</h2><p>Escolha um jogo para brincar com o Lumi!</p>
+    <div class="mlist">${GAMES.map(([g, name, txt]) => `<button class="mrow" data-g="${g}"><span class="mi">${D.units.find((u) => u.game === g).icon}</span><span class="mt"><b>${name}</b><small>${txt}</small></span><span class="mck">▶</span></button>`).join('')}</div>
+    <button class="big sm blue" data-close>Fechar</button>`);
+  $$('#sheet .mrow').forEach((r) => (r.onclick = () => { closeSheet(); if (!S.hatched) { toast('🚀 Primeiro abra a cápsula do Lumi!'); return; } startLesson(freeGame(r.dataset.g)); }));
+  say($('#home-bubble'), [[T.pt.gamesPick, 'pt']]);
+}
+$('#btn-games').addEventListener('click', () => { audioCtx(); openGames(); });
 
 /* ---------------- MISSÃO DO DIA: 3 tarefinhas que valem um baú ---------------- */
 const CHEST_SVG = '<svg viewBox="0 0 38 32"><rect x="2" y="12" width="34" height="18" rx="3" fill="#c0392b" stroke="#7a1f14" stroke-width="2"/><path d="M2 14 Q2 2 19 2 Q36 2 36 14 Z" fill="#e74c3c" stroke="#7a1f14" stroke-width="2"/><rect x="2" y="12" width="34" height="4" fill="#f1c40f"/><rect x="16" y="11" width="6" height="9" rx="1.5" fill="#f1c40f" stroke="#a87b00"/><rect x="8" y="2.5" width="3" height="27" fill="#f1c40f" opacity=".9"/><rect x="27" y="2.5" width="3" height="27" fill="#f1c40f" opacity=".9"/></svg>';

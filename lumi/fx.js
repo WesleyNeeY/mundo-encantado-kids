@@ -36,6 +36,10 @@ export const ICONS = {
     <path d="M24 13 C 18 8, 9 8, 3 10 v29 c6 -2 15 -2 21 3 z" fill="url(#${a})" stroke="#c2410c" stroke-width="1.2"/><path d="M24 13 C 30 8, 39 8, 45 10 v29 c-6 -2 -15 -2 -21 3 z" fill="url(#${b})" stroke="#1d4ed8" stroke-width="1.2"/>
     <path d="M8 17 c4 -1 8 -1 12 1 M8 23 c4 -1 8 -1 12 1 M8 29 c4 -1 8 -1 12 1 M28 18 c4 -2 8 -2 12 -1 M28 24 c4 -2 8 -2 12 -1" stroke="#fff" stroke-width="2" fill="none" opacity=".75" stroke-linecap="round"/><path d="M24 13 v29" stroke="#fff" stroke-width="1.4" opacity=".6"/>
     <path d="M39 1 L40.6 5.4 L45 7 L40.6 8.6 L39 13 L37.4 8.6 L33 7 L37.4 5.4 Z" fill="#ffd21f" stroke="#e0a000" stroke-width=".8"/></svg>`; },
+  games() { const a = id('j'); return `<svg viewBox="0 0 48 48"><defs><linearGradient id="${a}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd8ff"/><stop offset="1" stop-color="#5b5bf0"/></linearGradient></defs>
+    <path d="M14 13 h20 c6 0 10 5 11 12 l1.5 9 c.8 4.5 -4 7 -7 4 l-5 -5 h-17 l-5 5 c-3 3 -7.8 .5 -7 -4 l1.5 -9 c1 -7 5 -12 11 -12 z" fill="url(#${a})" stroke="#3a3ac0" stroke-width="1.3"/>
+    <path d="M13 20 v9 M8.5 24.5 h9" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><circle cx="33" cy="20.5" r="2.7" fill="#ffd21f"/><circle cx="38" cy="25.5" r="2.7" fill="#ff5d73"/><circle cx="28" cy="25.5" r="2.7" fill="#5fe08a"/><circle cx="33" cy="30.5" r="2.7" fill="#fff"/>
+    <path d="M16 16.5 q4 -2 9 -1" stroke="#fff" stroke-width="2" opacity=".5" fill="none" stroke-linecap="round"/></svg>`; },
   fire() { const a = id('f'); return `<svg viewBox="0 0 48 48"><defs><linearGradient id="${a}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff3d00"/><stop offset=".6" stop-color="#ff9100"/><stop offset="1" stop-color="#ffd54f"/></linearGradient></defs>
     <path d="M24 3 C 28 12, 38 16, 38 29 C 38 38, 31 45, 24 45 C 16 45, 10 38, 10 30 C 10 22, 16 18, 17 11 C 21 15, 21 19, 21 22 C 24 18, 26 11, 24 3 Z" fill="url(#${a})"/><path d="M24 26 C 27 30, 31 32, 30 37 C 29 41, 26 43, 24 43 C 21 43, 18 40, 18 36 C 18 32, 22 30, 24 26 Z" fill="#fff3a0"/></svg>`; },
 };
@@ -47,6 +51,7 @@ document.querySelectorAll('#btn-legend > span').forEach((e) => setIcon(e, 'spark
 document.querySelectorAll('.sbtn[data-go="map"] > span').forEach((e) => setIcon(e, 'map'));
 document.querySelectorAll('#echo-badge > span').forEach((e) => setIcon(e, 'mic'));
 document.querySelectorAll('#btn-mission > span').forEach((e) => setIcon(e, 'target'));
+document.querySelectorAll('#btn-games > span').forEach((e) => setIcon(e, 'games'));
 document.querySelectorAll('#btn-talk > span').forEach((e) => setIcon(e, 'talk'));
 document.querySelectorAll('#btn-books > span').forEach((e) => setIcon(e, 'book'));
 const tabIcon = { home: 'home', rest: 'moon', snack: 'apple', shop: 'hat' };

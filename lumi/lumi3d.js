@@ -1421,10 +1421,10 @@ function makeSchool() {
   const floorT = canvasTex(512, 512, (x, w) => { x.fillStyle = '#3a33a3'; x.fillRect(0, 0, w, w); const s = w / 2;
     for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) { ctxRR(x, i * s + 4, j * s + 4, s - 8, s - 8, 34); const g = x.createLinearGradient(i * s, j * s, i * s + s, j * s + s); g.addColorStop(0, '#6c66df'); g.addColorStop(1, '#544dca'); x.fillStyle = g; x.fill();
       x.strokeStyle = 'rgba(255,255,255,.16)'; x.lineWidth = 3; ctxRR(x, i * s + 9, j * s + 9, s - 18, s - 18, 30); x.stroke(); } });
-  floorT.wrapS = floorT.wrapT = THREE.RepeatWrapping; floorT.repeat.set(24, 12.7);
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(34, 18), new THREE.MeshPhysicalMaterial({ map: floorT, roughness: 0.38, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 0.35 }));
-  floor.rotation.x = -Math.PI / 2; floor.position.set(0.5, 0, 0); floor.receiveShadow = true; G.add(floor);
-  const mirror = makeFloorMirror(new THREE.PlaneGeometry(34, 18)); mirror.rotation.x = -Math.PI / 2; mirror.position.set(0.5, 0.003, 0); G.add(mirror);
+  floorT.wrapS = floorT.wrapT = THREE.RepeatWrapping; floorT.repeat.set(28, 42);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 60), new THREE.MeshPhysicalMaterial({ map: floorT, roughness: 0.38, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 0.35 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.set(0.5, 0, 21); floor.receiveShadow = true; G.add(floor);
+  const mirror = makeFloorMirror(new THREE.PlaneGeometry(40, 60)); mirror.rotation.x = -Math.PI / 2; mirror.position.set(0.5, 0.003, 21); G.add(mirror);
   const streakT = canvasTex(64, 256, (x, w, h) => { const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(0.3, 'rgba(255,255,255,.4)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h);
     const e = x.createLinearGradient(0, 0, w, 0); e.addColorStop(0, 'rgba(0,0,0,1)'); e.addColorStop(0.25, 'rgba(0,0,0,0)'); e.addColorStop(0.75, 'rgba(0,0,0,0)'); e.addColorStop(1, 'rgba(0,0,0,1)'); x.globalCompositeOperation = 'destination-out'; x.fillStyle = e; x.fillRect(0, 0, w, h); });
   { const aoT = canvasTex(8, 64, (x, w, h) => { const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(26,14,90,.55)'); g.addColorStop(1, 'rgba(26,14,90,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); });

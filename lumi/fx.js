@@ -35,7 +35,7 @@ function setIcon(el, name) { if (el && ICONS[name]) el.innerHTML = ICONS[name]()
 document.querySelectorAll('#btn-gift > span').forEach((e) => setIcon(e, 'gift'));
 document.querySelectorAll('#btn-legend > span').forEach((e) => setIcon(e, 'sparkle'));
 document.querySelectorAll('.sbtn[data-go="map"] > span').forEach((e) => setIcon(e, 'map'));
-document.querySelectorAll('#btn-echo > span').forEach((e) => setIcon(e, 'mic'));
+document.querySelectorAll('#btn-echo > span, #echo-badge > span').forEach((e) => setIcon(e, 'mic'));
 const tabIcon = { home: 'home', rest: 'moon', snack: 'apple', shop: 'hat' };
 document.querySelectorAll('.tabbar button').forEach((b) => setIcon(b.querySelector('span'), tabIcon[b.dataset.go]));
 document.querySelectorAll('.ic.coin').forEach((e) => { e.classList.add('svgic'); setIcon(e, 'coin'); });

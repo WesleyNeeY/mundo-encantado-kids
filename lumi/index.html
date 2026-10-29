@@ -352,6 +352,12 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 .sbtn span{font-size:28px;line-height:1.1}
 .sbtn:active{transform:translateY(3px)}
 .sbtn.glow{animation:glow 1.4s ease-in-out infinite}
+.bubble.sb{left:auto;right:14px;transform:none;top:calc(196px + env(safe-area-inset-top,0px));max-width:52%;font-size:17px;z-index:3}
+.bubble.sb::after{left:30px}
+.bubble.sb.pop{animation:popr .4s cubic-bezier(.2,1.6,.4,1)}
+.echo-badge{position:absolute;left:16px;top:calc(200px + env(safe-area-inset-top,0px));z-index:3;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-size:28px;background:linear-gradient(180deg,#ff8fb0,#ff4f7e);box-shadow:0 0 0 calc(3px + var(--lv,0) * 14px) rgba(255,79,126,.3),0 4px 0 #c9285a;opacity:0;transform:scale(.6);transition:opacity .3s,transform .3s;pointer-events:none}
+.echo-badge.on{opacity:1;transform:scale(1);animation:recp 1.1s ease-in-out infinite}
+.echo-badge span{width:34px;height:34px;display:block}.echo-badge span svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 1px rgba(0,0,0,.2))}
 .sbtn.rec{background:linear-gradient(180deg,#ff8fb0,#ff4f7e);color:#fff;box-shadow:0 0 0 calc(3px + var(--lv,0) * 12px) rgba(255,79,126,.32),0 4px 0 #c9285a;animation:recp 1.1s ease-in-out infinite}
 @keyframes recp{50%{transform:scale(1.06)}}
 .bubble.hb{left:auto;right:16px;transform:none;top:calc(150px + env(safe-area-inset-top,0px));max-width:52%;font-size:17px}
@@ -716,6 +722,8 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
    <input id="kidname" maxlength="16" placeholder="Qual é o seu nome?" autocomplete="off">
    <button class="big" id="btn-start">Vamos lá! ▶</button>
   </div>
+  <div class="bubble sb pop" id="splash-bubble"></div>
+  <div class="echo-badge" id="echo-badge"><span>🎤</span></div>
  </section>
 
  <!-- HOME -->

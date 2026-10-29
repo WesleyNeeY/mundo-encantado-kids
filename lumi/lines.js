@@ -68,8 +68,6 @@ window.LUMI_LINES = {
     bookPick: 'Escolhe uma história que eu leio para você!',
     bookTip: 'Toca nas palavras para ouvir!',
     bookEnd: 'Que história legal!',
-    songPick: 'Escolhe uma música para a gente cantar!',
-    songDone: 'Você canta muito bem!',
   },
   en: {
     praise: ['Great job!', 'Awesome!', 'Well done!', 'Excellent!', 'Super!'],

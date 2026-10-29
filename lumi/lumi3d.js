@@ -1700,6 +1700,151 @@ function makeBedroom() {
   G.userData.lowPower = () => { sparks.visible = false; shaft.visible = false; };
   return G;
 }
+/* ------------------------------------------------------------ peças comuns dos cômodos 3D */
+function roomKit() {
+  const anim = [], tick = (fn) => anim.push(fn);
+  const basic = (c, o = {}) => new THREE.MeshBasicMaterial(Object.assign({ color: c, toneMapped: false }, o));
+  const addM = (c, o, map) => basic(c, { map: map || null, transparent: true, opacity: o, depthWrite: false, blending: THREE.AdditiveBlending });
+  const gloss = (c, o = {}) => new THREE.MeshPhysicalMaterial(Object.assign({ color: c, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.14, envMapIntensity: 0.55 }, o));
+  const soft = (c, o = {}) => new THREE.MeshPhysicalMaterial(Object.assign({ color: c, roughness: 0.82, sheen: 1, sheenRoughness: 0.5, sheenColor: new C(0xffffff), envMapIntensity: 0.4 }, o));
+  const glowT = radialTex([[0, 'rgba(255,255,255,1)'], [0.22, 'rgba(255,255,255,.6)'], [0.55, 'rgba(255,255,255,.14)'], [1, 'rgba(255,255,255,0)']]);
+  const shadowT = radialTex([[0, 'rgba(30,20,90,.5)'], [0.5, 'rgba(30,20,90,.2)'], [1, 'rgba(30,20,90,0)']]);
+  const halo = (c, s, o = 0.6) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowT, color: c, transparent: true, opacity: o, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false })); sp.scale.set(s, s, 1); return sp; };
+  const blob = (w, d, o = 1) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ map: shadowT, transparent: true, opacity: o, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.y = 0.012; return m; };
+  const box = (sx, sy, sz, m, e = 3.4) => new THREE.Mesh(roundBoxGeo(1, e, sx / 2, sy / 2, sz / 2, 28), m);
+  const glowLine = (pts, c, r = 0.02, hr = 0.07, ho = 0.3) => { const cv = new THREE.CatmullRomCurve3(pts); return [new THREE.Mesh(new THREE.TubeGeometry(cv, 40, r, 6), basic(c)), new THREE.Mesh(new THREE.TubeGeometry(cv, 40, hr, 6), addM(c, ho))]; };
+  const holoPanel = (w, h, draw, tint = 0x9ff3ff) => { // tela holográfica com texto/ícones desenhados, linhas que correm e brilho
+    const g = new THREE.Group(), cv = document.createElement('canvas'); cv.width = 512; cv.height = Math.round((512 * h) / w); const x = cv.getContext('2d'), tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+    const paint = () => { const W = cv.width, H = cv.height; x.clearRect(0, 0, W, H); ctxRR(x, 10, 10, W - 20, H - 20, 40); const gr = x.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, 'rgba(38,86,226,.84)'); gr.addColorStop(1, 'rgba(26,38,160,.78)'); x.fillStyle = gr; x.fill();
+      x.save(); x.shadowColor = '#5ff0ff'; x.shadowBlur = 18; x.strokeStyle = '#b4f7ff'; x.lineWidth = 6; x.stroke(); x.restore(); draw(x, W, H); tex.needsUpdate = true; };
+    paint(); if (document.fonts && document.fonts.load) document.fonts.load("700 60px 'Fredoka'").then(paint).catch(() => {});
+    const scr = new THREE.Mesh(new THREE.PlaneGeometry(w, h), basic(0xffffff, { map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide })); g.add(scr);
+    const hb = halo(tint, Math.max(w, h) * 1.5, 0.3); hb.position.z = -0.05; hb.scale.set(w * 1.6, h * 1.6, 1); g.add(hb);
+    tick((t) => { const fl = Math.sin(t * 17 + w) > 0.985 ? 0.6 : 1; scr.material.opacity = (0.92 + 0.08 * Math.sin(t * 2.4)) * fl; hb.material.opacity = 0.24 + 0.08 * Math.sin(t * 1.9); });
+    return g;
+  };
+  const F = "'Fredoka', 'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif";
+  const sparks = (G, n, x0, x1, y0, y1, z0, z1, cA, cB) => { // brilhinhos subindo devagar
+    const pg = new THREE.BufferGeometry(), pp = new Float32Array(n * 3), pc = new Float32Array(n * 3), sd = []; for (let i = 0; i < n; i++) sd.push([x0 + Math.random() * (x1 - x0), Math.random() * (y1 - y0), z0 + Math.random() * (z1 - z0), Math.random() * TAU, 0.06 + Math.random() * 0.1]);
+    pg.setAttribute('position', new THREE.BufferAttribute(pp, 3)); pg.setAttribute('color', new THREE.BufferAttribute(pc, 3));
+    const P = new THREE.Points(pg, new THREE.PointsMaterial({ size: 0.07, map: glowT, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false })); P.frustumCulled = false; G.add(P);
+    const a = new C(cA), b = new C(cB), H = y1 - y0;
+    tick((t) => { for (let i = 0; i < n; i++) { const s = sd[i], y = (s[1] + t * s[4]) % H, tw = 0.3 + 0.7 * Math.max(0, Math.sin(t * 1.8 + s[3] * 3)), fd = Math.min(1, y * 2, (H - y) * 2) * tw, c = i % 2 ? a : b;
+      pp[i * 3] = s[0] + Math.sin(t * 0.4 + s[3]) * 0.2; pp[i * 3 + 1] = y0 + y; pp[i * 3 + 2] = s[2]; pc[i * 3] = c.r * fd; pc[i * 3 + 1] = c.g * fd; pc[i * 3 + 2] = c.b * fd; }
+      pg.attributes.position.needsUpdate = true; pg.attributes.color.needsUpdate = true; });
+    return P;
+  };
+  const floorTiles = (c1, c2, rep, gloss = true) => { const t = canvasTex(256, 256, (x, w) => { x.fillStyle = c2; x.fillRect(0, 0, w, w); for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) { ctxRR(x, i * 128 + 3, j * 128 + 3, 122, 122, 18); x.fillStyle = (i + j) % 2 ? c1 : c2; x.fill(); x.strokeStyle = 'rgba(255,255,255,.35)'; x.lineWidth = 2; x.stroke(); } });
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); const m = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshPhysicalMaterial({ map: t, roughness: 0.3, clearcoat: gloss ? 1 : 0, clearcoatRoughness: 0.1, envMapIntensity: 0.45 }));
+    m.rotation.x = -Math.PI / 2; m.position.set(0, 0, 8); m.receiveShadow = true; return m; };
+  const wallWith = (z, texDraw, holes = []) => { const S = new THREE.Shape(); S.moveTo(-12, -0.2); S.lineTo(12, -0.2); S.lineTo(12, 12); S.lineTo(-12, 12); S.closePath(); holes.forEach((h) => S.holes.push(h));
+    const m = new THREE.Mesh(uvFit(new THREE.ShapeGeometry(S, 24), -12, -0.2, 24, 12.2), new THREE.MeshStandardMaterial({ map: canvasTex(512, 512, texDraw), roughness: 0.7, envMapIntensity: 0.3 })); m.position.z = z; return m; };
+  return { anim, tick, basic, addM, gloss, soft, glowT, halo, blob, box, glowLine, holoPanel, F, sparks, floorTiles, wallWith };
+}
+const ROOM_REF = { x: 0, dist: 12.138 }; // câmera das telas de lanche e de acessórios (Lumi bebê)
+
+/* ------------------------------------------------------------ cozinha futurista (tela de lanche) */
+function makeKitchen() {
+  const K = roomKit(), { tick, basic, addM, gloss, soft, halo, blob, box, glowLine, holoPanel, F } = K, G = new THREE.Group();
+  const CY = 0x4fe3ff, PK = 0xff8ad8, YE = 0xffd65a, WHITE = gloss(0xf6f5ff), MINT = gloss(0x8ce8d2), LIL = gloss(0xb9a4ff);
+  const WZ = -6, R0 = { x: -1.45, y: 4.0, r: 0.72 };
+  const hole = new THREE.Path(); hole.absarc(R0.x, R0.y, R0.r, 0, TAU, true);
+  G.add(K.wallWith(WZ, (x, w, h) => { const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#7563d8'); g.addColorStop(0.5, '#9d8cf2'); g.addColorStop(1, '#8472e4'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+    const by0 = h * (1 - 2.6 / 12.2), by1 = h * (1 - 1.05 / 12.2); for (let yy = by0; yy < by1; yy += 14) for (let xx = (Math.floor(yy / 14) % 2) * 9; xx < w; xx += 18) { ctxRR(x, xx + 1, yy + 1, 16, 12, 4); x.fillStyle = 'rgba(255,255,255,.55)'; x.fill(); } }, [hole]));
+  // janela redonda com o céu de dia e a cidade
+  const sky = new THREE.Mesh(new THREE.CircleGeometry(R0.r + 0.05, 48), basic(0xffffff, { map: canvasTex(256, 256, (x, w) => { const g = x.createLinearGradient(0, 0, 0, w); g.addColorStop(0, '#3d8cf7'); g.addColorStop(0.7, '#a9cdff'); g.addColorStop(1, '#e8f3ff'); x.fillStyle = g; x.fillRect(0, 0, w, w);
+    x.fillStyle = 'rgba(255,255,255,.9)'; for (const [cx, cy, r] of [[60, 70, 26], [90, 62, 30], [120, 72, 22], [180, 110, 18], [205, 104, 22]]) { x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill(); }
+    let sd = 3; const rr = () => ((sd = (sd * 16807) % 2147483647) / 2147483647); for (let i = 0; i < 9; i++) { const bw = 22 + rr() * 26, bh = 60 + rr() * 110, bx = i * 30 - 10; x.fillStyle = rr() < 0.5 ? '#ffffff' : '#dfe9ff'; ctxRR(x, bx, w - bh, bw, bh + 10, bw / 2.4); x.fill(); x.fillStyle = '#5aa6f4'; for (let yy = w - bh + 16; yy < w - 6; yy += 14) x.fillRect(bx + 3, yy, bw - 6, 4); } }) }));
+  sky.position.set(R0.x, R0.y, WZ - 0.4); G.add(sky);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(R0.r + 0.06, 0.09, 12, 64), WHITE); ring.position.set(R0.x, R0.y, WZ + 0.02); G.add(ring);
+  { const rg = new THREE.Mesh(new THREE.TorusGeometry(R0.r + 0.01, 0.018, 6, 64), basic(CY)); rg.position.set(R0.x, R0.y, WZ + 0.1); G.add(rg); const gl = new THREE.Mesh(new THREE.CircleGeometry(R0.r, 48), addM(0xe6f6ff, 0.18)); gl.position.set(R0.x, R0.y, WZ - 0.02); G.add(gl); }
+  // balcão arredondado com tampo e faixa de luz, armários de cima com potes coloridos
+  const counter = box(6.2, 1.0, 0.9, WHITE); counter.position.set(0, 0.5, WZ + 0.45); G.add(counter);
+  const top = box(6.4, 0.12, 1.0, MINT, 4); top.position.set(0, 1.04, WZ + 0.48); G.add(top);
+  { const [a, b] = glowLine([new THREE.Vector3(-3.1, 0.12, WZ + 0.92), new THREE.Vector3(3.1, 0.12, WZ + 0.92)], CY); G.add(a, b); }
+  for (const x of [-2.2, -0.75, 0.75]) { const d = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.015, 6, 18), gloss(0xffd28a)); d.position.set(x, 0.62, WZ + 0.91); G.add(d); }
+  const shelf = box(3.4, 0.08, 0.36, WHITE); shelf.position.set(0.55, 2.85, WZ + 0.2); G.add(shelf);
+  const jars = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.11, 0.11, 0.26, 18), gloss(0xffffff, { transparent: true, opacity: 0.9 }), 6), lids = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.115, 0.115, 0.05, 18), gloss(0xffffff), 6);
+  [[-0.7, 0xff6f91], [-0.35, 0xffd65a], [0, 0x7be08a], [0.95, 0x7fd6ff], [1.3, 0xc49bff], [1.65, 0xff9a4d]].forEach(([x, c], i) => { jars.setMatrixAt(i, new THREE.Matrix4().setPosition(x, 3.02, WZ + 0.22)); jars.setColorAt(i, new C(c)); lids.setMatrixAt(i, new THREE.Matrix4().setPosition(x, 3.18, WZ + 0.22)); lids.setColorAt(i, new C([PK, CY, YE][i % 3])); });
+  G.add(jars, lids);
+  // geladeira com tela holográfica de comidas
+  const fr = new THREE.Group(); fr.position.set(1.75, 0, WZ + 0.55); G.add(fr);
+  { const b = box(1.15, 3.3, 0.9, WHITE, 3.8); b.position.y = 1.65; fr.add(b); const ln = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.02, 0.02), basic(0xc9c4f0)); ln.position.set(0, 2.25, 0.46); fr.add(ln);
+    for (const y of [1.4, 2.7]) { const hd = box(0.07, 0.5, 0.07, gloss(0xffd28a)); hd.position.set(-0.42, y, 0.5); fr.add(hd); } fr.add(blob(1.6, 1.0, 0.7)); }
+  const menu = holoPanel(0.82, 0.62, (x, w, h) => { x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = `700 64px ${F}`; x.fillStyle = '#ffe56e'; x.shadowColor = '#ffae00'; x.shadowBlur = 14; x.fillText('Yummy!', w / 2, h * 0.3); x.shadowBlur = 0; x.font = '84px serif'; ['🍎', '🍌', '🍪'].forEach((e, i) => x.fillText(e, w * (0.24 + i * 0.26), h * 0.7)); });
+  menu.position.set(1.72, 1.55, WZ + 1.03); G.add(menu);
+  // fruteira, plantinha e lâmpadas penduradas
+  const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.32, 28, 12, 0, TAU, Math.PI / 2, Math.PI / 2), gloss(0xffffff, { side: THREE.DoubleSide })); bowl.position.set(-1.55, 1.38, WZ + 0.5); G.add(bowl);
+  const fruit = new THREE.InstancedMesh(new THREE.SphereGeometry(0.12, 18, 14), gloss(0xffffff, { clearcoat: 1, roughness: 0.25 }), 4);
+  [[-1.68, 1.25, 0xff4a5f], [-1.45, 1.27, 0xffb43a], [-1.58, 1.42, 0x7be08a], [-1.38, 1.4, 0xff4a5f]].forEach(([x, y, c], i) => { fruit.setMatrixAt(i, new THREE.Matrix4().setPosition(x, y, WZ + 0.5)); fruit.setColorAt(i, new C(c)); }); G.add(fruit);
+  const ban = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.05, 8, 18, 2.2), gloss(0xffd84a)); ban.position.set(-1.5, 1.5, WZ + 0.55); ban.rotation.z = 2.5; G.add(ban);
+  const pot = new THREE.Group(); pot.position.set(-2.55, 1.1, WZ + 0.5); G.add(pot);
+  pot.add(new THREE.Mesh(smoothLathe([[0.001, 0], [0.13, 0], [0.16, 0.06], [0.17, 0.22], [0.001, 0.22]], 20, 10), LIL));
+  const lv = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 12, 9), soft(0xffffff), 4); [[0, 0.36, 0, 0.16, 0x47c98d], [-0.1, 0.46, 0.02, 0.12, 0x6fe2a9], [0.1, 0.47, 0, 0.12, 0x6fe2a9], [0.02, 0.58, 0.02, 0.1, 0x47c98d]].forEach(([x, y, z, r, c], i) => { lv.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion(), new THREE.Vector3(r, r, r))); lv.setColorAt(i, new C(c)); }); pot.add(lv);
+  [[-0.95, 4.75, -4.6, PK], [0.95, 4.95, -5.0, CY]].forEach(([x, y, z, c], i) => { const g = new THREE.Group(); g.position.set(x, y, z); G.add(g);
+    const shade = new THREE.Mesh(new THREE.SphereGeometry(0.3, 24, 12, 0, TAU, 0, Math.PI / 2), gloss(c, { side: THREE.DoubleSide })); g.add(shade);
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 12), basic(0xfff3c8)); bulb.position.y = -0.03; g.add(bulb); const h = halo(0xffe2a0, 1.3, 0.45); h.position.y = -0.1; g.add(h);
+    const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 3, 6), basic(0x6a5aa8)); cord.position.y = 1.6; g.add(cord);
+    tick((t) => { g.rotation.z = Math.sin(t * 0.7 + i) * 0.03; h.material.opacity = 0.4 + 0.08 * Math.sin(t * 1.5 + i); }); });
+  G.add(K.floorTiles('#e9e4ff', '#cfc6fb', 7));
+  { const b = blob(7, 1.2, 0.6); b.position.set(0, 0.013, WZ + 1.05); G.add(b); }
+  K.sparks(G, 18, -2.4, 2.4, 0.4, 4.2, -5, -2, 0xfff1a8, 0xbff6ff);
+  G.userData.tick = (t) => { for (const fn of K.anim) fn(t); };
+  return G;
+}
+
+/* ------------------------------------------------------------ closet fashion (tela de acessórios) */
+function makeCloset() {
+  const K = roomKit(), { tick, basic, addM, gloss, soft, halo, blob, box, glowLine, holoPanel, F } = K, G = new THREE.Group();
+  const CY = 0x4fe3ff, PK = 0xff7ac0, YE = 0xffd65a, LI = 0xb38bff, WHITE = gloss(0xfbf7ff);
+  const WZ = -6;
+  G.add(K.wallWith(WZ, (x, w, h) => { const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#b06fd8'); g.addColorStop(0.5, '#e3b0f2'); g.addColorStop(1, '#c48ae6'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+    x.strokeStyle = 'rgba(255,255,255,.22)'; x.lineWidth = 3; for (let k = 0; k < w; k += 42) { x.beginPath(); x.moveTo(k, 0); x.lineTo(k, h); x.stroke(); }
+    x.fillStyle = 'rgba(255,255,255,.25)'; for (let i = 0; i < 40; i++) { const sx = Math.random() * w, sy = Math.random() * h * 0.7; x.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + (k * Math.PI) / 5, r = k % 2 ? 2.5 : 6; x.lineTo(sx + Math.cos(a) * r, sy + Math.sin(a) * r); } x.fill(); } }));
+  // guarda-roupa aberto à esquerda: prateleiras com luz, roupas dobradas, chapéus e sapatos
+  const wd = new THREE.Group(); wd.position.set(-1.75, 0, WZ + 0.45); G.add(wd);
+  { const b = box(1.5, 3.6, 0.8, WHITE, 3.6); b.position.y = 1.8; wd.add(b); const inn = box(1.32, 3.36, 0.5, soft(0xf2c9ff), 3.2); inn.position.set(0, 1.8, 0.2); wd.add(inn);
+    for (const y of [0.75, 1.6, 2.45]) { const [a, c] = glowLine([new THREE.Vector3(-0.6, y, 0.42), new THREE.Vector3(0.6, y, 0.42)], CY, 0.015, 0.05, 0.35); wd.add(a, c); const sh = box(1.3, 0.05, 0.42, WHITE, 4); sh.position.set(0, y - 0.03, 0.2); wd.add(sh); }
+    const folds = new THREE.InstancedMesh(roundBoxGeo(1, 3, 0.2, 0.06, 0.15, 14), soft(0xffffff), 9); let k = 0;
+    for (const y of [0.82, 1.67]) for (let i = 0; i < 4; i++, k++) { folds.setMatrixAt(k, new THREE.Matrix4().compose(new THREE.Vector3(-0.42 + i * 0.28, y + 0.06 + (i % 2) * 0.12, 0.25), new THREE.Quaternion(), new THREE.Vector3(1, 1, 1))); folds.setColorAt(k, new C([PK, CY, YE, 0x8f7bff][(i + k) % 4])); }
+    folds.setMatrixAt(8, new THREE.Matrix4().setPosition(-0.42, 1.95, 0.25)); folds.setColorAt(8, new C(0x5fd39a)); wd.add(folds);
+    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.32, 20), gloss(PK)); hat.position.set(0.1, 2.68, 0.25); wd.add(hat); const pom = sph(0.05, gloss(YE), 10); pom.position.set(0.1, 2.86, 0.25); wd.add(pom);
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.16, 20, 10, 0, TAU, 0, Math.PI / 2), gloss(CY)); cap.position.set(-0.36, 2.48, 0.25); wd.add(cap);
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.12, 0.12, 8, 1, true), gloss(YE, { side: THREE.DoubleSide, metalness: 0.3 })); crown.position.set(0.42, 2.55, 0.25); wd.add(crown);
+    const shoes = new THREE.InstancedMesh(new THREE.CapsuleGeometry(0.06, 0.12, 4, 10), gloss(0xffffff), 4); [[-0.4, 0xff5a8a], [-0.25, 0xff5a8a], [0.2, 0x4fc3ff], [0.35, 0x4fc3ff]].forEach(([x, c], i) => { shoes.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, 0.18, 0.3), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), new THREE.Vector3(1, 1, 1))); shoes.setColorAt(i, new C(c)); }); wd.add(shoes);
+    wd.add(blob(2, 1.1, 0.7)); }
+  // arara com cabides e camisetas coloridas
+  const rail = new THREE.Group(); rail.position.set(0.15, 0, WZ + 0.5); G.add(rail);
+  { const bar = new THREE.Mesh(new THREE.CapsuleGeometry(0.025, 1.7, 4, 8), gloss(0xffd28a, { metalness: 0.4 })); bar.rotation.z = Math.PI / 2; bar.position.y = 3.35; rail.add(bar);
+    const shirts = new THREE.InstancedMesh(roundBoxGeo(1, 3, 0.16, 0.24, 0.05, 14), soft(0xffffff), 6), hangers = new THREE.InstancedMesh(new THREE.TorusGeometry(0.08, 0.01, 4, 12, Math.PI), gloss(0xffffff), 6);
+    [PK, YE, CY, 0x8f7bff, 0x5fd39a, 0xff9a4d].forEach((c, i) => { const x = -0.7 + i * 0.28; shirts.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, 3.02, 0), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0.5, 0)), new THREE.Vector3(1, 1, 1))); shirts.setColorAt(i, new C(c)); hangers.setMatrixAt(i, new THREE.Matrix4().setPosition(x, 3.3, 0)); });
+    rail.add(shirts, hangers); tick((t) => { rail.rotation.z = Math.sin(t * 0.6) * 0.004; }); }
+  // espelho oval com moldura que brilha
+  const mir = new THREE.Group(); mir.position.set(1.75, 1.95, WZ + 0.3); G.add(mir);
+  { const fr = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.07, 12, 64), gloss(YE, { metalness: 0.35 })); fr.scale.y = 1.75; mir.add(fr);
+    const gl = new THREE.Mesh(new THREE.CircleGeometry(0.6, 48), basic(0xffffff, { map: canvasTex(128, 256, (x, w, h) => { const g = x.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#f6f9ff'); g.addColorStop(0.55, '#d6e2ff'); g.addColorStop(1, '#b4c4f2'); x.fillStyle = g; x.fillRect(0, 0, w, h); x.fillStyle = 'rgba(255,255,255,.55)'; x.translate(w / 2, h / 2); x.rotate(-0.5); x.fillRect(-60, -70, 14, 140); x.fillRect(-36, -70, 6, 140); }) })); gl.scale.y = 1.75; gl.position.z = -0.01; mir.add(gl);
+    const sw = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 2.2), addM(0xffffff, 0.35)); sw.rotation.z = 0.5; sw.position.z = 0.02; mir.add(sw);
+    const fg = new THREE.Mesh(new THREE.TorusGeometry(0.66, 0.1, 8, 64), addM(PK, 0.3)); fg.scale.y = 1.75; mir.add(fg);
+    tick((t) => { const k = ((t * 0.25) % 2.4) - 1.2; sw.position.x = k * 0.5; sw.material.opacity = 0.3 * Math.max(0, 1 - Math.abs(k)); fg.material.opacity = 0.22 + 0.1 * Math.sin(t * 1.6); }); }
+  { const b = blob(1.4, 0.8, 0.5); b.position.set(1.75, 0.013, WZ + 0.55); G.add(b); }
+  // holograma "Style!" e holofotes no Lumi
+  const sign = holoPanel(0.9, 0.42, (x, w, h) => { x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = `700 92px ${F}`; x.fillStyle = '#ffe56e'; x.shadowColor = '#ff7ac0'; x.shadowBlur = 16; x.fillText('Style!', w / 2, h * 0.54); }, PK);
+  sign.position.set(1.7, 3.75, WZ + 0.6); G.add(sign); tick((t) => { sign.position.y = 3.75 + Math.sin(t * 1.2) * 0.04; });
+  const spotT = canvasTex(32, 128, (x, w, h) => { const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(255,255,255,.0)'); g.addColorStop(0.15, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); });
+  [[-1.0, PK], [1.0, CY]].forEach(([x, c], i) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.9, 5, 24, 1, true), addM(c, 0.16, spotT)); m.material.side = THREE.DoubleSide; m.position.set(x * 0.8, 2.7, -1.2); m.rotation.z = -x * 0.22; G.add(m);
+    tick((t) => (m.material.opacity = 0.12 + 0.05 * Math.sin(t * 1.3 + i * 2))); });
+  G.add(K.floorTiles('#f4e9ff', '#e2ccfa', 7));
+  { const b = blob(7, 1.2, 0.5); b.position.set(0, 0.013, WZ + 1.05); G.add(b); }
+  K.sparks(G, 24, -2.4, 2.4, 0.3, 4.4, -5, -1.5, 0xffe6a0, 0xffc7ee);
+  G.userData.tick = (t) => { for (const fn of K.anim) fn(t); };
+  return G;
+}
+// cômodos 3D por tela (data-scene): cada um com sua câmera de referência, as duas luzes coloridas e o contraluz
+const ROOMS = {
+  bedroom: { make: makeBedroom, ref: BEDROOM_REF, l: [[0x6fe8ff, 3, [1.75, 1.6, -3.7]], [0xffb86b, 6, [-1.5, 1.45, -3.4]]], rim: [0x8fb4ff, 2.0, 0xffc27a, 1.0], dim: true },
+  kitchen: { make: makeKitchen, ref: ROOM_REF, l: [[0x6fe8ff, 4, [1.7, 1.6, -4.6]], [0xffd6a0, 5, [-1.2, 3.8, -4.2]]], rim: [0xbfe6ff, 2.2, 0xffd9b0, 1.2], pad: true },
+  wardrobe: { make: makeCloset, ref: ROOM_REF, l: [[0xff8ad8, 5, [-0.9, 3.5, -2.0]], [0x6fe8ff, 5, [0.9, 3.5, -2.0]]], rim: [0xd8b8ff, 2.2, 0xffc0e8, 1.3], pad: true },
+};
 function makePad() { // base holográfica da escola: disco branco brilhante com anéis de luz
   const g = new THREE.Group();
   const top = canvasTex(512, 512, (x, w) => { const c = w / 2, gr = x.createRadialGradient(c, c, 0, c, c, c);
@@ -1807,24 +1952,29 @@ export class Stage {
       }
     }
     if (this.school) this.school.visible = school && !!this.schoolReady && !this.schoolBroken;
-    const bedroom = !!(host.closest && host.closest('[data-scene="bedroom"]')); // quarto do Lumi à noite (tela de descanso)
-    if (bedroom && !this.bedroom && !this.bedroomBroken) {
-      let B = null; try { B = makeBedroom(); } catch (e) { console.warn('quarto 3D indisponível neste aparelho', e); this.bedroomBroken = true; }
-      if (B) {
-        const R = this.renderer; this.bedroom = B; B.visible = false; this.scene.add(B);
-        const show = () => { this.bedroomReady = true; B.visible = !this.bedroomBroken && !!(this.host && this.host.closest && this.host.closest('[data-scene="bedroom"]')); };
-        try { if (!R.compileAsync || !R.extensions.has('KHR_parallel_shader_compile')) throw 0; R.compileAsync(B, this.camera, this.scene).then(show, show); setTimeout(() => this.bedroomReady || show(), 2500); } catch (e) { show(); }
+    const envEl = host.closest && host.closest('[data-scene]'), envKey = envEl ? envEl.dataset.scene : '', ENV = ROOMS[envKey] || null, bedroom = envKey === 'bedroom';
+    this.rooms = this.rooms || {};
+    if (ENV && !this.rooms[envKey]) { // monta o cômodo uma vez e compila em segundo plano antes de mostrar
+      let Gr = null; try { Gr = ENV.make(); } catch (e) { console.warn('cômodo 3D indisponível neste aparelho', envKey, e); }
+      const RM = (this.rooms[envKey] = { key: envKey, G: Gr, ENV, ready: false, broken: !Gr });
+      if (Gr) {
+        const R = this.renderer; Gr.visible = false; this.scene.add(Gr);
+        const show = () => { RM.ready = true; Gr.visible = !RM.broken && this.envKey === envKey; };
+        try { if (!R.compileAsync || !R.extensions.has('KHR_parallel_shader_compile')) throw 0; R.compileAsync(Gr, this.camera, this.scene).then(show, show); setTimeout(() => RM.ready || show(), 2500); } catch (e) { show(); }
       }
     }
-    if (this.bedroom) this.bedroom.visible = bedroom && !!this.bedroomReady && !this.bedroomBroken;
+    this.envKey = envKey; this.roomActive = ENV ? this.rooms[envKey] : null;
+    for (const k in this.rooms) { const RM = this.rooms[k]; if (RM.G) RM.G.visible = k === envKey && RM.ready && !RM.broken; }
+    if (ENV && ENV.pad) { this.pad.visible = room && !p.night; this.rug.visible = false; } // base holográfica no lugar do tapete
     if (!this.schoolLights) { // luzes coloridas da escola (ciano e lilás), ligadas só na escola
       this.schoolLights = [new THREE.PointLight(0x4fe3ff, 0, 9, 1.6), new THREE.PointLight(0xc28bff, 0, 9, 1.6)];
       this.schoolLights[0].userData.p = new THREE.Vector3(1.9, 1.7, -3.4); this.schoolLights[1].userData.p = new THREE.Vector3(-1.7, 2.6, -2.4); this.schoolLights.forEach((l) => { l.position.copy(l.userData.p); l.layers.enable(1); this.scene.add(l); });
     }
     // as duas luzes coloridas servem aos dois cenários (escola: ciano e lilás; quarto: abajur quente e planeta ciano)
-    const EL = this.schoolLights; EL[0].color.set(bedroom ? 0x6fe8ff : 0x4fe3ff); EL[1].color.set(bedroom ? 0xffb86b : 0xc28bff);
-    if (!EL[0].userData.pb) { EL[0].userData.pb = new THREE.Vector3(1.75, 1.6, -3.7); EL[1].userData.pb = new THREE.Vector3(-1.5, 1.45, -3.4); }
-    EL[0].intensity = school ? 9 : bedroom ? 3 : 0; EL[1].intensity = school ? 7 : bedroom ? 6 : 0; this.envBase = [EL[0].intensity, EL[1].intensity];
+    const EL = this.schoolLights;
+    if (ENV) EL.forEach((l, i) => { l.color.set(ENV.l[i][0]); l.intensity = ENV.l[i][1]; l.userData.pe = new THREE.Vector3(...ENV.l[i][2]); });
+    else { EL[0].color.set(0x4fe3ff); EL[1].color.set(0xc28bff); EL[0].intensity = school ? 9 : 0; EL[1].intensity = school ? 7 : 0; }
+    this.envBase = [EL[0].intensity, EL[1].intensity];
     this.props.visible = p.props && !room; this.pillow.visible = !!p.night;
     this.hemi.color.set(p.night ? 0x5c6bc0 : room ? 0xfff0dc : 0xdff1ff); this.hemi.groundColor.set(p.night ? 0x2b2f74 : room ? 0xc98b55 : 0x8fd47e); this.hemi.intensity = p.night ? 0.7 : room ? 1.0 : 0.9;
     this.fill.color.set(p.night ? 0xffb86b : 0xffe6cc); this.fill.intensity = p.night ? 0.5 : 0.55;
@@ -1838,8 +1988,8 @@ export class Stage {
       this.rim.color.set(0x9fe9ff); this.rim.intensity = 2.6; this.rim2.color.set(0xe2b8ff); this.rim2.intensity = 1.5;
       this.renderer.toneMappingExposure = 1.0;
     }
-    if (bedroom) { // noite no quarto: luar azul pela janela, abajur quente do lado
-      this.rim.color.set(0x8fb4ff); this.rim.intensity = 2.0; this.rim2.color.set(0xffc27a); this.rim2.intensity = 1.0; this.renderer.toneMappingExposure = 1.0;
+    if (ENV) { // contraluz de cada cômodo (no quarto: luar azul pela janela e abajur quente)
+      this.rim.color.set(ENV.rim[0]); this.rim.intensity = ENV.rim[1]; this.rim2.color.set(ENV.rim[2]); this.rim2.intensity = ENV.rim[3]; this.renderer.toneMappingExposure = bedroom ? 1.0 : 1.02;
     }
   }
   resize() {
@@ -1888,13 +2038,14 @@ export class Stage {
       this.scene.fog.near = 55 * s; this.scene.fog.far = 300 * s;
       for (const l of this.schoolLights) l.position.copy(l.userData.p).multiplyScalar(s).setX(l.userData.p.x * s + ox);
     } catch (err) { console.warn('escola 3D desligada', err); this.schoolBroken = true; this.school.visible = false; } // nunca trava o Lumi
-    if (this.bedroom && this.bedroom.visible) try {
-      const s = (tg.dist || BEDROOM_REF.dist) / BEDROOM_REF.dist, ox = (tg.x || 0) - s * BEDROOM_REF.x, B = this.bedroom, night = this.lieK || 0;
-      B.scale.setScalar(s); B.position.set(ox, 0, 0); B.userData.tick(this.t, night);
-      const EL = this.schoolLights, base = this.envBase || [3, 6];
-      for (const l of EL) l.position.copy(l.userData.pb).multiplyScalar(s).setX(l.userData.pb.x * s + ox);
-      EL[0].intensity = base[0] * (1 - 0.4 * night); EL[1].intensity = base[1] * (1 - 0.6 * night);
-    } catch (err) { console.warn('quarto 3D desligado', err); this.bedroomBroken = true; this.bedroom.visible = false; }
+    const RM = this.roomActive;
+    if (RM && RM.G && RM.G.visible) try {
+      const ref = RM.ENV.ref, sc = (tg.dist || ref.dist) / ref.dist, ox = (tg.x || 0) - sc * ref.x, night = this.lieK || 0;
+      RM.G.scale.setScalar(sc); RM.G.position.set(ox, 0, 0); RM.G.userData.tick(this.t, night);
+      const EL = this.schoolLights, base = this.envBase || [0, 0];
+      for (const l of EL) if (l.userData.pe) l.position.copy(l.userData.pe).multiplyScalar(sc).setX(l.userData.pe.x * sc + ox);
+      if (RM.ENV.dim) { EL[0].intensity = base[0] * (1 - 0.4 * night); EL[1].intensity = base[1] * (1 - 0.6 * night); }
+    } catch (err) { console.warn('cômodo 3D desligado', err); RM.broken = true; RM.G.visible = false; }
     this.eggTick(dt);
     this.renderer.render(this.scene, this.camera);
   }
@@ -1945,8 +2096,8 @@ export class Stage {
   /* miniatura do Lumi vestindo uma peça (para a loja) */
   outfitSnapshot(outfit, focus, size = 140) {
     const L = this.lumi, saved = Object.assign({}, L.outfit), z = L.size;
-    const vis = { p: this.props.visible, i: this.island.visible, e: this.egg.visible, l: L.root.visible, ry: L.root.rotation.y, r: this.rug.visible, b: this.pillow.visible, pd: this.pad.visible, sc: this.school && this.school.visible, bd: this.bedroom && this.bedroom.visible };
-    if (this.school) this.school.visible = false; if (this.bedroom) this.bedroom.visible = false;
+    const vis = { p: this.props.visible, i: this.island.visible, e: this.egg.visible, l: L.root.visible, ry: L.root.rotation.y, r: this.rug.visible, b: this.pillow.visible, pd: this.pad.visible, sc: this.school && this.school.visible, rooms: Object.values(this.rooms || {}).filter((r) => r.G && r.G.visible) };
+    if (this.school) this.school.visible = false; vis.rooms.forEach((r) => (r.G.visible = false));
     this.props.visible = this.island.visible = this.egg.visible = this.rug.visible = this.pillow.visible = this.pad.visible = false; L.root.visible = true;
     L.setOutfit(outfit);
     const F = { head: [3.15, 5.4], face: [2.75, 3.6], body: [1.25, 4.8], legs: [0.75, 4.8], neck: [1.7, 4.0], costume: [2.25, 8.6], back: [1.5, 6.8] }[focus] || [2.2, 8.8];
@@ -1958,20 +2109,20 @@ export class Stage {
     const url = this.canvas.toDataURL('image/png');
     this.renderer.setSize(old.x, old.y, false);
     L.setOutfit(saved); L.root.rotation.y = vis.ry;
-    this.props.visible = vis.p; this.island.visible = vis.i; this.egg.visible = vis.e; L.root.visible = vis.l; this.rug.visible = vis.r; this.pillow.visible = vis.b; this.pad.visible = vis.pd; if (this.school) this.school.visible = !!vis.sc; if (this.bedroom) this.bedroom.visible = !!vis.bd;
+    this.props.visible = vis.p; this.island.visible = vis.i; this.egg.visible = vis.e; L.root.visible = vis.l; this.rug.visible = vis.r; this.pillow.visible = vis.b; this.pad.visible = vis.pd; if (this.school) this.school.visible = !!vis.sc; vis.rooms.forEach((r) => (r.G.visible = true));
     return url;
   }
   /* imagem do Lumi (para o mapa) */
   snapshot(w = 256, h = 256) {
-    const old = { pv: this.props.visible, iv: this.island.visible, rv: this.rug.visible, bv: this.pillow.visible, dv: this.pad.visible, sv: this.school && this.school.visible, bv2: this.bedroom && this.bedroom.visible, size: new THREE.Vector2() };
-    if (this.school) this.school.visible = false; if (this.bedroom) this.bedroom.visible = false;
+    const old = { pv: this.props.visible, iv: this.island.visible, rv: this.rug.visible, bv: this.pillow.visible, dv: this.pad.visible, sv: this.school && this.school.visible, rooms: Object.values(this.rooms || {}).filter((r) => r.G && r.G.visible), size: new THREE.Vector2() };
+    if (this.school) this.school.visible = false; old.rooms.forEach((r) => (r.G.visible = false));
     this.renderer.getSize(old.size);
     this.props.visible = this.island.visible = this.rug.visible = this.pillow.visible = this.pad.visible = false;
     const z = this.lumi.size; const cam = new THREE.PerspectiveCamera(26, w / h, 0.1, 50); cam.position.set(0, 2.6 * z, 7.2 * z + 0.6); cam.lookAt(0, 2.3 * z, 0);
     this.renderer.setSize(w, h, false); this.renderer.render(this.scene, cam);
     const url = this.canvas.toDataURL('image/png');
     this.renderer.setSize(old.size.x, old.size.y, false);
-    this.props.visible = old.pv; this.island.visible = old.iv; this.rug.visible = old.rv; this.pillow.visible = old.bv; this.pad.visible = old.dv; if (this.school) this.school.visible = !!old.sv; if (this.bedroom) this.bedroom.visible = !!old.bv2;
+    this.props.visible = old.pv; this.island.visible = old.iv; this.rug.visible = old.rv; this.pillow.visible = old.bv; this.pad.visible = old.dv; if (this.school) this.school.visible = !!old.sv; old.rooms.forEach((r) => (r.G.visible = true));
     return url;
   }
   accessorySnapshot(slot, id, size = 160) {

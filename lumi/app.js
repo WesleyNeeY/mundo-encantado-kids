@@ -809,6 +809,74 @@ function checkAwards(levelBefore, growBefore) {
 function renderChestBtn() { const b = $('#btn-chest'); if (!b) return; b.style.display = S.chests.length ? '' : 'none'; $('#chest-n').textContent = S.chests.length; }
 $('#btn-chest').addEventListener('click', () => { audioCtx(); openChest(); });
 $('#btn-legend').addEventListener('click', () => { audioCtx(); slot = 'legend'; go('shop'); });
+
+/* ---------------- 🎤 Repete: a criança fala e o Lumi repete com voz de robozinho ----------------
+   Tudo acontece no aparelho: o áudio não é salvo nem enviado para lugar nenhum. */
+let echoBusy = false;
+function showBubble(b, html) { if (!b) return; b.innerHTML = html; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+async function echoTalk() {
+  if (echoBusy) return;
+  const bub = $('#home-bubble'), btn = $('#btn-echo');
+  if (S.sleeping) { say(bub, T.pt.sleeping); return; }
+  const ctx = audioCtx();
+  if (!ctx || !CAN_REC || !ctx.createScriptProcessor) { toast('🎤 O microfone não funciona neste aparelho'); return; }
+  echoBusy = true; stopTalk(); lumi.setMood('listen'); btn.classList.add('rec');
+  showBubble(bub, 'Fala alguma coisa que eu repito! 🎤');
+  let stream;
+  try { setSession('play-and-record'); stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
+  catch (e) { setSession('playback'); btn.classList.remove('rec'); lumi.setMood('idle'); echoBusy = false; showBubble(bub, 'Preciso do microfone para ouvir você! 🎤'); return; }
+  if (ctx.state !== 'running') await ctx.resume().catch(() => {});
+  const src = ctx.createMediaStreamSource(stream), proc = ctx.createScriptProcessor(2048, 1, 1), mute = ctx.createGain(); mute.gain.value = 0;
+  src.connect(proc); proc.connect(mute); mute.connect(ctx.destination);
+  const SRt = ctx.sampleRate, chunks = [], lv = [], pre = []; let floor = 0.006, thr = 0.016, voiced = 0, lastVoice = 0, started = false;
+  const t0 = performance.now();
+  const heard = await new Promise((resolve) => {
+    let done = false; const end = (v) => { if (!done) { done = true; resolve(v); } };
+    const guard = setInterval(() => { if (current !== 'home') end(false); }, 300); // saiu da tela: para de ouvir
+    proc.onaudioprocess = (ev) => {
+      if (done) return clearInterval(guard);
+      const d = new Float32Array(ev.inputBuffer.getChannelData(0)); let e = 0; for (let i = 0; i < d.length; i++) e += d[i] * d[i];
+      const rms = Math.sqrt(e / d.length), now = performance.now(), ms = (d.length / SRt) * 1000;
+      // ruído do ambiente: desce rápido no silêncio e sobe devagar (igual às aulas)
+      floor = rms < floor ? floor * 0.7 + rms * 0.3 : Math.min(0.05, floor + (rms - floor) * 0.003); thr = Math.max(0.016, floor * 3);
+      btn.style.setProperty('--lv', Math.min(1, rms / (thr * 2.2)).toFixed(2));
+      if (!started) { pre.push([d, rms]); if (pre.length > 6) pre.shift(); }
+      if (rms > thr && now - t0 > 250) { if (!started) { started = true; pre.forEach(([c, r]) => { chunks.push(c); lv.push(r); }); pre.length = 0; } voiced += ms; lastVoice = now; }
+      else if (started) { chunks.push(d); lv.push(rms); }
+      if (started && rms > thr) { if (chunks[chunks.length - 1] !== d) { chunks.push(d); lv.push(rms); } }
+      const secs = (chunks.length * d.length) / SRt;
+      if (started && voiced > 220 && now - lastVoice > 850) { clearInterval(guard); end(true); }
+      else if (secs > 6.5 || now - t0 > 10000) { clearInterval(guard); end(started && voiced > 220); }
+    };
+  });
+  // devolve o microfone e o som volta para o alto-falante
+  proc.onaudioprocess = null; try { src.disconnect(); proc.disconnect(); mute.disconnect(); } catch (e) {}
+  stream.getTracks().forEach((t) => t.stop()); btn.classList.remove('rec'); btn.style.removeProperty('--lv');
+  setSession('playback'); await wait(350); if (ctx.state !== 'running') await ctx.resume().catch(() => {});
+  if (!heard || current !== 'home') { lumi.setMood('idle'); echoBusy = false; if (current === 'home') showBubble(bub, 'Não ouvi nada... Toca no 🎤 e fala de novo!'); return; }
+  // tira o silêncio do fim, suaviza as pontas e deixa o volume bom
+  let last = lv.length - 1; while (last > 0 && lv[last] < thr * 0.8) last--; const keep = Math.min(chunks.length, last + 3);
+  const n = chunks.slice(0, keep).reduce((a, c) => a + c.length, 0), buf = ctx.createBuffer(1, n, SRt), out = buf.getChannelData(0);
+  let o = 0, peak = 0.0001; for (let k = 0; k < keep; k++) { out.set(chunks[k], o); o += chunks[k].length; }
+  for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(out[i]));
+  const g = Math.min(6, 0.9 / peak), fade = Math.floor(SRt * 0.015);
+  for (let i = 0; i < n; i++) out[i] *= g * Math.min(1, i / fade, (n - 1 - i) / fade);
+  // voz de robozinho: mais fina (1,38x) com um eco metálico curtinho
+  const s = ctx.createBufferSource(); s.buffer = buf; s.playbackRate.value = 1.38;
+  const dry = ctx.createGain(), dl = ctx.createDelay(0.05), fb = ctx.createGain(), wet = ctx.createGain();
+  dry.gain.value = 0.85; dl.delayTime.value = 0.011; fb.gain.value = 0.38; wet.gain.value = 0.42;
+  s.connect(dry); s.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(wet); dry.connect(analyser); wet.connect(analyser);
+  lumi.setMood('idle'); showBubble(bub, '🤖 🎶'); curSrc = s;
+  await new Promise((resolve) => {
+    const data = new Uint8Array(analyser.fftSize); let live = true;
+    const lip = () => { if (!live) return; analyser.getByteTimeDomainData(data); let q = 0; for (let i = 0; i < data.length; i++) { const v = (data[i] - 128) / 128; q += v * v; } lumi.mouthLevel = Math.min(1, Math.sqrt(q / data.length) * 5.5); requestAnimationFrame(lip); };
+    s.onended = () => { if (!live) return; live = false; lumi.mouthLevel = null; lumi.talk(false); if (curSrc === s) curSrc = null; try { dry.disconnect(); wet.disconnect(); dl.disconnect(); fb.disconnect(); } catch (e) {} resolve(); };
+    lumi.talk(true); s.start(); lip();
+  });
+  echoBusy = false;
+  if (current === 'home') { lumi.setMood('happy'); lumi.doWave && lumi.doWave(1.6); showBubble(bub, 'Hihi! Fala mais! 😄'); setTimeout(() => { if (!echoBusy && lumi.mood === 'happy') lumi.setMood(S.sleeping ? 'sleep' : 'idle'); }, 1800); }
+}
+$('#btn-echo').addEventListener('click', () => { audioCtx(); echoTalk(); });
 function wornSet() { return D.legendary.find((c) => c.items.every((it) => (it.slot === 'costume' ? S.outfit.costume === it.id : S.outfit[it.slot] === it.id && (!S.outfit.costume || S.outfit.costume === 'none' || !COVERED.includes(it.slot))))); }
 function updateFx(announce) {
   const c = wornSet(); lumi.setEffect(c ? c.fx : null);

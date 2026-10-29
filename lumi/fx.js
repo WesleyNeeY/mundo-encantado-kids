@@ -23,6 +23,9 @@ export const ICONS = {
     <path d="M8 30 C 8 14, 40 10, 40 28 Z" fill="url(#${a})" stroke="#174ea8" stroke-width="1.2"/><path d="M6 30 C 18 26, 34 26, 46 34 C 34 36, 16 36, 6 30 Z" fill="#174ea8"/><circle cx="24" cy="14" r="2.6" fill="#ffd21f"/><path d="M24 18 L25.8 22.5 L30.5 22.8 L26.8 25.6 L28 30 L24 27.4 L20 30 L21.2 25.6 L17.5 22.8 L22.2 22.5 Z" fill="#ffd21f"/><path d="M13 22 Q 16 16 22 15" stroke="#fff" stroke-width="2" fill="none" opacity=".5" stroke-linecap="round"/></svg>`; },
   coin() { const a = id('k'); return `<svg viewBox="0 0 48 48"><defs><radialGradient id="${a}" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#fff7b0"/><stop offset=".55" stop-color="#ffc21a"/><stop offset="1" stop-color="#d98800"/></radialGradient></defs>
     <circle cx="24" cy="24" r="21" fill="#c27a00"/><circle cx="24" cy="22" r="20" fill="url(#${a})"/><circle cx="24" cy="22" r="14.5" fill="none" stroke="#e8a000" stroke-width="2"/><path d="M24 12 L26.8 18.6 L33.8 19 L28.4 23.5 L30.2 30.4 L24 26.6 L17.8 30.4 L19.6 23.5 L14.2 19 L21.2 18.6 Z" fill="#fff3a0" stroke="#e8a000" stroke-width="1"/></svg>`; },
+  mic() { const a = id('p'); return `<svg viewBox="0 0 48 48"><defs><linearGradient id="${a}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb3d9"/><stop offset="1" stop-color="#d23f8f"/></linearGradient></defs>
+    <rect x="15" y="4" width="18" height="27" rx="9" fill="url(#${a})" stroke="#a8286c" stroke-width="1.2"/><path d="M19 11 h10 M19 16 h10 M19 21 h10" stroke="#fff" stroke-width="1.6" opacity=".55" stroke-linecap="round"/>
+    <path d="M10 22 a14 14 0 0 0 28 0" fill="none" stroke="#7a4cc9" stroke-width="3" stroke-linecap="round"/><path d="M24 36 v7 M16 44 h16" stroke="#7a4cc9" stroke-width="3" stroke-linecap="round"/><rect x="18" y="6" width="4" height="12" rx="2" fill="#fff" opacity=".45"/></svg>`; },
   fire() { const a = id('f'); return `<svg viewBox="0 0 48 48"><defs><linearGradient id="${a}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff3d00"/><stop offset=".6" stop-color="#ff9100"/><stop offset="1" stop-color="#ffd54f"/></linearGradient></defs>
     <path d="M24 3 C 28 12, 38 16, 38 29 C 38 38, 31 45, 24 45 C 16 45, 10 38, 10 30 C 10 22, 16 18, 17 11 C 21 15, 21 19, 21 22 C 24 18, 26 11, 24 3 Z" fill="url(#${a})"/><path d="M24 26 C 27 30, 31 32, 30 37 C 29 41, 26 43, 24 43 C 21 43, 18 40, 18 36 C 18 32, 22 30, 24 26 Z" fill="#fff3a0"/></svg>`; },
 };
@@ -32,6 +35,7 @@ function setIcon(el, name) { if (el && ICONS[name]) el.innerHTML = ICONS[name]()
 document.querySelectorAll('#btn-gift > span').forEach((e) => setIcon(e, 'gift'));
 document.querySelectorAll('#btn-legend > span').forEach((e) => setIcon(e, 'sparkle'));
 document.querySelectorAll('.sbtn[data-go="map"] > span').forEach((e) => setIcon(e, 'map'));
+document.querySelectorAll('#btn-echo > span').forEach((e) => setIcon(e, 'mic'));
 const tabIcon = { home: 'home', rest: 'moon', snack: 'apple', shop: 'hat' };
 document.querySelectorAll('.tabbar button').forEach((b) => setIcon(b.querySelector('span'), tabIcon[b.dataset.go]));
 document.querySelectorAll('.ic.coin').forEach((e) => { e.classList.add('svgic'); setIcon(e, 'coin'); });

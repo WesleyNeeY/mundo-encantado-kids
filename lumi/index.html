@@ -352,6 +352,8 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
 .sbtn span{font-size:28px;line-height:1.1}
 .sbtn:active{transform:translateY(3px)}
 .sbtn.glow{animation:glow 1.4s ease-in-out infinite}
+.sbtn.rec{background:linear-gradient(180deg,#ff8fb0,#ff4f7e);color:#fff;box-shadow:0 0 0 calc(3px + var(--lv,0) * 12px) rgba(255,79,126,.32),0 4px 0 #c9285a;animation:recp 1.1s ease-in-out infinite}
+@keyframes recp{50%{transform:scale(1.06)}}
 .bubble.hb{left:auto;right:16px;transform:none;top:calc(150px + env(safe-area-inset-top,0px));max-width:52%;font-size:17px}
 .bubble.hb::after{left:30px}
 .bubble.hb.pop{animation:popr .4s cubic-bezier(.2,1.6,.4,1)}
@@ -729,6 +731,7 @@ button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer
    <button class="sbtn" id="btn-gift"><span>🎁</span>Presente</button>
    <button class="sbtn" id="btn-legend"><span>✨</span>Coleções</button>
    <button class="sbtn" data-go="map"><span>🗺️</span>Mapa</button>
+   <button class="sbtn" id="btn-echo"><span>🎤</span>Repete</button>
   </div>
   <div class="bubble hb pop" id="home-bubble"></div>
   <div class="hcards">

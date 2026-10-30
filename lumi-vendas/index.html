@@ -4,7 +4,7 @@
 <link rel="canonical" href="https://wesleyneey.github.io/mundo-encantado-kids/lumi-vendas/">
 <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#e9f8ff}iframe{display:block;border:0;width:100%;height:100%;height:100dvh}</style>
 </head><body>
-<iframe id="paginaLumi" src="./lumi_vendas_correta.html?v=20261030checkout" title="Página de vendas Lumi" loading="eager"></iframe>
+<iframe id="paginaLumi" src="./lumi_vendas_correta.html?v=20261030garantia" title="Página de vendas Lumi" loading="eager"></iframe>
 <script>
 const frame=document.getElementById('paginaLumi');
 frame.addEventListener('load',function(){
@@ -33,8 +33,25 @@ try{
    }
  },true);
 
+
+ // Selo de garantia junto à oferta principal.
+ const guarantee=doc.createElement('div');
+ guarantee.className='lumi-guarantee';
+ guarantee.innerHTML='<span class="lumi-guarantee-icon">✓</span><span><strong>GARANTIA DE 7 DIAS</strong><small>Compre com tranquilidade e segurança</small></span>';
+ const offer=doc.querySelector('.offer, .pricing, .price-box, .offer-card, #oferta, #offer, .checkout, .purchase');
+ const buttons=Array.from(doc.querySelectorAll('a')).filter(a=>/comprar|garantir|quero|adquirir/i.test(a.textContent||'')&&!a.closest('.fixed'));
+ const anchor=offer || (buttons.length?buttons[buttons.length-1].parentElement:null);
+ if(anchor){anchor.insertAdjacentElement('afterend',guarantee)}
+ else {doc.body.appendChild(guarantee)}
+
  const style=doc.createElement('style');
  style.textContent=`
+.lumi-guarantee{display:flex;align-items:center;justify-content:center;gap:13px;max-width:400px;margin:24px auto;padding:17px 20px;border:1px solid #bce7d0;border-radius:18px;background:linear-gradient(135deg,#f4fff8,#e6fff0);box-shadow:0 7px 25px rgba(11,105,62,.09);font-family:inherit;color:#126b42;text-align:left;box-sizing:border-box}
+.lumi-guarantee-icon{flex:none;display:grid;place-items:center;width:49px;height:49px;border:3px solid #18955b;border-radius:50%;font-size:27px;font-weight:900;color:#18955b}
+.lumi-guarantee strong{display:block;font-size:16px;font-weight:900;letter-spacing:.5px}
+.lumi-guarantee small{display:block;font-size:12px;margin-top:3px;color:#386c51;line-height:1.35}
+@media(max-width:480px){.lumi-guarantee{margin:20px 15px;padding:14px 15px}.lumi-guarantee strong{font-size:14px}.lumi-guarantee-icon{width:42px;height:42px;font-size:23px}}
+
 @keyframes lumiCtaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.055)}}
 a.button,a.mini{animation:lumiCtaPulse 1.75s ease-in-out infinite!important;transform-origin:center!important;will-change:transform}
 .fixed{position:fixed!important;left:auto!important;right:12px!important;bottom:12px!important;top:auto!important;width:min(195px,calc(100vw - 20px))!important;max-width:195px!important;display:block!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;z-index:9999!important;text-align:center!important;backdrop-filter:none!important}

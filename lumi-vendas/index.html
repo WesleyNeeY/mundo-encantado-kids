@@ -14,13 +14,13 @@ try{
  style.textContent=`
 @keyframes lumiCtaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.055)}}
 a.button,a.mini{animation:lumiCtaPulse 1.75s ease-in-out infinite!important;transform-origin:center!important;will-change:transform}
-.fixed{position:fixed!important;left:auto!important;right:12px!important;bottom:12px!important;top:auto!important;width:min(195px,calc(100vw - 20px))!important;max-width:195px!important;display:block!important;padding:8px!important;background:#fffffff2!important;border:1px solid #d9eaff!important;border-radius:18px!important;box-shadow:0 10px 30px #123c7733!important;z-index:9999!important;text-align:center!important;backdrop-filter:blur(10px)}
+.fixed{position:fixed!important;left:auto!important;right:12px!important;bottom:12px!important;top:auto!important;width:min(195px,calc(100vw - 20px))!important;max-width:195px!important;display:block!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;z-index:9999!important;text-align:center!important;backdrop-filter:none!important}
 .fixed .button{width:100%!important;max-width:none!important;font-size:11px!important;padding:9px 7px!important}
-.fixed .offer-price{font-size:13px!important;margin:0 0 5px!important}
+.fixed .offer-price{display:none!important}
 .fixed .single-pay{display:inline!important;font-size:10px!important}
-.fixed small{display:block!important;font-size:9px!important;margin-top:4px!important}
+.fixed small{display:none!important}
 body{padding-bottom:25px!important}
-@media(max-width:700px){.fixed{right:10px!important;bottom:10px!important;padding:10px!important}}
+@media(max-width:700px){.fixed{right:10px!important;bottom:10px!important;padding:0!important}}
 @media(prefers-reduced-motion:reduce){a.button,a.mini{animation:none!important}}
 `;
  doc.head.appendChild(style);

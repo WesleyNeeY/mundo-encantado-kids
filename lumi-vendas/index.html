@@ -4,12 +4,35 @@
 <link rel="canonical" href="https://wesleyneey.github.io/mundo-encantado-kids/lumi-vendas/">
 <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#e9f8ff}iframe{display:block;border:0;width:100%;height:100%;height:100dvh}</style>
 </head><body>
-<iframe id="paginaLumi" src="./lumi_vendas_correta.html?v=20261029c" title="Página de vendas Lumi" loading="eager"></iframe>
+<iframe id="paginaLumi" src="./lumi_vendas_correta.html?v=20261030checkout" title="Página de vendas Lumi" loading="eager"></iframe>
 <script>
 const frame=document.getElementById('paginaLumi');
 frame.addEventListener('load',function(){
 try{
+
+ const CHECKOUT='https://ggcheckout.app/checkout/v5/LfVNX47P7kkdux7uQ0fAoe';
  const doc=frame.contentDocument;
+ // Garante que todos os botões de compra usem o checkout atualizado.
+ function updateCheckoutLinks(){
+   doc.querySelectorAll('a').forEach(function(a){
+     const href=a.getAttribute('href')||'';
+     if(/ggcheckout\.app|checkout|comprar|garantir|quero|começar|comecar/i.test(href+' '+(a.textContent||'')+' '+a.className)){
+       a.href=CHECKOUT;
+       a.removeAttribute('onclick');
+       a.target='_top';
+     }
+   });
+ }
+ updateCheckoutLinks();
+ doc.addEventListener('click',function(e){
+   const a=e.target.closest&&e.target.closest('a');
+   if(a && (/ggcheckout\.app|checkout/i.test(a.href)||/button|mini/i.test(a.className))){
+     e.preventDefault();
+     e.stopImmediatePropagation();
+     window.location.assign(CHECKOUT);
+   }
+ },true);
+
  const style=doc.createElement('style');
  style.textContent=`
 @keyframes lumiCtaPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.055)}}

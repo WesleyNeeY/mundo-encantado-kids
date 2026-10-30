@@ -1,1 +1,38 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=./lumi_vendas_correta.html"><title>Lumi – Seu mundo de inglês</title><script>location.replace("./lumi_vendas_correta.html"+location.search+location.hash)</script></head><body><p>Abrindo a nova página do Lumi… <a href="./lumi_vendas_correta.html">Clique aqui</a>.</p></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lumi – Seu mundo de inglês</title>
+<style>body{margin:0;font-family:system-ui;background:#e9f8ff;color:#113471}#loading{padding:40px 20px;text-align:center}#loading a{color:#1266cc}</style>
+</head>
+<body>
+<div id="loading">Abrindo a página de vendas do Lumi…</div>
+<script>
+(async function(){
+try{
+  const res=await fetch('./lumi_vendas_correta.html?versao=20261029b',{cache:'no-store'});
+  if(!res.ok)throw Error('Não foi possível carregar a página');
+  let page=await res.text();
+  const extra='<style id="lumi-cta-customizacao">'+
+  '@keyframes lumiPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.065)}}'+
+  'a.button,a.mini{animation:lumiPulse 1.7s ease-in-out infinite!important;transform-origin:center!important;will-change:transform}'+
+  'a.button:hover,a.mini:hover{animation-play-state:paused!important;transform:scale(1.045)!important}'+
+  '.fixed{position:fixed!important;left:auto!important;right:14px!important;bottom:14px!important;top:auto!important;display:block!important;width:min(320px,calc(100vw - 28px))!important;max-width:320px!important;border:1px solid #d8eaff!important;border-radius:20px!important;padding:12px!important;text-align:center!important;box-shadow:0 12px 32px #123c7733!important;z-index:9999!important;background:#fffffff2!important;backdrop-filter:blur(10px)}'+
+  '.fixed .button{width:100%!important;max-width:100%!important;padding:13px 12px!important;font-size:14px!important}'+
+  '.fixed .offer-price{font-size:17px!important;margin:0 0 8px!important}'+
+  '.fixed .single-pay{display:inline!important;font-size:12px!important}'+
+  '.fixed small{display:block!important;font-size:10px!important;margin-top:6px!important}'+
+  'body{padding-bottom:20px!important}'+
+  '@media(max-width:700px){.fixed{right:10px!important;bottom:10px!important;width:min(295px,calc(100vw - 20px))!important;padding:10px!important}.fixed .button{font-size:13px!important}}'+
+  '@media(prefers-reduced-motion:reduce){a.button,a.mini{animation:none!important}}'+
+  '</style>';
+  page=page.replace(/<\/head>/i,extra+'</head>');
+  document.open();document.write(page);document.close();
+}catch(err){
+  document.getElementById('loading').innerHTML='Não foi possível abrir a página. <a href="./lumi_vendas_correta.html">Abrir a página do Lumi</a>';
+}
+})();
+</script>
+</body>
+</html>

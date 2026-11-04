@@ -1,31 +1,22 @@
-# Lume: notificações independentes
+# Lume: avisos sem custo
 
-Projeto real criado no Firebase: `assistente-lume` (Lume Web).
-O envio ainda está desativado em notification-config.json. Não ativar antes de concluir e verificar a infraestrutura.
+Os avisos funcionam no plano gratuito (Spark) do Firebase, sem cartão:
 
-## Pendências externas antes da implantação
+- **Firestore** (`southamerica-east1`, modo produção) guarda o cadastro de cada aparelho (`devices/{uid}`) e os avisos programados (`alarms/{uid}_{compromisso}_{antecedência}`).
+- **Login anônimo** identifica cada aparelho. As regras em `firestore.rules` só deixam cada aparelho ler e gravar o que é dele.
+- **Firebase Cloud Messaging** entrega a notificação (gratuito).
+- **GitHub Actions** (`.github/workflows/lume-avisos.yml`) roda a cada 5 minutos o script `dispatcher/send.js`, que envia os avisos que chegaram na hora e os apaga. O GitHub pode atrasar a execução alguns minutos em horários de pico.
 
-1. O responsável deve ativar o faturamento Blaze no projeto. A tela Functions bloqueia no plano Spark. Não ativar cobrança automaticamente.
-2. Confirmar a criação de credenciais Web Push (VAPID) e a habilitação de Authentication anônimo; nenhum usuário final precisa entrar numa conta.
-3. Criar Firestore Standard em modo de produção (preferir southamerica-east1), habilitar Authentication anônimo e permitir wesleyneey.github.io como domínio autorizado.
-4. Gerar o par VAPID nas configurações Cloud Messaging. Copiar somente a chave pública para `notification-config.json`; nunca adicionar a chave privada ou credenciais Admin ao repositório.
-5. Fazer npm ci em functions e firebase deploy --project assistente-lume --only firestore,functions.
-6. Copiar a URL real de lumeApi no resultado de deploy para apiUrl. Conferir funções e Cloud Scheduler every 1 minutes. Só então mudar enabled=true no config do cliente.
+## Configuração (já feita, exceto onde indicado)
 
-## Verificação obrigatória antes de anunciar funcionamento
+1. Authentication → login Anônimo ativado; `wesleyneey.github.io` nos domínios autorizados.
+2. Firestore criado em São Paulo, modo produção. Publicar o conteúdo de `firestore.rules` na aba Regras.
+3. Cloud Messaging → par de chaves Web Push gerado; a chave pública está em `assistente-lume/notification-config.json`.
+4. **Credencial do envio:** Configurações do projeto → Contas de serviço → Gerar nova chave privada. Colar o conteúdo do arquivo JSON no GitHub em Settings → Secrets and variables → Actions → New repository secret, com o nome `FIREBASE_SERVICE_ACCOUNT`. Nunca colocar essa chave no repositório.
+5. Mudar `enabled` para `true` em `notification-config.json`.
 
-- Registrar notificações no iPhone instalado na tela inicial, sem conta GPT.
-- Agendar teste pelo aparelho, fechar o Lume e confirmar a notificação recebida.
-- Cadastrar compromisso com 2 avisos futuros e verificar confirmação do servidor.
-- Editar/cancelar o compromisso e confirmar que os avisos antigos não são enviados.
-- Verificar isolamento entre dois aparelhos (UID anônimo distinto).
-- As regras Firestore negam acesso direto do navegador; somente Admin das funções acessa documentos.
-- O servidor verifica ID token e deriva UID exclusivamente dele. Não aceita UID de terceiros.
-- O despacho usa lease e tag idempotente para reduzir duplicação; não promete entrega no segundo exato. Conexão do aparelho e agendamento podem atrasar.
+## Verificação
 
-## Limites e operação
-
-No máximo 50 compromissos por aparelho; até 30 gravações por minuto por UID; maxInstances da API = 2, dispatcher = 1. Reavaliar App Check antes de abrir o produto para tráfego amplo e acompanhar orçamento/uso. O teste e o cadastro ainda podem consumir recursos se a API pública for abusada; CORS não substitui autenticação nem orçamento.
-Uma edição exige confirmação de reprogramação do servidor. Alertas de horários já passados são omitidos. Um teste bem-sucedido no navegador aberto NÃO valida recebimento com o app fechado.
-
-O projeto e o app foram criados pelo console do proprietário, sem conectar Firebase ao ChatGPT. Os avisos são executados pelo Firebase; não dependem de conversa, automação GPT ou Calendário.
+- No iPhone, instalar o Lume na tela inicial, tocar em Permitir avisos e depois em Enviar teste. Fechar o app e confirmar que a notificação chega (até uns 15 minutos).
+- Cadastrar um compromisso com os dois avisos, editar e excluir, e conferir que avisos antigos não chegam.
+- Em GitHub → Actions → "Avisos do Lume", cada execução mostra quantos avisos foram enviados.

@@ -1,7 +1,42 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Acesso exclusivo das funções autenticadas do servidor.
+    function signedIn() { return request.auth != null; }
+    function now() { return request.time.toMillis(); }
+
+    // Cadastro de notificação do próprio aparelho (login anônimo).
+    match /devices/{uid} {
+      allow get, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['token', 'enabled', 'updatedAt'])
+        && request.resource.data.enabled is bool
+        && request.resource.data.updatedAt is int
+        && (!('token' in request.resource.data)
+            || (request.resource.data.token is string
+                && request.resource.data.token.size() > 30
+                && request.resource.data.token.size() < 4096));
+    }
+
+    // Avisos programados. O ID sempre começa com o UID do aparelho dono.
+    match /alarms/{alarmId} {
+      allow get: if signedIn() && resource.data.uid == request.auth.uid;
+      allow delete: if signedIn() && alarmId.matches(request.auth.uid + '_.*')
+        && (resource == null || resource.data.uid == request.auth.uid);
+      allow create, update: if signedIn()
+        && alarmId.matches(request.auth.uid + '_.*')
+        && alarmId.size() < 400
+        && request.resource.data.keys().hasOnly(['uid', 'eventId', 'title', 'eventAt', 'dueAt', 'label'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.eventId is string && request.resource.data.eventId.size() <= 200
+        && request.resource.data.title is string && request.resource.data.title.size() >= 1 && request.resource.data.title.size() <= 200
+        && request.resource.data.label in ['1 dia', '2 horas', 'teste']
+        && request.resource.data.eventAt is int && request.resource.data.dueAt is int
+        && request.resource.data.dueAt <= request.resource.data.eventAt
+        && request.resource.data.dueAt > now() - 300000
+        && request.resource.data.eventAt < now() + 367 * 86400000;
+    }
+
+    // Qualquer outro acesso direto é negado. O envio usa uma credencial de servidor.
     match /{document=**} { allow read, write: if false; }
   }
 }

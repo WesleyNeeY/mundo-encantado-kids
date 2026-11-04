@@ -55,8 +55,10 @@ exports.lumeDispatch=onSchedule({schedule:'every 1 minutes',timeZone:'America/Sa
       const event=alarm.eventId==='test'?null:(await db.doc(`devices/${alarm.uid}/events/${hash(alarm.eventId)}`).get()).data();
       if(!device?.enabled||!device.token||(alarm.eventId!=='test'&&(!event||event.version!==alarm.version)))throw Object.assign(Error('Cancelado'),{permanent:true});
       if(alarm.eventAt+3600000<now)throw Object.assign(Error('Expirado'),{permanent:true});
-      const body=alarm.eventId==='test'?'As notificações do Lume estão funcionando.':'Você tem um compromisso em '+alarm.label+'. Abra o Lume para conferir.';
-      await getMessaging().send({token:device.token,notification:{title:'Assistente Lume',body},webpush:{headers:{TTL:'3600'},notification:{tag:snap.id,icon:APP_URL+'icon-192.png'},fcmOptions:{link:APP_URL+'#agenda-page'}}});
+      const when=new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',weekday:'long',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(alarm.eventAt));
+      const title=alarm.eventId==='test'?'Assistente Lume':String(alarm.title||'Compromisso').slice(0,80)+(alarm.label==='1 dia'?' — amanhã':' — daqui a 2 horas');
+      const body=alarm.eventId==='test'?'As notificações do Lume estão funcionando.':'Lembrete do Lume: '+when+'.';
+      await getMessaging().send({token:device.token,notification:{title,body},webpush:{headers:{TTL:'3600'},notification:{tag:snap.id,icon:APP_URL+'icon-192.png'},fcmOptions:{link:APP_URL+'#agenda-page'}}});
     }catch(error){failure=error;}
     // A edição/exclusão concorrente do compromisso não pode recriar o aviso antigo.
     await db.runTransaction(async tx=>{const current=await tx.get(snap.ref);const data=current.data();if(!data||data.lease!==lease)return;

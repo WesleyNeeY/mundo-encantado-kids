@@ -1,11 +1,10 @@
 name: Avisos do Lume
+# Reserva manual. O envio automático (a cada 1 minuto) roda no Google Apps Script
+# "Avisos do Lumi" (cópia em assistente-lume-server/apps-script).
 on:
-  schedule:
-    - cron: '*/5 * * * *'
   workflow_dispatch:
 permissions:
   contents: read
-  actions: write
 concurrency:
   group: lume-avisos
   cancel-in-progress: false
@@ -28,9 +27,3 @@ jobs:
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: node send.js
-      - name: Manter a tarefa ativa
-        # O GitHub pausa tarefas agendadas após 60 dias sem alterações no repositório.
-        if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/lume-avisos.yml/enable" || true

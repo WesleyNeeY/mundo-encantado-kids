@@ -1,4 +1,4 @@
-# Lume: avisos sem custo
+# Lumi: avisos sem custo
 
 Os avisos funcionam no plano gratuito (Spark) do Firebase, sem cartão:
 
@@ -17,6 +17,6 @@ Os avisos funcionam no plano gratuito (Spark) do Firebase, sem cartão:
 
 ## Verificação
 
-- No iPhone, instalar o Lume na tela inicial, tocar em Permitir avisos e depois em Enviar teste. Fechar o app e confirmar que a notificação chega (até uns 15 minutos).
+- No iPhone, instalar o Lumi na tela inicial, tocar em Permitir avisos e depois em Enviar teste. Fechar o app e confirmar que a notificação chega (até uns 15 minutos).
 - Cadastrar um compromisso com os dois avisos, editar e excluir, e conferir que avisos antigos não chegam.
-- Em GitHub → Actions → "Avisos do Lume", cada execução mostra quantos avisos foram enviados.
+- Em GitHub → Actions → "Avisos do Lumi", cada execução mostra quantos avisos foram enviados.

@@ -1,5 +1,5 @@
 'use strict';
-// Envia os avisos do Lume que já estão na hora. Roda numa tarefa agendada do GitHub
+// Envia os avisos do Lumi que já estão na hora. Roda numa tarefa agendada do GitHub
 // (gratuita), usando a credencial de serviço guardada no segredo FIREBASE_SERVICE_ACCOUNT.
 const {initializeApp,cert}=require('firebase-admin/app');
 const {getFirestore}=require('firebase-admin/firestore');
@@ -14,10 +14,10 @@ const LATE_LIMIT=60*60*1000; // aviso atrasado mais de 1h depois do compromisso 
 const DEAD_TOKEN=['messaging/registration-token-not-registered','messaging/invalid-registration-token','messaging/invalid-argument'];
 
 function message(alarm){
-  if(alarm.eventId==='test')return {title:'Assistente Lume',body:'As notificações do Lume estão funcionando.'};
+  if(alarm.eventId==='test')return {title:'Assistente Lumi',body:'As notificações do Lumi estão funcionando.'};
   const when=new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',weekday:'long',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(alarm.eventAt));
   const title=String(alarm.title||'Compromisso').slice(0,80)+(alarm.label==='1 dia'?' — amanhã':' — daqui a 2 horas');
-  return {title,body:'Lembrete do Lume: '+when+'.'};
+  return {title,body:'Lembrete do Lumi: '+when+'.'};
 }
 
 (async()=>{

@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-// Avisos do Lume sem servidor pago: o aparelho grava seus avisos no Firestore
+// Avisos do Lumi sem servidor pago: o aparelho grava seus avisos no Firestore
 // (plano gratuito) e uma tarefa agendada no GitHub envia as notificações.
 var SDK='https://www.gstatic.com/firebasejs/13.1.0/';
 var DAY=86400000,TWO_HOURS=7200000,OFFSETS=[[DAY,'1 dia'],[TWO_HOURS,'2 horas']];
@@ -22,20 +22,20 @@ async function initialize(){
   user=auth.currentUser||(await authMod.signInAnonymously(auth)).user;
   db=fs.getFirestore(app);
   registration=await navigator.serviceWorker.register(new URL('firebase-messaging-sw.js',base).href,{scope:base.pathname});await navigator.serviceWorker.ready;messaging=messagingMod.getMessaging(app);
-  messagingMod.onMessage(messaging,function(payload){var n=payload.notification||{};show((n.title?n.title+' — ':'')+(n.body||'Você recebeu um aviso do Lume.'));});
+  messagingMod.onMessage(messaging,function(payload){var n=payload.notification||{};show((n.title?n.title+' — ':'')+(n.body||'Você recebeu um aviso do Lumi.'));});
  })().catch(function(error){boot=null;throw error;});return boot;
 }
 function alarmRef(eventId,offset){return fs.doc(db,'alarms',user.uid+'_'+String(eventId).replace(/\//g,'-')+'_'+offset);}
 function friendly(error){var m=String(error&&error.message||error||'');if(/permission|insufficient/i.test(m))return 'O serviço de avisos recusou o pedido. Tente desativar e ativar os avisos de novo.';if(/offline|network|unavailable|failed to fetch/i.test(m))return 'Sem conexão. Confira a internet e tente novamente.';return m||'Não foi possível falar com o serviço de avisos.';}
 async function enable(){
- if(isiOS()&&!standalone())throw Error('No Safari: Compartilhar → Adicionar à Tela de Início. Abra o Lume pelo ícone e volte aqui para permitir os avisos.');
+ if(isiOS()&&!standalone())throw Error('No Safari: Compartilhar → Adicionar à Tela de Início. Abra o Lumi pelo ícone e volte aqui para permitir os avisos.');
  if(!setupReady())throw Error('O serviço de avisos ainda está em configuração. Nenhum aviso foi ativado.');
  if(!('Notification'in window)||!('serviceWorker'in navigator))throw Error('Use um navegador com suporte a notificações.');
  // O pedido de permissão fica direto no toque do usuário (exigência do iPhone).
- var permission=await Notification.requestPermission();if(permission!=='granted')throw Error('A permissão não foi concedida. Ajuste as notificações do Lume no aparelho.');
+ var permission=await Notification.requestPermission();if(permission!=='granted')throw Error('A permissão não foi concedida. Ajuste as notificações do Lumi no aparelho.');
  await initialize();var token=await messagingMod.getToken(messaging,{vapidKey:config.vapidKey,serviceWorkerRegistration:registration});if(!token)throw Error('Não foi possível registrar este aparelho.');
  await fs.setDoc(fs.doc(db,'devices',user.uid),{token:token,enabled:true,updatedAt:Date.now()});
- localStorage.setItem('lume-push-enabled','1');show('Aparelho cadastrado. Faça o teste com o Lume fechado antes de confiar nos avisos.');window.dispatchEvent(new Event('lume-push-enabled'));var dot=document.getElementById('push-dot');if(dot)dot.hidden=true;document.getElementById('push-test').disabled=false;document.getElementById('push-disable').disabled=false;
+ localStorage.setItem('lume-push-enabled','1');show('Aparelho cadastrado. Faça o teste com o Lumi fechado antes de confiar nos avisos.');window.dispatchEvent(new Event('lume-push-enabled'));var dot=document.getElementById('push-dot');if(dot)dot.hidden=true;document.getElementById('push-test').disabled=false;document.getElementById('push-disable').disabled=false;
 }
 window.LumeNotifications={
  ready:function(){return setupReady()&&localStorage.getItem('lume-push-enabled')==='1';},
@@ -62,7 +62,7 @@ window.LumeNotifications={
  }
 };
 document.getElementById('push-enable').onclick=function(){enable().catch(function(error){show(friendly(error));});};
-document.getElementById('push-test').onclick=async function(){try{await initialize();var now=Date.now();await fs.setDoc(alarmRef('teste',Math.floor(now/60000)),{uid:user.uid,eventId:'test',title:'Teste do Lume',eventAt:now+60000,dueAt:now+60000,label:'teste'});show('Teste programado. Feche o Lume e aguarde: o aviso chega em até uns 15 minutos. Só considere validado quando receber a notificação.');}catch(error){show(friendly(error));}};
+document.getElementById('push-test').onclick=async function(){try{await initialize();var now=Date.now();await fs.setDoc(alarmRef('teste',Math.floor(now/60000)),{uid:user.uid,eventId:'test',title:'Teste do Lumi',eventAt:now+60000,dueAt:now+60000,label:'teste'});show('Teste programado. Feche o Lumi e aguarde: o aviso chega em até uns 15 minutos. Só considere validado quando receber a notificação.');}catch(error){show(friendly(error));}};
 document.getElementById('push-disable').onclick=async function(){try{await initialize();await fs.setDoc(fs.doc(db,'devices',user.uid),{enabled:false,updatedAt:Date.now()});if(messaging)await messagingMod.deleteToken(messaging);localStorage.removeItem('lume-push-enabled');show('Avisos desativados neste aparelho.');document.getElementById('push-test').disabled=true;}catch(error){show(friendly(error));}};
 fetch(new URL('notification-config.json',base),{cache:'no-store'}).then(function(r){if(!r.ok)throw Error();return r.json();}).then(function(data){config=data;if(!setupReady()){show('Envio de notificações ainda não ativado. A preparação do serviço está pendente.');return;}var dot=document.getElementById('push-dot');if(dot)dot.hidden=localStorage.getItem('lume-push-enabled')==='1';if(localStorage.getItem('lume-push-enabled')==='1')show('Avisos ativos neste aparelho. Use Enviar teste para conferir a entrega.');else show('Adicione à tela inicial e toque em Permitir avisos.');document.getElementById('push-enable').disabled=false;document.getElementById('push-test').disabled=localStorage.getItem('lume-push-enabled')!=='1';document.getElementById('push-disable').disabled=localStorage.getItem('lume-push-enabled')!=='1';}).catch(function(){show('Não foi possível consultar o serviço de avisos. Tente novamente mais tarde.');});
 })();
